@@ -1879,11 +1879,14 @@ input, select, textarea {
 						outline: 0;
 					}
 
-		@media screen and (max-width: 736px) {
+		@media screen and (max-width: 638px) {
 
 			#header {
-				height: 2.5em;
+				height: 7.5em;
 				line-height: 2.5em;
+				text-align: center;
+				margin-left: auto;
+  margin-right: auto;
 			}
 
 				#header h1 {
@@ -1896,13 +1899,72 @@ input, select, textarea {
 				}
 
 					#header h1 a {
+						text-align: center;
 						font-size: 1em;
 					}
 
 				#header nav {
-					display: none;
+					//display: none;
+					margin-left: auto;
+  margin-right: auto;
+				}
+				#header nav {
+					padding: 20px 10px !important;
+				  }
+				  #header nav {
+					float: none;
+					display: block;
+					text-align: center;
+				  }
+				  #header nav {
+					float: none;
+				  }
+				#header nav ul li a {
+						text-align: center;
+					}
+
+		}
+		
+		@media screen and (max-width: 830px) and (min-width: 638px) {
+			#header {
+				height: 4.5em;
+				line-height: 2.5em;
+				text-align: center;
+				margin: auto
+			}
+
+				#header h1 {
+					text-align: center;
+					position: relative;
+					left: 0;
+					top: 0;
+					height: 2.5em;
+					line-height: 2.5em;
 				}
 
+					#header h1 a {
+						text-align: center;
+						font-size: 1em;
+					}
+
+				#header nav {
+					//display: none;
+					margin-left: auto;
+  margin-right: auto;
+				}
+				#header nav {
+					padding: 20px 10px !important;
+				  }
+				  #header nav {
+					float: none;
+					display: block;
+					text-align: center;
+				  }
+				  
+				#header nav ul li a {
+					
+				}
+						
 		}
 
 	body {
