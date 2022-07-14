@@ -567,13 +567,13 @@ body {
       rgba(10, 10, 10, 0.3),
       rgb(10, 10, 10, 1)
     ),
-    url("images/marin.jpg");
+    url("images/marinalt.jpg");
   --background-background: linear-gradient(
       0deg,
       rgba(10, 10, 10, 1),
       rgba(10, 10, 10, 0.6)
     ),
-    url("images/marin.jpg") center center fixed;
+    url("images/marinalt.jpg") center center fixed;
   --height: 50vh;
 }
 
