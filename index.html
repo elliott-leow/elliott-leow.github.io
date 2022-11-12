@@ -2,190 +2,115 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Elliott's Website</title>
-    <!-- Primary Meta Tags -->
-    <meta name="title" content="Elliott's Website">
-    <meta name="description" content="Elliott's Website">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
-        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
-        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/magic-grid/dist/magic-grid.min.js"></script>
-    <link rel="stylesheet" href="main.css">
-    <link rel="icon" href="https://avatars.githubusercontent.com/u/76672688?v=4" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>elliott's website</title>
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="Elliott's Website">
+  <meta name="description" content="Welcome to Elliott's Website">
+  <!-- Open Graph / Facebook -->
+  <meta name="theme-color" content="#727FFF">
+  <meta property="og:site_name" content="Elliott's Website">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://elliottleow.me/">
+  <meta property="og:title" content="Elliott's Website">
+  <meta property="og:description" content="Elliott's Website">
+  <!-- <meta property="og:image" content="https://autumnvn.me/blog/ShiinaMahiru/top_image.png"> -->
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://elliottleow.me/">
+  <meta property="twitter:title" content="Elliott's Website">
+  <meta property="twitter:description" content="Elliott's Website">
+  <!-- <meta property="twitter:image" content="https://autumnvn.me/blog/ShiinaMahiru/top_image.png"> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+    integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/magic-grid/dist/magic-grid.min.js"></script>
+  <link rel="stylesheet" href="index.css">
+  <!-- <link rel="icon" href="https://avatars.githubusercontent.com/u/77253698?v=4" type="image/png"> -->
 </head>
 
 <body>
-    
-    <script src="cursor.js"></script>
-    <script type="module">var cursor = new osuCursor();</script>
-    <div id="loading">
-        <div id="spinner"></div>
+  <script>function playAudio(audio_element) {
+      var x = document.getElementById(audio_element);
+      x.play();
+    }</script>
+  <script src="cursor.js"></script>
+  <script type="module">var cursor = new osuCursor();</script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <div id="loading">
+    <div id="spinner"></div>
+  </div>
+  <div id="profile">
+    <div id="profile_img" style="background: url(https://avatars.githubusercontent.com/u/76672688?v=4) center;">
     </div>
-    <div id="profile">
-        <div id="profile_img" style="background: url(https://avatars.githubusercontent.com/u/76672688?v=4) center;">
-        </div>
-        <div id="username"><span style="display:block;">Elliott Leow</span><a
-                href="https://github.com/elliott-leow">@elliott-leow</a></div>
-        <div id="userbio" style="display: block;">Student / Developer</div>
-        <div id="about">
-            <span style="display:none;"><i class="fas fa-users"></i> &nbsp; null</span>
-            <span style="display:none;"><i class="fas fa-link"></i> &nbsp; <a href="null">null</a></span>
-            <span style="display:block;"><i class="fas fa-map-marker-alt"></i> &nbsp;&nbsp; Bay Area, California</span>
-            <span style="display:none;"><i class="fas fa-user-tie"></i> &nbsp;&nbsp; Student</span>
-            <div class="socials">
-                <!-- <span style="display:block !important;"><a href="https://www.facebook.com/dvht0" target="_blank" class="socials"><i class="fab fa-facebook"></i> Đỗ Văn Hoài Tuân</a></span>
-                <span style="display:block !important;"><a href="https://www.youtube.com/channel/UC4G_Vf_usl4MHnyCTidbGmA" target="_blank" class="socials"><i class="fab fa-youtube"></i> AutumnVN</a></span>
-                <span style="display:block !important;"><a href="https://steamcommunity.com/id/AutumnVN/" target="_blank" class="socials"><i class="fab fa-steam"></i> AutumnVN</a></span> -->
-                <span style="display:block !important;"><a href="https://instagram.com/elliottleow" target="_blank"
-                        class="socials"><i class="fab fa-instagram"></i> @elliottleow</a></span>
-                <span style="display:block !important;"><a href="" target="_blank"
-                        class="socials"><i class="fab fa-discord"></i> elliott#0727</a></span>
-            </div>
-        </div>
+    <div id="username"><span style="display:block;">Elliott Leow</span><a
+        href="https://github.com/elliott-leow">@elliott-leow</a></div>
+    <div id="userbio" style="display: block;">Student / (really bad) Developer</div>
+    <div id="about">
+      <span style="display:none;"><i class="fas fa-users"></i> &nbsp; null</span>
+      <!--<span style="display:block;"><i class="fas fa-envelope"></i> &nbsp; leowelliottd23@gmail.com</span>-->
+      <span style="display:none;"><i class="fas fa-link"></i> &nbsp; <a href="null">null</a></span>
+      <span style="display:block;"><i class="fas fa-map-marker-alt"></i> &nbsp;&nbsp; Bay Area, California</span>
+      <span style="display:none;"><i class="fas fa-user-tie"></i> &nbsp;&nbsp; Student</span>
+      <div class="socials">
+        <span style="display:block !important;"><a href="https://www.instagram/elliottleow" target="_blank"
+            class="socials"><i class="fab fa-instagram"></i> elliottleow</a></span>
+        <span style="display:block !important;"><a href="" target="_blank"
+            class="socials"><i class="fab fa-discord"></i> elot#8621</a></span>
+      </div>
     </div>
-    <div id="display">
-        <div id="header">
-            <center>
-                <h1>About Me</h1>
-                <p>Hi, I'm Elliott Leow, a student at Dublin High School. 
-                    Currently, I'm busy with college applications and school work. 
-                    Outside of school, I develop game modifications and discord bots. I build and program robots too (VEX Robotics team 5327A).
-                    I also spend too much of my time playing video games such as osu! and Valorant. 
-                    Below, you can see some of my projects on Github as well as some of my stats in the games I play.
-                 </p>
-            </center>
+  </div>
+  <div id="display">
+    <div id="header">
+        <h1>About Me</h1>
+        <p>Hi, I'm Elliott Leow, a student at Dublin High School.</br>
+        I develop game modifications (mainly Minecraft forge mods and server plugins) and Discord bots.</br>
+        I also build and program robots (VEX Robotics team 5327A).</br>
+        Thank you for checking out my website!
+        </p>
+    </div>
 
-        </div>
-
-        
-        <div id="work">
-            <center>
-                <h1>Github Repositories</h1>
-            </center>
-
-            <div class="projects" id="work_section">
-                <!-- <a href="https://github.com/elliott-leow/5327A-2021-2022-Tipping-Point" target="_blank">
-                    <section>
-                        <div class="section_title">5327A Tipping Point (2021-2022)</div>
-                        <div class="about_section">
-                            <span style="display:none;">undefined</span>
-                            <span style="display:block;">Robot code for the VEX Robotics 2021-2022 season</span>
-                        </div>
-                        <div class="bottom_section">
-                            <span style="display:inline-block;"><i class="fas fa-code"></i>&nbsp; C++</span>
-                            <span><i class="fas fa-star"></i>&nbsp; 0</span>
-                            <span><i class="fas fa-code-branch"></i>&nbsp; 0</span>
-                        </div>
-                    </section>
-                </a> -->
-                <a href="https://github.com/elliott-leow/kabbalah-old" target="_blank">
-                    <section>
-                        <div class="section_title">Kabbalah Client</div>
-                        <div class="about_section">
-                            <span style="display:none;">undefined</span>
-                            <span style="display:block;">1.8.9 Forge utility mod for Minecraft Hypixel's "The Bridge" minigame</span>
-                        </div>
-                        <div class="bottom_section">
-                            <span style="display:inline-block;"><i class="fas fa-code"></i>&nbsp; Java</span>
-                            <span><i class="fas fa-star"></i>&nbsp; 0</span>
-                            <span><i class="fas fa-code-branch"></i>&nbsp; 0</span>
-                        </div>
-                    </section>
-                </a>
-                <a href="https://github.com/elliott-leow/RushiaBot" target="_blank">
-                    <section>
-                        <div class="section_title">RushiaBot</div>
-                        <div class="about_section">
-                            <span style="display:none;">undefined</span>
-                            <span style="display:block;">Discord bot that tracks osu! players and plays music</span>
-                        </div>
-                        <div class="bottom_section">
-                            <span style="display:inline-block;"><i class="fas fa-code"></i>&nbsp; Javascript</span>
-                            <span><i class="fas fa-star"></i>&nbsp; 0</span>
-                            <span><i class="fas fa-code-branch"></i>&nbsp; 0</span>
-                        </div>
-                    </section>
-                </a>
-                <a href="https://github.com/elliott-leow/Remove-Observers" target="_blank">
-                    <section>
-                        <div class="section_title">Remove Observers</div>
-                        <div class="about_section">
-                            <span style="display:block;">Minecraft server plugin that disables observers (to prevent lag machines) </span>
-                        </div>
-                        <div class="bottom_section">
-                            <span style="display:inline-block;"><i class="fas fa-code"></i>&nbsp; Java</span>
-                            <span><i class="fas fa-star"></i>&nbsp; 0</span>
-                            <span><i class="fas fa-code-branch"></i>&nbsp; 0</span>
-                        </div>
-                    </section>
-                </a>
-            </div>
-            <div id="forks" style="display: block;">
-                <center>
-                    <h1>Forks</h1>
-                </center>
-                <div class="projects" id="forks_section">
-                    <a href="https://github.com/elliott-leow/harakiri" target="_blank">
-                        <section>
-                            <div class="section_title">Harakiri Client</div>
-                            <div class="about_section">
-                                <span style="display:block;">A Minecraft utility client for anarchy servers, with nice visuals and generally some novel ideas</span>
-                            </div>
-                            <div class="bottom_section">
-                                <span style="display:none;"><i class="fas fa-code"></i>&nbsp; null</span>
-                                <span><i class="fas fa-star"></i>&nbsp; 0</span>
-                                <span><i class="fas fa-code-branch"></i>&nbsp; 0</span>
-                            </div>
-                        </section>
-                    </a>
-                </div>
-            </div>
-            <div id="blog_section">
-                <center>
-                    <h1>Blog</h1>
-                </center>
-                <div id="blogs"></div>
-            </div>
-            <center>
-                <h1>Game Statistics</h1>
-            </center>
-            <div id="header">
-                <a href="https://osu.ppy.sh/users/Daisukii"><img class="osu"
-                        src="https://osu-stats-signature.vercel.app/card?user=Daisukii&mode=std&lang=en&animation=true" /></a>
-            </div>
-            <div id="wysi">
-                <audio id="WYSI727" src="wysi.ogg"></audio><button class="btn 727" onclick="playAudio('WYSI727')"
-                    type="button">727</button>
-            </div>
-            <div id="footer">
-                <h3>Visitor Count</h3>
-                <img src="https://profile-counter.glitch.me/elliott-leow/count.svg" />
-            </div>
-        </div>
-        <script type="text/javascript">
-            setTimeout(function () {
-                document.getElementById("loading").classList.add("animated");
-                document.getElementById("loading").classList.add("fadeOut");
-                setTimeout(function () {
-                    document.getElementById("loading").classList.remove("animated");
-                    document.getElementById("loading").classList.remove("fadeOut");
-                    document.getElementById("loading").style.display = "none";
-                }, 800);
-            }, 1500);
-            $.getJSON("blog.json", function (blog) {
-                blog = blog || [];
-                if (blog.length == 0) {
-                    return (document.getElementById("blog_section").style.display =
-                        "none");
-                }
-                for (var i = 0; i < blog.length; i++) {
-                    $("#blogs").append(`
+    <div id="work">
+        <center>
+          <h1>osu! stats</h1>
+        <p>I play osu! occasionally</p>
+      <a href="https://osu.ppy.sh/users/Daisukii"><img class="osu"
+          src="https://osu-stats-signature.vercel.app/card?user=Daisukii&mode=std&lang=en&animation=true" /></a>
+        </center>
+      </div>
+      <div id="blog_section">
+        <center>
+          <h1>Blog</h1>
+        </center>
+        <div id="blogs"></div>
+      </div>
+      <div id="footer">
+        <h3>Visitor Count</h3>
+        <img src="https://profile-counter.glitch.me/AutumnVN/count.svg" />
+      </div>
+    </div>
+    <script type="text/javascript">
+      setTimeout(function () {
+        document.getElementById("loading").classList.add("animated");
+        document.getElementById("loading").classList.add("fadeOut");
+        setTimeout(function () {
+          document.getElementById("loading").classList.remove("animated");
+          document.getElementById("loading").classList.remove("fadeOut");
+          document.getElementById("loading").style.display = "none";
+        }, 800);
+      }, 1500);
+      $.getJSON("blog.json", function (blog) {
+        blog = blog || [];
+        if (blog.length == 0) {
+          return (document.getElementById("blog_section").style.display =
+            "none");
+        }
+        for (var i = 0; i < blog.length; i++) {
+          $("#blogs").append(`
             <a href="./blog/${blog[i].url_title}/" target="_blank">
                 <section>
                     <img src="./blog/${blog[i].url_title}/${blog[i].top_image}">
@@ -198,43 +123,40 @@
                 </section>
             </a>
             `);
-                }
-            }).fail(function () {
-                return (document.getElementById("blog_section").style.display = "none");
-            });
-        </script>
+        }
+      }).fail(function () {
+        return (document.getElementById("blog_section").style.display = "none");
+      });
+    </script>
 
-        <script>
-            const magicProjectsGrid = new MagicGrid({
-                container: "#work_section",
-                animate: false,
-                gutter: 30, // default gutter size
-                static: true,
-                useMin: false,
-                maxColumns: 2,
-                useTransform: true
-            });
+    <script>
+      const magicProjectsGrid = new MagicGrid({
+        container: "#work_section",
+        animate: false,
+        gutter: 30, // default gutter size
+        static: true,
+        useMin: false,
+        maxColumns: 2,
+        useTransform: true
+      });
 
-            const magicForksGrid = new MagicGrid({
-                container: "#forks_section",
-                animate: false,
-                gutter: 30, // default gutter size
-                static: true,
-                useMin: false,
-                maxColumns: 2,
-                useTransform: true
-            });
+      const magicForksGrid = new MagicGrid({
+        container: "#forks_section",
+        animate: false,
+        gutter: 30, // default gutter size
+        static: true,
+        useMin: false,
+        maxColumns: 2,
+        useTransform: true
+      });
 
-            $("document").ready(() => {
-                magicProjectsGrid.listen();
-                magicForksGrid.listen();
-            });
-        </script>
+      $("document").ready(() => {
+        magicProjectsGrid.listen();
+        magicForksGrid.listen();
+      });
+    </script>
 
 
 </body>
-<script>function playAudio(audio_element) {
-    var x = document.getElementById(audio_element);
-    x.play();
-}</script>
+
 </html>

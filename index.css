@@ -184,6 +184,7 @@ body {
 
 #header {
   width: 100%;
+  max-width: 100%;
   margin-top: 8vh;
   text-align: center;
 }
@@ -193,6 +194,11 @@ body {
   text-decoration: none;
   font-family: "Questrial", sans-serif;
   font-weight: bold;
+}
+
+#header img {
+  max-width: 100%;
+  text-align: center;
 }
 
 #wysi {
@@ -291,6 +297,17 @@ body {
 
 #about span i {
   font-size: 16px;
+}
+
+#youtube {
+  margin: 2vh 0px;
+  padding: 4vh 0px !important;
+  text-align: center;
+}
+
+iframe {
+  width: 65vw;
+  height: calc(65vw/1.77777778);
 }
 
 #work {
@@ -567,13 +584,13 @@ body {
       rgba(10, 10, 10, 0.3),
       rgb(10, 10, 10, 1)
     ),
-    url("images/marin.jpg");
+    url("image/background.jpg");
   --background-background: linear-gradient(
       0deg,
       rgba(10, 10, 10, 1),
       rgba(10, 10, 10, 0.6)
     ),
-    url("images/marin.jpg") center center fixed;
+    url("image/background.jpg") center center fixed;
   --height: 50vh;
 }
 
@@ -604,7 +621,7 @@ body {
         rgba(10, 10, 10, 1),
         rgba(10, 10, 10, 0)
       ),
-      url("images/marin.jpg") !important;
+      url("image/background.jpg") !important;
   }
 }
 
