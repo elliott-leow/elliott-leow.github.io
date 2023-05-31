@@ -22,7 +22,7 @@ function setClock() {
     const { year, month, day, hour, minute, second } = (() => {
         const dayObject = {};
         new Intl.DateTimeFormat([], {
-            timeZone: 'Asia/Ho_Chi_Minh', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric'
+            timeZone: 'America/Los_Angeles', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric'
         }).formatToParts(new Date()).forEach(({ type: type, value: value }) => {
             if (type !== 'literal') dayObject[type] = Number(value);
         });
