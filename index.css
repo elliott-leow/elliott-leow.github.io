@@ -232,6 +232,12 @@
     transition: transform 0.15s linear 0s;
   }
   
+  .widget.osu {
+    background: rgba(0, 0, 0, 0.0);
+
+    
+  }
+
   .widget:active {
     transform: perspective(300px) translateZ(-10px);
   }
