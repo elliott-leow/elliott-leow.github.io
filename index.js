@@ -1,109 +1,165 @@
-const visitTime = new Date(new Date().setSeconds(0, 0)).getTime();
+(window.setScroll = () => document.body.style.setProperty('--scroll', scrollY / innerHeight))();
+['scroll', 'resize'].forEach(e => addEventListener(e, setScroll));
 
-function setScrollValue() {
-    document.documentElement.style.setProperty('--scroll-y', `${window.scrollY}px`);
-    document.documentElement.style.setProperty('--scroll-y-percent', window.scrollY / window.innerHeight);
-    document.documentElement.classList.toggle('scrolled', window.scrollY > 0);
-};
+const bg = document.querySelector('#bg');
 
-setScrollValue();
-window.addEventListener('scroll', setScrollValue);
-window.addEventListener('resize', setScrollValue);
+addEventListener('touchstart', () => bg.style.setProperty('--multiplier', '0'));
+addEventListener('mousemove', ({ clientX, clientY }) => {
+    bg.style.setProperty('--tx', `${20 * (clientX - innerWidth / 2) / innerWidth}px`);
+    bg.style.setProperty('--ty', `${20 * (clientY - innerHeight / 2) / innerHeight}px`);
+});
 
-document.querySelector('.down-arrow-inner').addEventListener('click', () => {
-    window.scrollTo({
-        top: window.innerHeight * 0.3,
-        behavior: 'smooth'
+['mouseenter', 'mouseleave'].forEach(e => document.addEventListener(e, () => {
+    if (e === 'mouseleave') bg.removeAttribute('style');
+    bg.style.transition = 'transform .1s linear';
+    setTimeout(() => bg.style.transition = '', 100);
+}));
+
+document.querySelector('#arrow svg').addEventListener('click', () => {
+    const start = performance.now();
+
+    !function step() {
+        const progress = (performance.now() - start) / 200;
+        scrollTo({ top: (innerWidth > 880 ? .3 : .8) * innerHeight * easeOutCubic(progress) });
+        if (progress < 1) requestAnimationFrame(step);
+    }();
+
+    function easeOutCubic(x) {
+        return 1 - Math.pow(1 - x, 3);
+    }
+});
+
+document.querySelector('footer span').addEventListener('click', async () => {
+    const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: { frameRate: { ideal: 60 } } });
+    const recoder = new MediaRecorder(stream);
+    const [video] = stream.getVideoTracks();
+
+    recoder.start();
+    video.addEventListener('ended', () => recoder.stop());
+    recoder.addEventListener('dataavailable', e => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(e.data);
+        a.download = 'watch if cute.webm';
+        a.click();
     });
 });
 
-function setClock() {
+fetch('/stats').then(r => r.json()).then(repos => {
+    const stats = repos.pop();
+    document.querySelectorAll('.stat').forEach((stat, i) => stat.textContent = stats[i]);
+    document.querySelectorAll('.star').forEach((star, i) => star.textContent = repos[i][0]);
+    document.querySelectorAll('.fork').forEach((fork, i) => fork.textContent = repos[i][1]);
+});
+
+const visit = new Date(new Date().setSeconds(0, 0)).getTime();
+const map = new Map();
+
+!function setClock() {
     const date = new Date();
-    const { year, month, day, hour, minute, second } = (() => {
-        const dayObject = {};
-        new Intl.DateTimeFormat([], {
-            timeZone: 'America/Los_Angeles', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric'
-        }).formatToParts(new Date()).forEach(({ type: type, value: value }) => {
-            if (type !== 'literal') dayObject[type] = Number(value);
-        });
-        return dayObject;
-    })();
+    const time = date.getTime();
+    const { year, month, day, hour, minute, second } = myTime();
+    const hourOff = -date.getTimezoneOffset() / 60;
+    const minuteOff = new Date(time - time % 1000 - hourOff * 60 * 60 * 1000);
+    const tzOff = (new Date(year, month - 1, day, hour, minute, second) - minuteOff) / 1000 / 60 / 60;
+    const tzDiff = tzOff - hourOff;
 
-    const hourOffset = -date.getTimezoneOffset() / 60;
-    const minuteOffset = new Date(date.getTime() - date.getTime() % 1000 - hourOffset * 60 * 60 * 1000);
-    const myTimezoneOffset = (new Date(year, month - 1, day, hour, minute, second) - minuteOffset) / 1000 / 60 / 60;
-    const timezoneDiff = myTimezoneOffset - hourOffset;
-    const timePassed = date.getTime() - visitTime;
+    update('#hour-hand', `rotate(${hour % 12 / 12 * 360 + minute / 60 * 30 + second / 60 / 60 * 30}deg)`);
+    update('#minute-hand', `rotate(${minute / 60 * 360 + second / 60 * 6}deg)`);
+    update('#second-hand', `rotate(${360 * Math.floor((time - visit) / 60 / 1000) + second / 60 * 360}deg)`);
+    update('#date', new Date(time + tzDiff * 60 * 60 * 1000).toLocaleDateString());
+    ['hour', 'minute', 'second'].forEach(u => update(`#${u}`, eval(u).toString().padStart(2, '0')));
+    update('#timezone-diff', tzDiff === 0 ? 'same time' : (tzDiff > 0 ? `${format(tzDiff)} ahead` : `${format(-tzDiff)} behind`));
+    update('#utc-offset', ` / UTC ${(tzOff >= 0 ? '+' : '')}${Math.floor(tzOff)}:${(tzOff % 1 * 60).toString().padStart(2, '0')}`);
 
-    document.querySelector('.widget-clock-hour-hand').style.transform = `rotate(${hour % 12 / 12 * 360 + minute / 60 * 30 + second / 60 / 60 * 30}deg)`;
-    document.querySelector('.widget-clock-minute-hand').style.transform = `rotate(${minute / 60 * 360 + second / 60 * 6}deg)`;
-    document.querySelector('.widget-clock-second-hand').style.transform = `rotate(${360 * Math.floor(timePassed / 60 / 1000) + second / 60 * 360}deg)`;
-    document.querySelector('.widget-clock-date-text').innerHTML = new Date(date.getTime() + timezoneDiff * 60 * 60 * 1000).toLocaleDateString();
-    document.querySelector('.widget-clock-timezone-abbr').innerHTML = 'ICT';
-    document.querySelector('.widget-clock-hour').innerHTML = hour.toString().padStart(2, '0');
-    document.querySelector('.widget-clock-minute').innerHTML = minute.toString().padStart(2, '0');
-    document.querySelector('.widget-clock-second').innerHTML = second.toString().padStart(2, '0');
-    document.querySelector('.widget-clock-timezone-diff').innerHTML = timezoneDiff === 0 ? 'same time' : (timezoneDiff > 0 ? `${formatTimezoneDiff(timezoneDiff)} ahead` : `${formatTimezoneDiff(-timezoneDiff)} behind`);
-    document.querySelector('.widget-clock-timezone-utc-offset').innerHTML = ` / UTC ${(myTimezoneOffset >= 0 ? '+' : '')}${Math.floor(myTimezoneOffset)}:${(myTimezoneOffset % 1 * 60).toString().padStart(2, '0')}`;
+    setRpcTimestamp(map.get('timestamp'));
+
+    setTimeout(setClock, 1000 - time % 1000);
+
+    function myTime() {
+        const obj = {};
+        const options = { timeZone: 'Asia/Ho_Chi_Minh', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric' };
+        new Intl.DateTimeFormat([], options).formatToParts(new Date()).forEach(({ type, value }) => obj[type] = +value);
+        return obj;
+    };
+
+    function format(tzDiff) {
+        if (tzDiff < 0) return `-${format(-tzDiff)}`;
+        const minute = tzDiff % 1 * 60;
+        tzDiff = Math.floor(tzDiff);
+        return minute ? `${tzDiff}h ${minute}m` : `${tzDiff}h`;
+    }
+}();
+
+!function lanyard() {
+    const ActivityType = ['Playing', 'Streaming to', 'Listening to', 'Watching', 'Custom status', 'Competing in'];
+    const StatusColor = { online: '#4b8', idle: '#fa1', dnd: '#f44', offline: '#778' };
+    const ws = new WebSocket('wss://api.lanyard.rest/socket');
+
+    ws.addEventListener('open', () => ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: '393694671383166998' } })));
+    ws.addEventListener('error', () => ws.close());
+    ws.addEventListener('close', () => setTimeout(lanyard, 1000));
+
+    ws.addEventListener('message', async ({ data }) => {
+        const { t, d } = JSON.parse(data);
+        if (t !== 'INIT_STATE' && t !== 'PRESENCE_UPDATE') return;
+
+        update('#name', d.discord_user.display_name);
+        update('#dot', StatusColor[d.discord_status]);
+
+        const activities = d.activities.filter(a => a.type !== 4);
+        if (!activities.length) {
+            update('#status', d.discord_status);
+            update(['#large_image', '#small_image', '#activity', '#details', '#state']);
+            return setRpcTimestamp();
+        }
+
+        const a = activities[0];
+        ['large_image', 'small_image'].forEach(size => update(`#${size}`,
+            !a.assets?.[size]
+                ? ''
+                : a.assets[size].startsWith('mp:')
+                    ? `--image: url(https://media.discordapp.net/${a.assets[size].slice(3)}?width=${getSize(size)}&height=${getSize(size)})`
+                    : a.assets[size].startsWith('spotify:')
+                        ? `--image: url(https://i.scdn.co/image/${a.assets[size].slice(8)})`
+                        : `--image: url(https://cdn.discordapp.com/app-assets/${a.application_id}/${a.assets[size]}.png?size=${getSize(size)})`));
+        update('#status', ActivityType[a.type]);
+        update('#activity', a.name);
+        update('#details', a.details);
+        update('#state', a.state);
+
+        const timestamp = a.timestamps?.end ? a.timestamps.end : a.timestamps?.start;
+        if (map.get('timestamp') !== timestamp) setRpcTimestamp(map.set('timestamp', timestamp).get('timestamp'));
+    });
+
+    function getSize(size) {
+        return size === 'large_image' ? 96 : 40;
+    }
+}();
+
+function update(selector, value = '') {
+    if (Array.isArray(selector)) return selector.forEach(s => update(s, value));
+    if (map.get(selector) === value) return;
+
+    const e = document.querySelector(selector);
+
+    if (value.startsWith('rotate')) e.style.transform = value;
+    else if (value.match(/^#[a-f0-9]+$/)) e.style.backgroundColor = value;
+    else if (value.startsWith('--image')) e.style.setProperty(value.split(':')[0], value.split(' ')[1]);
+    else if (value === '' && (['#large_image', '#small_image'].includes(selector))) e.removeAttribute('style');
+    else e.textContent = value;
+
+    map.set(selector, value);
 }
 
-setClock();
-setInterval(setClock, 500);
-
-function formatTimezoneDiff(timeZoneDifferent) {
-    if (timeZoneDifferent < 0) return `-${formatTimezoneDiff(-timeZoneDifferent)}`;
-
-    const minutes = timeZoneDifferent % 1 * 60;
-    timeZoneDifferent = Math.floor(timeZoneDifferent);
-
-    if (minutes) return `${timeZoneDifferent}h ${minutes}m`;
-
-    return `${timeZoneDifferent}h`;
+function setRpcTimestamp(timestamp) {
+    if (!timestamp) {
+        update('#timestamp');
+        return map.delete('timestamp');
+    }
+    const diff = Math.abs(timestamp - Date.now());
+    const hour = Math.floor(diff / 1000 / 60 / 60);
+    const minute = Math.floor(diff / 1000 / 60) % 60;
+    const second = Math.floor(diff / 1000) % 60;
+    const format = n => n.toString().padStart(2, '0');
+    update('#timestamp', `${hour ? `${format(hour)}:` : ''}${format(minute)}:${format(second)} ${timestamp > Date.now() ? 'left' : 'elapsed'}`);
 }
-
-function setSquareSizeAndGap() {
-    const bento = document.querySelector('.bento');
-
-    const numColumns = getComputedStyle(bento).gridTemplateColumns.split(' ').length;
-    const columnGap = parseInt(getComputedStyle(bento).columnGap);
-    const squareSize = (bento.offsetWidth - columnGap * (numColumns - 1)) / numColumns;
-
-    bento.style.setProperty('--square-size', `${squareSize}px`);
-    bento.style.setProperty('--gap', `${columnGap}px`);
-};
-
-setSquareSizeAndGap();
-window.addEventListener('resize', setSquareSizeAndGap);
-
-document.addEventListener('mousemove', ({ clientX, clientY }) => {
-    document.querySelector('#background').style.setProperty('--tx', `${20 * (clientX - window.innerWidth / 2) / window.innerWidth}px`);
-    document.querySelector('#background').style.setProperty('--ty', `${20 * (clientY - window.innerHeight / 2) / window.innerHeight}px`);
-});
-document.addEventListener('mouseleave', () => {
-    document.querySelector('#background').style.setProperty('--tx', '0px');
-    document.querySelector('#background').style.setProperty('--ty', '0px');
-});
-
-window.addEventListener('touchstart', () => {
-    document.body.classList.add("touch-device");
-}, { once: true });
-
-document.querySelectorAll('.project').forEach(async (project) => {
-    const href = project.querySelector('a').getAttribute('href');
-    if (!href.startsWith('https://github.com/')) return;
-    const { star, fork } = await (await fetch(`/repos/${href.slice(19)}`)).json();
-
-    project.querySelector('.project-metas').insertAdjacentHTML('afterbegin', `
-    <div class="project-meta project-stars">
-        <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" stroke-width="0" fill="currentColor"></path>
-        </svg>${star ?? '-'}</div>
-    <div class="project-meta project-forks">
-        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em">
-            <g>
-                <path fill="none" d="M0 0h24v24H0z"></path>
-                <path d="M7.105 15.21A3.001 3.001 0 1 1 5 15.17V8.83a3.001 3.001 0 1 1 2 0V12c.836-.628 1.874-1 3-1h4a3.001 3.001 0 0 0 2.895-2.21 3.001 3.001 0 1 1 2.032.064A5.001 5.001 0 0 1 14 13h-4a3.001 3.001 0 0 0-2.895 2.21z"></path>
-            </g>
-        </svg>${fork ?? '-'}</div>`);
-})
