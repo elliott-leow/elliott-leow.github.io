@@ -77,7 +77,7 @@ const map = new Map();
 
     function myTime() {
         const obj = {};
-        const options = { timeZone: 'Asia/Ho_Chi_Minh', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric' };
+        const options = { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric' };
         new Intl.DateTimeFormat([], options).formatToParts(new Date()).forEach(({ type, value }) => obj[type] = +value);
         return obj;
     };

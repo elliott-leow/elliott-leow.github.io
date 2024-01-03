@@ -102,6 +102,10 @@ header section {
     width: min(500px, 100%);
 }  */
 
+header svg {
+    width: min(500px, 100%);
+}
+
 header svg::before {
     content: '';
       position: absolute;
@@ -173,21 +177,7 @@ header svg::before {
   
   
 
-/* header h1 {
-    padding: 0px;
-    margin: 0px;
-    line-height: 100%; 
-    -webkit-mask: linear-gradient(to right, #fff 45%, transparent 55%) 0 0/220% 100% no-repeat;
-    opacity: clamp(.7, .75 * var(--scroll, 0) + .7, .85);
-    animation: 2s ease-in-out 1.9s both bio;
-    color: #fff;
-    backdrop-filter: saturate(2) brightness(2.5) blur(12px);
-    font-weight: normal;
-    font-size: clamp(100px, 3vmin, 125px);
-} */
-
 header p {
-    /* top: '-15px'; */
     -webkit-mask: linear-gradient(to right, #fff 45%, transparent 55%) 0 0/220% 100% no-repeat;
     opacity: clamp(.7, .75 * var(--scroll, 0) + .7, .85);
     animation: 2s ease-in-out 1.9s both bio;
