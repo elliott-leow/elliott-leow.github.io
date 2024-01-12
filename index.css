@@ -11,7 +11,7 @@
 
 :root {
     /* --background: image-set(url('/bg.avif') type('image/avif'), url('/bg.webp') type('image/webp')); */
-    --background: image-set(url('/bg.png') type('image/png'));
+    --background: image-set(url('/bg2.jpg') type('image/jpg'));
     font-weight: 500;
     line-height: 1.5;
     font-family: Modulus, system-ui, sans-serif;
