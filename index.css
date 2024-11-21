@@ -21,6 +21,9 @@ body {
     margin: 0 auto;
     min-width: 320px;
     max-width: min(1280px, 100% - 100px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 @media (width < 880px) {
@@ -229,9 +232,12 @@ body[style*='.'] #arrow {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 60px;
-    opacity: calc(var(--scroll) / .15);
-    margin-top: max(0px, calc(-140vh * var(--scroll) + 35vh));
-    margin-bottom: calc(35vh - max(0px, calc(-140vh * var(--scroll) + 35vh)));
+    opacity: calc(var(--scroll) / 0.15);
+    margin-top: calc(35vh * (1 - min(var(--scroll), 1)));
+    margin-bottom: calc(35vh * min(var(--scroll), 1));
+    min-height: calc(100vh - 20vh - 20vh);
+    flex: 1 0 auto;
+
 }
 
 @media (width < 1300px) {
@@ -638,6 +644,10 @@ footer {
     margin-top: -35vh;
     height: 15vh;
     font-size: 20px;
+    /* Remove any absolute or fixed positioning */
+    position: relative;
+    /* Ensure it doesn't overlap other elements */
+    z-index: 1;
 }
 
 footer p {

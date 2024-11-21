@@ -1,5 +1,7 @@
+//(window.setScroll = () => document.body.style.setProperty('--scroll', scrollY / innerHeight))();
 (window.setScroll = () => document.body.style.setProperty('--scroll', scrollY / innerHeight))();
 ['scroll', 'resize'].forEach(e => addEventListener(e, setScroll));
+
 
 const bg = document.querySelector('#bg');
 
