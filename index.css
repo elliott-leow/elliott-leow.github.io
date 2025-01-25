@@ -234,7 +234,7 @@ body[style*='.'] #arrow {
     gap: 60px;
     opacity: calc(var(--scroll) / 0.15);
     margin-top: calc(35vh * (1 - min(var(--scroll), 1)));
-    margin-bottom: calc(35vh * min(var(--scroll), 1));
+    margin-bottom: calc(1vh * min(var(--scroll), 1));
     min-height: calc(100vh - 20vh - 20vh);
     flex: 1 0 auto;
 
@@ -641,14 +641,25 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: -35vh;
     height: 15vh;
     font-size: 20px;
-    /* Remove any absolute or fixed positioning */
     position: relative;
-    /* Ensure it doesn't overlap other elements */
     z-index: 1;
+    width: 100%;
+    margin-top: auto; /* Ensures footer stays at the bottom */
 }
+
+
+footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
+    height: 15vh;
+    font-size: 20px;
+    position: relative;
+    z-index: 1;
+} 
 
 footer p {
     opacity: .65;
