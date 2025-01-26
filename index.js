@@ -165,3 +165,60 @@ function setRpcTimestamp(timestamp) {
     const format = n => n.toString().padStart(2, '0');
     update('#timestamp', `${hour ? `${format(hour)}:` : ''}${format(minute)}:${format(second)} ${timestamp > Date.now() ? 'left' : 'elapsed'}`);
 }
+
+function closeModal() {
+    const modal = document.getElementById('imageModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const imageContainers = document.querySelectorAll('.image-container');
+    const modal = document.getElementById('imageModal');
+    
+    if (!modal) {
+        console.error('Modal element not found');
+        return;
+    }
+
+    const modalImage = modal.querySelector('.modal-image');
+    const modalTitle = modal.querySelector('.modal-description h3');
+    const modalDescription = modal.querySelector('.modal-description p');
+
+    imageContainers.forEach(container => {
+        const img = container.querySelector('img');
+        if (!img) return;
+
+        container.addEventListener('click', () => {
+            console.log('Image clicked!');
+            modalImage.src = img.src;
+            modalImage.alt = img.alt;
+            modalTitle.textContent = img.dataset.title || img.alt;
+            modalDescription.textContent = img.dataset.description || '';
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    // Close modal when clicking outside the image
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Close modal when pressing escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // Close modal when clicking the close button
+    const closeButton = modal.querySelector('.modal-close');
+    if (closeButton) {
+        closeButton.addEventListener('click', closeModal);
+    }
+});

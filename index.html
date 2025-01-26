@@ -2,12 +2,19 @@
 <html lang="en" translate="no">
 
 <head>
+    <meta charset="UTF-8">
     <title>Elliott's Website</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Elliott's Website">
+    <meta name="description" content="Elliott Leow">
+    <meta name="theme-color" content="#9af">
+    <meta property="og:title" content="Elliott's Website">
+    <meta property="og:description" content="Elliott Leow">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://elliottleow.me/">
     <link rel="canonical" href="https://elliottleow.me/">
     <link rel="stylesheet" href="/index.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3">
+    <script src="/index.js" defer></script>
     <noscript>
         <link rel="stylesheet" href="/noscript.css">
     </noscript>
@@ -47,59 +54,27 @@
 
             
 
-            <div class="widget js" style="--columns: 4; --rows: 3;">
+            <div class="widget welcome-widget">
                 <div id="discord">
                     <div class="content">
                         <!-- <div class="icon">
                             <img src="/avatar.webp" alt="avatar" draggable="false">
                         </div> -->
                         <div class="meta">
-                            <b>About Me</b>
+                            <b>Welcome!</b>
                             <p> 
-                                Hi, I'm Elliott, a student at Johns Hopkins University pursuing a BS in Biomedical Engineering and Computer Science.
-                            
+                                Here, i just post random things that I find interesting and some photos.
+                            </br>
+                            </br>
+                                As for the domain, rushia.world, it was just a cheap domain name. 😄🐈 
+                            </br>
+                            </br>
+                                Thanks for stopping by!
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="widget js" style="--columns: 4; --rows: 3;">
-                <div class="image" 
-                     style="
-                       position: relative; 
-                       width: 100%; 
-                       height: 100%; 
-                       display: flex; 
-                       justify-content: center; 
-                       align-items: center; 
-                       overflow: hidden;
-                     ">
-                  <img src="sf.jpg" 
-                       alt="Description of image" 
-                       style="
-                         width: 100%; 
-                         height: 100%; 
-                         object-fit: cover; 
-                         object-position: center;
-                       ">
-              
-                  <p style="
-                        position: absolute; 
-                        bottom: 10px; 
-                        left: 10px; 
-                        background: rgba(0, 0, 0, 0.5); 
-                        color: #fff; 
-                        padding: 10px 15px; 
-                        border-radius: 5px;
-                        margin: 0;
-                        z-index: 2;
-                      ">
-                    Dec 31, 2024 - Golden Gate Bridge
-            </p>
-                </div>
-              </div>
-            
 
             <div class="widget js" style="--columns: 4;">
                 <div id="clock">
@@ -127,27 +102,33 @@
                 </div>
             </div>
 
-            
-
-            
-
-            
-
-            <div class="widget" style="--columns: 4; --rows: 1;">
-                <a href="mailto:leowelliottd27@gmail.com">
-                    <div class="content">
-                        <div class="icon" style="background-color: #48d; --size: 60%;">
-                            <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"></path>
-                            </svg>
-                        </div>
-                        <div class="meta">
-                            <b>Email</b>
-                            <p>leowelliottd27@gmail.com</p>
-                        </div>
-                    </div>
-                </a>
+            <div class="widget image-widget">
+                <div class="image-container">
+                    <img src="sf.jpg" alt="Golden Gate Bridge"
+                         data-title="Golden Gate Bridge"
+                         data-description="A beautiful evening at the iconic Golden Gate Bridge in San Francisco. The fog was rolling in from the Pacific, creating a mystical atmosphere that San Francisco is famous for.">
+                    <p class="image-caption">Dec 31, 2024 - Golden Gate Bridge</p>
+                </div>
             </div>
+
+            <div class="widget image-widget">
+                <div class="image-container">
+                    <img src="jhmi.jpg" alt="Johns Hopkins Medical Institute"
+                         data-title="Johns Hopkins Medical Institute"
+                         data-description="The historic dome of Johns Hopkins Hospital, a landmark of medical excellence and innovation in Baltimore, Maryland. The architecture reflects both the historical significance and the continuing legacy of medical breakthroughs.">
+                    <p class="image-caption">Aug 5, 2024 - JHMI</p>
+                </div>
+            </div>
+
+            
+
+            
+
+            
+
+            
+
+            
 
             
 
@@ -186,16 +167,42 @@
                     </div>
                 </a>
             </div>
+            <div class="widget" style="--columns: 4; --rows: 1;">
+                <a href="mailto:leowelliottd27@gmail.com">
+                    <div class="content">
+                        <div class="icon" style="background-color: #48d; --size: 60%;">
+                            <svg fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"></path>
+                            </svg>
+                        </div>
+                        <div class="meta">
+                            <b>Email</b>
+                            <p>leowelliottd27@gmail.com</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </aside>
 
         
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal-overlay" id="imageModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <img class="modal-image" src="" alt="">
+            <div class="modal-description">
+                <h3></h3>
+                <p></p>
+            </div>
+        </div>
     </div>
 
     <footer>
         <p><span>Elliott Leow</span>  • Made with &hearts; • <a target="_blank" href="https://github.com/elliott-leow/elliott-leow.github.io">source code</a></p>
     </footer>
 
-    <script defer src="/index.js"></script>
     <script defer src="/min.js"></script>
 </body>
 
