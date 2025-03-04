@@ -344,6 +344,7 @@ iframe {
   box-shadow: 0px 0px 0px rgb(0, 0, 0, 0);
   transition: 0.4s ease-in-out;
   transform: scale(1);
+  will-change: transform;
 }
 
 .projects section:hover {
@@ -464,15 +465,17 @@ iframe {
   #profile {
     width: 90vw;
     padding: 4vh 5vw;
-    height: 60vh;
+    height: auto;
+    min-height: 60vh;
     text-align: center;
     position: relative;
   }
 
   #display {
     width: 90vw;
-    padding: 4vh 5vw ;
+    padding: 2vh 5vw;
     height: auto;
+    min-height: 100vh;
     display: inline-block;
     padding-left: 5vw;
   }
@@ -560,6 +563,16 @@ iframe {
 
   #blog p {
     margin: 2vh 0px;
+  }
+
+  :root {
+    --background-image: none;
+    --background-background: none;
+  }
+
+  .projects section:hover {
+    transform: none;
+    box-shadow: none;
   }
 }
 

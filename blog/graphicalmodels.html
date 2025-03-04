@@ -44,7 +44,10 @@
   </script>
   <script src="cursor.js"></script>
   <script type="module">
-    var cursor = new osuCursor();
+    // Only initialize cursor on desktop
+    if (window.innerWidth > 800) {
+        var cursor = new osuCursor();
+    }
   </script>
   <div id="loading">
     <div id="spinner"></div>
