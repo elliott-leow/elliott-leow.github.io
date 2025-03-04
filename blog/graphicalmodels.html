@@ -57,7 +57,7 @@
     <div id="userbio" style="display: block;">An Introduction to Graphical Models in Machine Learning</div>
     <div id="about">
       <span style="display:none;"><i class="fas fa-users"></i> &nbsp; null</span>
-      <span style="display:block;"><i class="far fa-calendar"></i> &nbsp; November 5, 2024</span>
+      <span style="display:block;"><i class="far fa-calendar"></i> &nbsp; March 3, 2025</span>
       <!--  <span style="display:none;"><i class="fas fa-link"></i> &nbsp; <a href="null">null</a></span>
       <span style="display:block;"><i class="fas fa-map-marker-alt"></i> &nbsp;&nbsp; Bay Area, California</span>
       <span style="display:none;"><i class="fas fa-user-tie"></i> &nbsp;&nbsp; Student</span> -->
@@ -72,7 +72,7 @@
   <div id="display">
     <div id="header">
       <h1>Introduction</h1>
-      <p>Welcome! Here, I attempt to explain Machine Learning concepts to help myself learn. This is content I am learning in the course Machine Learning 601.475 at Johns Hopkins University.
+      <p>It's just a short intro to graphical models to help learn concepts in my machine learning class
       </p>
         <!-- <div class="tikz-center">
           <script type="text/tikz">
@@ -119,8 +119,8 @@
 
     <div id="header">
         <h1>Why Graphical Models?</h1>
-        <p>Graphs can represent complex multivariate systems which are easy for us humans to visualize. High dimensional probability spaces are hard to visualize because, but with a graph, we can see how certain random variables are independent to others. 
-          In addition, when variables are conditionally independent, our model can run much faster. A model defined by conditional independence restrictions are $\textit{Markov}$ copyright (Markov must be in the name).
+        <p>Graphs can represent complex multivariate systems in a way that is easy for us humans to visualize. High dimensional probability spaces are hard to visualize, but with a graph, we can see how certain random variables are independent to others. 
+          In addition, when random variables are conditionally independent, our model can be computationally efficient (we will see how later). A model defined by conditional independence restrictions is $\textit{Markov}$ copyright (Markov must be in the name).
         </p>
 
         
@@ -167,19 +167,51 @@
       </div>
 
       <p>
-        The corresponding probability model is that an atoms state $A_i$ is only dependent on its neighbors
+        The undirected graph effectively shows a model that states that an atoms state $A_i$ is only dependent on its neighbors. Lets call this undirected model a Markov random field (MRF).
       </p>
       <p>
-        To make our graphical model useful, we want to use it to break down a probability distribution $p(\vec{A})$ in terms of smaller parts.
-        
+        To make our graphical model useful, we want to use it to break down a probability distribution $p(\vec{A}) = p(A_1, A_2, A_3, A_4, A_5, A_6)$ in terms of smaller parts. Remember that when we have the joint probability distribution $p(\vec{A})$, we have a complete encoding of how different variables interact with each other.
+      </br><b>Equation 1:</b> In a MRF, we can factorize $p(\vec{A})$ as $\frac{1}{Z}\prod_{\vec{C}\in \mathcal{C}(G)}\phi_\vec{C}(\vec{c})$
+      </br></br>Lets break down this equation!
+      </br></br>MRFs factorize in terms of potential functions over cliques. What does this mean? Well lets start by understanding what a clique is. 
+    </br></br><b>Definition of a clique:</b> A clique in a graph is a subset of nodes where each node is directly connected to every other node in the subset. In other words, it is a subgraph that is fully connected (you cannot draw any more edges between nodes in the subgraph).
+  </br></br>$\mathcal{C}(G)$ is the set of all possible max cliques. A max clique is when you cannot add another node to a clique and still call it a clique. In an MRF, each $\vec{C} \in \mathcal{C}(G)$ has its own <b>potential function</b>, which is basically a function that maps every configuration of random variables in the clique to a weight. It represents how strongly certain states of a clique are preferred relative to others. Note that this does NOT have to be a probability distribution, hence the $\frac{1}{Z}$ normalizing factor.
+</br></br>EXAMPLE 1
+</br> Consider the graph:
+
       </p>
+      <div class="tikz-center">
+        <script type="text/tikz">
+        
+          \begin{tikzpicture}[>=stealth, node distance=1.2cm]
+            \tikzstyle{format} = [draw, very thick, circle, minimum size=5.0mm, inner sep=0pt]
+
+            \begin{scope}
+                \path[-, very thick]
+                  node[white, format] (A1) {$A_1$}
+                  node[white, format, right of=A1] (A2) {$A_2$}
+                  node[white, format, below of=A1] (A4) {$A_3$}
+                  node[white, format, right of=A4] (A5) {$A_4$}
+                  
+                  (A1) edge[red] (A2)
+                  (A1) edge[red] (A4)
+                  (A4) edge[red] (A5)
+                  (A2) edge[red] (A5);
+            \end{scope}
+        \end{tikzpicture}
+      
+        </script>
+      </div>
+    <p>
+      The cliques are: $\mathcal{C}(G) = ((A_1, A_2), (A_2, A_4), (A_1, A_3), (A_3, A_4))$
+    </br>Therefore, the joint factorizes into $p(a_1, a_2, a_3, a_4) = \frac{1}{Z} \phi_{A_1, A_2}(a_1, a_2) \phi_{A_2, A_4}(a_2, a_4) \phi_{A_1, A_3}(a_1, a_3) \phi_{A_3, A_4}(a_3, a_4)$
+    </p>
   </div>
 
     
 
     <div id="footer">
-      <h3>Visitor Count</h3>
-      <img src="https://profile-counter.glitch.me/AutumnVN/count.svg" alt="Visitor Count" />
+      <h3>Made with love <3</h3>
     </div>
   </div>
 
