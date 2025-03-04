@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Graphical Models</title>
   <!-- Primary Meta Tags -->
@@ -27,7 +27,18 @@
         displayMath: [['$$', '$$'], ['\\[', '\\]']]
       },
       svg: {
-        fontCache: 'global'
+        fontCache: 'local',
+      },
+      startup: {
+        typeset: false
+      },
+      options: {
+        enableMenu: false,
+        processSectionDelay: 0,
+        renderActions: {
+          addMenu: [],
+          checkLoading: []
+        }
       }
     };
   </script>
@@ -220,15 +231,21 @@
 
   <!-- Loading Animation Script -->
   <script type="text/javascript">
-    setTimeout(function () {
-      document.getElementById("loading").classList.add("animated");
-      document.getElementById("loading").classList.add("fadeOut");
-      setTimeout(function () {
-        document.getElementById("loading").classList.remove("animated");
-        document.getElementById("loading").classList.remove("fadeOut");
+    // Optimize loading animation
+    if (window.innerWidth <= 800) {
+        // Simpler loading for mobile
         document.getElementById("loading").style.display = "none";
-      }, 800);
-    }, 1500);
+    } else {
+        setTimeout(function () {
+            document.getElementById("loading").classList.add("animated");
+            document.getElementById("loading").classList.add("fadeOut");
+            setTimeout(function () {
+                document.getElementById("loading").classList.remove("animated");
+                document.getElementById("loading").classList.remove("fadeOut");
+                document.getElementById("loading").style.display = "none";
+            }, 800);
+        }, 1500);
+    }
   </script>
 
   
@@ -259,6 +276,44 @@
       magicProjectsGrid.listen();
       magicForksGrid.listen();
     });
+  </script>
+
+  <script>
+    // Only load TikzJax on desktop
+    if (window.innerWidth > 800) {
+        const script = document.createElement('script');
+        script.src = "https://tikzjax.com/v1/tikzjax.js";
+        document.head.appendChild(script);
+    } else {
+        // For mobile, replace TikzJax diagrams with static images or hide them
+        document.querySelectorAll('.tikz-center').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+  </script>
+
+  <script>
+    // Memory management for mobile
+    if (window.innerWidth <= 800) {
+        // Clear unused resources periodically
+        setInterval(() => {
+            if (window.gc) {
+                window.gc();
+            }
+            
+            // Clear image cache
+            document.querySelectorAll('img').forEach(img => {
+                const src = img.src;
+                img.src = '';
+                img.src = src;
+            });
+        }, 30000);
+
+        // Remove unnecessary animations
+        document.querySelectorAll('.animated').forEach(el => {
+            el.classList.remove('animated');
+        });
+    }
   </script>
 
 </body>
