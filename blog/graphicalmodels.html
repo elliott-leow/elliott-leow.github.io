@@ -19,31 +19,37 @@
   <script src="https://unpkg.com/magic-grid/dist/magic-grid.min.js"></script>
   <link rel="stylesheet" href="index.css">
   <!-- MathJax Configuration and Library -->
-  <script src="https://tikzjax.com/v1/tikzjax.js"></script>
   <script>
     window.MathJax = {
       tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        packages: ['base', 'ams', 'noerrors', 'noundefined']
       },
       svg: {
-        fontCache: 'local',
+        fontCache: 'global'  // Changed back to global for better performance
       },
       startup: {
-        typeset: false
-      },
-      options: {
-        enableMenu: false,
-        processSectionDelay: 0,
-        renderActions: {
-          addMenu: [],
-          checkLoading: []
+        ready: () => {
+          MathJax.startup.defaultReady();
+          // Trigger initial typeset after page loads
+          MathJax.typeset();
         }
       }
     };
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   <!-- <link rel="icon" href="https://avatars.githubusercontent.com/u/77253698?v=4" type="image/png"> -->
+
+  <!-- Move TikzJax after MathJax -->
+  <script>
+    // Only load TikzJax on desktop
+    if (window.innerWidth > 800) {
+        const script = document.createElement('script');
+        script.src = "https://tikzjax.com/v1/tikzjax.js";
+        document.head.appendChild(script);
+    }
+  </script>
 </head>
 
 <body>
@@ -184,12 +190,13 @@
         The undirected graph effectively shows a model that states that an atoms state $A_i$ is only dependent on its neighbors. Lets call this undirected model a Markov random field (MRF).
       </p>
       <p>
-        To make our graphical model useful, we want to use it to break down a probability distribution $p(\vec{A}) = p(A_1, A_2, A_3, A_4, A_5, A_6)$ in terms of smaller parts. Remember that when we have the joint probability distribution $p(\vec{A})$, we have a complete encoding of how different variables interact with each other.
+        To make our graphical model useful, we want to use it to break down a probability distribution $p(\vec{A}) = p(A_1, A_2, A_3, A_4, A_5, A_6)$ in terms of smaller parts. Remember that when we have the joint probability distribution $p(\vec{A})$, we have a complete encoding of how different variables interact with each other, so its very useful to be able to quickly compute it.
       </br><b>Equation 1:</b> In a MRF, we can factorize $p(\vec{A})$ as $\frac{1}{Z}\prod_{\vec{C}\in \mathcal{C}(G)}\phi_\vec{C}(\vec{c})$
       </br></br>Lets break down this equation!
-      </br></br>MRFs factorize in terms of potential functions over cliques. What does this mean? Well lets start by understanding what a clique is. 
-    </br></br><b>Definition of a clique:</b> A clique in a graph is a subset of nodes where each node is directly connected to every other node in the subset. In other words, it is a subgraph that is fully connected (you cannot draw any more edges between nodes in the subgraph).
-  </br></br>$\mathcal{C}(G)$ is the set of all possible max cliques. A max clique is when you cannot add another node to a clique and still call it a clique. In an MRF, each $\vec{C} \in \mathcal{C}(G)$ has its own <b>potential function</b>, which is basically a function that maps every configuration of random variables in the clique to a weight. It represents how strongly certain states of a clique are preferred relative to others. Note that this does NOT have to be a probability distribution, hence the $\frac{1}{Z}$ normalizing factor.
+      </br></br>MRFs factorize in terms of potential functions over max cliques. What does this mean? Well lets start by understanding what a clique is. 
+    </br></br><b>Definition of a clique:</b> A clique in a graph is a subset of nodes where each node is directly connected to every other node in the subset. In other words, it is a subgraph that is fully connected (you cannot draw any more edges between nodes in the subgraph). If each vertex was a person and an edge represented friendship, a clique is a group of people who are all friends with each other.
+  </br></br>$\mathcal{C}(G)$ is the set of all possible max cliques. A max clique is when you cannot add another node to a clique and still call it a clique. In the friends analogy, a max clique represents a group of people who are all friends, and no other person can be added to the group such that everyone is still friends with everyone else. 
+</br>In an MRF, each $\vec{C} \in \mathcal{C}(G)$ has its own <b>potential function</b>, which is basically a function that maps every configuration of random variables in the clique to a weight. It represents how strongly certain states of a clique are preferred relative to others. Note that this does NOT have to be a probability distribution, hence the $\frac{1}{Z}$ normalizing factor.
 </br></br>EXAMPLE 1
 </br> Consider the graph:
 
@@ -219,7 +226,11 @@
     <p>
       The cliques are: $\mathcal{C}(G) = ((A_1, A_2), (A_2, A_4), (A_1, A_3), (A_3, A_4))$
     </br>Therefore, the joint factorizes into $p(a_1, a_2, a_3, a_4) = \frac{1}{Z} \phi_{A_1, A_2}(a_1, a_2) \phi_{A_2, A_4}(a_2, a_4) \phi_{A_1, A_3}(a_1, a_3) \phi_{A_3, A_4}(a_3, a_4)$
-    </p>
+  </br>
+</br>
+    
+  
+  </p>
   </div>
 
     
@@ -279,20 +290,6 @@
   </script>
 
   <script>
-    // Only load TikzJax on desktop
-    if (window.innerWidth > 800) {
-        const script = document.createElement('script');
-        script.src = "https://tikzjax.com/v1/tikzjax.js";
-        document.head.appendChild(script);
-    } else {
-        // For mobile, replace TikzJax diagrams with static images or hide them
-        document.querySelectorAll('.tikz-center').forEach(el => {
-            el.style.display = 'none';
-        });
-    }
-  </script>
-
-  <script>
     // Memory management for mobile
     if (window.innerWidth <= 800) {
         // Clear unused resources periodically
@@ -314,6 +311,26 @@
             el.classList.remove('animated');
         });
     }
+  </script>
+
+  <script>
+    // Function to check if MathJax has loaded and retry rendering
+    function checkMathJax() {
+      if (window.MathJax) {
+        try {
+          MathJax.typeset();
+        } catch (e) {
+          console.log("MathJax typeset failed, retrying...");
+          setTimeout(checkMathJax, 1000);
+        }
+      } else {
+        console.log("MathJax not loaded yet, retrying...");
+        setTimeout(checkMathJax, 1000);
+      }
+    }
+
+    // Start checking after page loads
+    window.addEventListener('load', checkMathJax);
   </script>
 
 </body>

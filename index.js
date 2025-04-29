@@ -4,6 +4,8 @@
 
 
 const bg = document.querySelector('#bg');
+const arrowSvg = document.querySelector('#arrow svg');
+const footerSpan = document.querySelector('footer span');
 
 addEventListener('touchstart', () => bg.style.setProperty('--multiplier', '0'));
 addEventListener('mousemove', ({ clientX, clientY }) => {
@@ -17,46 +19,64 @@ addEventListener('mousemove', ({ clientX, clientY }) => {
     setTimeout(() => bg.style.transition = '', 100);
 }));
 
-document.querySelector('#arrow svg').addEventListener('click', () => {
-    const start = performance.now();
+if (arrowSvg) {
+    arrowSvg.addEventListener('click', () => {
+        const start = performance.now();
 
-    !function step() {
-        const progress = (performance.now() - start) / 200;
-        scrollTo({ top: (innerWidth > 880 ? .3 : .8) * innerHeight * easeOutCubic(progress) });
-        if (progress < 1) requestAnimationFrame(step);
-    }();
+        !function step() {
+            const progress = (performance.now() - start) / 200;
+            scrollTo({ top: (innerWidth > 880 ? .3 : .8) * innerHeight * easeOutCubic(progress) });
+            if (progress < 1) requestAnimationFrame(step);
+        }();
 
-    function easeOutCubic(x) {
-        return 1 - Math.pow(1 - x, 3);
-    }
-});
-
-document.querySelector('footer span').addEventListener('click', async () => {
-    const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: { frameRate: { ideal: 60 } } });
-    const recoder = new MediaRecorder(stream);
-    const [video] = stream.getVideoTracks();
-
-    recoder.start();
-    video.addEventListener('ended', () => recoder.stop());
-    recoder.addEventListener('dataavailable', e => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(e.data);
-        a.download = 'watch if cute.webm';
-        a.click();
+        function easeOutCubic(x) {
+            return 1 - Math.pow(1 - x, 3);
+        }
     });
-});
+}
 
-fetch('/stats').then(r => r.json()).then(repos => {
-    const stats = repos.pop();
-    document.querySelectorAll('.stat').forEach((stat, i) => stat.textContent = stats[i]);
-    document.querySelectorAll('.star').forEach((star, i) => star.textContent = repos[i][0]);
-    document.querySelectorAll('.fork').forEach((fork, i) => fork.textContent = repos[i][1]);
-});
+if (footerSpan) {
+    footerSpan.addEventListener('click', async () => {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: { frameRate: { ideal: 60 } } });
+            const recoder = new MediaRecorder(stream);
+            const [video] = stream.getVideoTracks();
+
+            recoder.start();
+            video.addEventListener('ended', () => recoder.stop());
+            recoder.addEventListener('dataavailable', e => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(e.data);
+                a.download = 'watch if cute.webm';
+                a.click();
+                URL.revokeObjectURL(a.href); // Clean up object URL
+            });
+        } catch (err) {
+            console.error("Error getting display media:", err);
+            // Optionally inform the user about the error
+        }
+    });
+}
+
+fetch('/stats')
+    .then(r => {
+        if (!r.ok) {
+            throw new Error(`HTTP error! status: ${r.status}`);
+        }
+        return r.json();
+    })
+    .then(repos => {
+        const stats = repos.pop();
+        document.querySelectorAll('.stat').forEach((stat, i) => stat.textContent = stats[i]);
+        document.querySelectorAll('.star').forEach((star, i) => star.textContent = repos[i][0]);
+        document.querySelectorAll('.fork').forEach((fork, i) => fork.textContent = repos[i][1]);
+    })
+    .catch(e => console.error('Error fetching stats:', e));
 
 const visit = new Date(new Date().setSeconds(0, 0)).getTime();
 const map = new Map();
 
-!function setClock() {
+function setClock() {
     const date = new Date();
     const time = date.getTime();
     const { year, month, day, hour, minute, second } = myTime();
@@ -90,9 +110,9 @@ const map = new Map();
         tzDiff = Math.floor(tzDiff);
         return minute ? `${tzDiff}h ${minute}m` : `${tzDiff}h`;
     }
-}();
+}
 
-!function lanyard() {
+function lanyard() {
     const ActivityType = ['Playing', 'Streaming to', 'Listening to', 'Watching', 'Custom status', 'Competing in'];
     const StatusColor = { online: '#4b8', idle: '#fa1', dnd: '#f44', offline: '#778' };
     const ws = new WebSocket('wss://api.lanyard.rest/socket');
@@ -136,13 +156,20 @@ const map = new Map();
     function getSize(size) {
         return size === 'large_image' ? 96 : 40;
     }
-}();
+}
+
+const elementCache = new Map(); // Cache for update function
 
 function update(selector, value = '') {
     if (Array.isArray(selector)) return selector.forEach(s => update(s, value));
     if (map.get(selector) === value) return;
 
-    const e = document.querySelector(selector);
+    let e = elementCache.get(selector);
+    if (!e) {
+        e = document.querySelector(selector);
+        if (!e) return; // Element not found, do nothing
+        elementCache.set(selector, e);
+    }
 
     if (value.startsWith('rotate')) e.style.transform = value;
     else if (value.match(/^#[a-f0-9]+$/)) e.style.backgroundColor = value;
@@ -186,6 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalImage = modal.querySelector('.modal-image');
     const modalTitle = modal.querySelector('.modal-description h3');
     const modalDescription = modal.querySelector('.modal-description p');
+    const closeButton = modal.querySelector('.modal-close');
+
+    if (!modalImage || !modalTitle || !modalDescription) {
+        console.error('Modal content elements not found');
+        return;
+    }
 
     imageContainers.forEach(container => {
         const img = container.querySelector('img');
@@ -202,9 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Close modal when clicking outside the image
+    // Close modal when clicking outside the image (on the overlay)
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
+        if (e.target === modal) { // Check if the click is directly on the overlay
             closeModal();
         }
     });
@@ -216,9 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Close modal when clicking the close button
-    const closeButton = modal.querySelector('.modal-close');
     if (closeButton) {
         closeButton.addEventListener('click', closeModal);
     }
+
+    setClock();
+    lanyard();
 });
