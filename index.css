@@ -1,24 +1,24 @@
 @font-face {
     font-family: Modulus;
-    src: url("/Modulus Pro Regular.otf") format("opentype");
+    src: url("Modulus Pro Regular.otf") format("opentype");
     font-display: swap;
 }
 
 @font-face {
     font-family: Modulus;
     font-weight: bold;
-    src: url("/Modulus Pro Bold.otf") format("opentype");
+    src: url("Modulus Pro Bold.otf") format("opentype");
     font-display: swap;
 }
 
 @font-face {
-    src: url('/font.woff2') format('woff2');
+    src: url('font.woff2') format('woff2');
     font-family: Inter;
     font-display: swap;
 }
 
 :root {
-    --background: image-set(url('/bg2.jpg') type('image/jpg'));
+    --background: image-set(url('bg2.jpg') type('image/jpg'));
     --primary-color: #9af;
     --text-color: #fff;
     --transition-speed: 0.2s;

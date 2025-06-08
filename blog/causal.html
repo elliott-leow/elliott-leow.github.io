@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Causal Inference</title>
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="Graphical Models">
+  <meta name="description" content="Light Introduction to Graphical Models">
+  <!-- CSS Libraries -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+    integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/magic-grid/dist/magic-grid.min.js"></script>
+  <link rel="stylesheet" href="index.css">
+  <!-- MathJax Configuration and Library -->
+  <script src="https://tikzjax.com/v1/tikzjax.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <!-- <link rel="icon" href="https://avatars.githubusercontent.com/u/77253698?v=4" type="image/png"> -->
+</head>
+
+<body>
+  <script>
+    function playAudio(audio_element) {
+      var x = document.getElementById(audio_element);
+      x.play();
+    }
+  </script>
+  <script src="cursor.js"></script>
+  <script type="module">
+    var cursor = new osuCursor();
+  </script>
+  <div id="loading">
+    <div id="spinner"></div>
+  </div>
+  <div id="profile">
+    <div id="profile_img" style="background: url(https://avatars.githubusercontent.com/u/76672688?v=4) center;">
+    </div>
+    <div id="username"><span style="display:block;">Elliott Leow</span><a
+        href="https://github.com/elliott-leow">@elliott-leow</a></div>
+    <div id="userbio" style="display: block;">An Introduction to Causal Inference</div>
+    <div id="about">
+      <span style="display:none;"><i class="fas fa-users"></i> &nbsp; null</span>
+      <span style="display:block;"><i class="far fa-calendar"></i> &nbsp; March 13, 2025</span>
+      <!--  <span style="display:none;"><i class="fas fa-link"></i> &nbsp; <a href="null">null</a></span>
+      <span style="display:block;"><i class="fas fa-map-marker-alt"></i> &nbsp;&nbsp; Bay Area, California</span>
+      <span style="display:none;"><i class="fas fa-user-tie"></i> &nbsp;&nbsp; Student</span> -->
+      <div class="socials">
+        <!-- <span style="display:block !important;"><a href="https://www.instagram/elliottleow" target="_blank"
+            class="socials"><i class="fab fa-instagram"></i> elliottleow</a></span>
+        <span style="display:block !important;"><a href="" target="_blank"
+            class="socials"><i class="fab fa-discord"></i> elot#8621</a></span> -->
+      </div>
+    </div>
+  </div>
+  <div id="display">
+    <div id="header">
+      <h1>Introduction</h1>
+      <p>We all know that association does not imply causation, so what does imply causation? People in hospitals tend to be sick, so therefore, I should not go to the hospital as it would make me sick.
+      
+      </p>
+        <!-- <div class="tikz-center">
+          <script type="text/tikz">
+          
+            \begin{tikzpicture}[>=stealth, node distance=1.2cm]
+    \tikzstyle{format} = [draw, very thick, circle, minimum size=5.0mm,
+	inner sep=0pt]
+
+	\begin{scope}
+		\path[->, very thick]
+			node[white, format] (A) {$A$}
+			node[white, format, below right of=A] (B) {$B$}
+			node[white, format, below left of=B] (C) {$C$}
+			node[white, format, below left of=C] (D) {$D$}
+			node[white, format, below right of=C] (E) {$E$}
+			
+			node[white, format, above right of=B] (F) {$F$}
+			node[white, format, below right of=B] (G) {$G$}
+			node[white, format, below right of=G] (H) {$H$}
+
+			(A) edge[red] (B)
+			(B) edge[red] (C)
+
+			(C) edge[red] (D)
+			(C) edge[red] (E)
+
+			(F) edge[red] (B)
+			(B) edge[red] (G)
+			(G) edge[red] (H)
+			
+			(A) edge[red] (D)
+			(B) edge[red,bend right=30] (H)
+			(F) edge[red] (G)
+			(G) edge[red] (E)
+		;
+	\end{scope}
+\end{tikzpicture}
+        
+          </script>
+        </div> -->
+      
+      
+    </div>
+
+    <div id="header">
+        <h1>The Average Treatment Effect</h1>
+        <p>The purpose of causal inference is to establish a treatment effect. Lets define some terms before we start defining treatment effects though. Let Y be the outcome of a treatment. Lets call the treatment A. Now lets call Y(A=a) or (sometimes $Y^a$) the outcome if the treatment was a. 
+          Lets give an example. Say we wanted to determine if a drug decreases the risk of COVID-19. Y would be whether a person has COVID or not (we can define Y=1 for if a person has covid, and Y=0 for if they don't have COVID). "A" would be whether a person recieves the drug (we define A=1 if someone recieved the drug and A=0 if they didn't).
+          Y(A=1) would be whether a person would have gotten covid if they took the drug. Y(A=0) would be whether a person would have gotten covid if they did not take the drug.
+          Keep in mind this is for a singular person. Notice that we can never know both Y(A=1) and Y(A=0) at the same time in reality. Intuitively, we cannot treat a person with a drug and see if they get COVID and also not treat them with the drug and see if they get COVID at the same time.
+          This is called the fundemental problem of causal inference.
+          If we could see both at the same time, we could just calculate Y(A=1)-Y(A=0) in many people, and take the average. This is denoted as $\mathbb{E}[Y(A=1)-Y(A=0)]$ and is called the average treatment effect.
+
+          Some misunderstandings: Y(A=a) may not be equal to Y given a. Y(A=a) is what happens if you forcefully intervene and give everyone covid drugs. Y|A is purely observational.
+
+          Lets give another example to illustrate this.
+          We know that fire causes smoke. Let Y be where there is smoke or not (Y=1 for smoke and Y=0 for no smoke). Let A be whether there is a fire or not (A=1 for fire and A=0 for no fire).
+          Since we know that smoke causes fire, Y(A=1)=1. In addition, if there was no fire, there would be no smoke, so Y(A=0)=0.
+          This means the treatment effect is Y(A=1)-Y(A=0) = 0. Y|A would not consider other factors such as if someone was smoking, and that was causing the smoke.
+          
+          
+        </p>
+
+        
+    </div>
+
+    <div id="header">
+      <h1>Markov Random Fields</h1>
+
+      <p>
+        That is why the first topic discussed will be Markov Random (MRFs). These are undirected graphical models.
+      </br>
+        Undirected graph models were first developed by physicist Ernst Ising. He wanted to model the states of iron atoms arranged in a lattice,
+        where the atom's neighbors affect its spin. His idea is represented by the graph below:
+      </p>
+
+      
+
+      <div class="tikz-center">
+        <script type="text/tikz">
+        
+          \begin{tikzpicture}[>=stealth, node distance=1.2cm]
+            \tikzstyle{format} = [draw, very thick, circle, minimum size=5.0mm, inner sep=0pt]
+
+            \begin{scope}
+                \path[-, very thick]
+                  node[white, format] (A1) {$A_1$}
+                  node[white, format, right of=A1] (A2) {$A_2$}
+                  node[white, format, right of=A2] (A3) {$A_3$}
+                  node[white, format, below of=A1] (A4) {$A_4$}
+                  node[white, format, right of=A4] (A5) {$A_5$}
+                  node[white, format, right of=A5] (A6) {$A_6$}
+                  
+                  (A1) edge[red] (A2)
+                  (A1) edge[red] (A4)
+                  (A2) edge[red] (A3)
+                  (A4) edge[red] (A5)
+                  (A5) edge[red] (A6)
+                  (A2) edge[red] (A5)
+                  (A3) edge[red] (A6);
+            \end{scope}
+        \end{tikzpicture}
+      
+        </script>
+      </div>
+
+      <p>
+        The corresponding probability model is that an atoms state $A_i$ is only dependent on its neighbors
+      </p>
+      <p>
+        To make our graphical model useful, we want to use it to break down a probability distribution $p(\vec{A})$ in terms of smaller parts.
+        
+      </p>
+  </div>
+
+    
+
+    <div id="footer">
+      <h3>Visitor Count</h3>
+      <img src="https://profile-counter.glitch.me/AutumnVN/count.svg" alt="Visitor Count" />
+    </div>
+  </div>
+
+  <!-- Loading Animation Script -->
+  <script type="text/javascript">
+    setTimeout(function () {
+      document.getElementById("loading").classList.add("animated");
+      document.getElementById("loading").classList.add("fadeOut");
+      setTimeout(function () {
+        document.getElementById("loading").classList.remove("animated");
+        document.getElementById("loading").classList.remove("fadeOut");
+        document.getElementById("loading").style.display = "none";
+      }, 800);
+    }, 1500);
+  </script>
+
+  
+
+  <!-- Magic Grid Scripts -->
+  <script>
+    const magicProjectsGrid = new MagicGrid({
+      container: "#work_section",
+      animate: false,
+      gutter: 30, // default gutter size
+      static: true,
+      useMin: false,
+      maxColumns: 2,
+      useTransform: true
+    });
+
+    const magicForksGrid = new MagicGrid({
+      container: "#forks_section",
+      animate: false,
+      gutter: 30, // default gutter size
+      static: true,
+      useMin: false,
+      maxColumns: 2,
+      useTransform: true
+    });
+
+    $("document").ready(() => {
+      magicProjectsGrid.listen();
+      magicForksGrid.listen();
+    });
+  </script>
+
+</body>
+
+</html>
