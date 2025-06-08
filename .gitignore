@@ -2,14 +2,11 @@
 .well-known/
 blog/
 functions/
-.nojekyll
 Modulus Pro Bold.otf
 Modulus Pro Regular.otf
 font.woff2
 jhmi.jpg
 sf.jpg
-robots.txt
-CNAME
 bg.png
 bg1.png
 extras.html
