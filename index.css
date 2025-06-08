@@ -11,8 +11,13 @@
     font-display: swap;
 }
 
+@font-face {
+    src: url('/font.woff2') format('woff2');
+    font-family: Inter;
+    font-display: swap;
+}
+
 :root {
-    /* --background: image-set(url('/bg.avif') type('image/avif'), url('/bg.webp') type('image/webp')); */
     --background: image-set(url('/bg2.jpg') type('image/jpg'));
     --primary-color: #9af;
     --text-color: #fff;
@@ -75,6 +80,9 @@ header {
     header h1 {
         text-align: center;
     }
+    header p {
+        text-align: center;
+    }
 }
 
 header img {
@@ -102,13 +110,6 @@ header section {
     flex-direction: column;
     gap: 20px;
 }
-
-/* header svg {
-    -webkit-mask-image:url('data:image/svg+xml,<svg width="526.9450073242188" height="70.30000305175781" viewBox="0 0 526.945 70.3" xmlns="http://www.w3.org/2000/svg"><g id="svgGroup" stroke-linecap="round" fill-rule="evenodd" font-size="9pt" stroke="#ffffffaf" stroke-width="0.25mm" fill="#ffffff" style="stroke:#ffffffaf;stroke-width:0.25mm;fill:#ffffff"><path d="M 43 58.3 L 11.7 58.3 L 11.7 40.8 L 37.6 40.8 C 40.8 40.8 43.4 38.2 43.4 35 C 43.4 31.8 40.8 29.2 37.6 29.2 L 11.7 29.2 L 11.7 11.7 L 43 11.7 A 5.824 5.824 0 0 0 48.8 5.877 A 6.268 6.268 0 0 0 48.8 5.8 C 48.8 2.6 46.2 0 43 0 L 5.8 0 C 2.6 0 0 2.6 0 5.8 L 0 64.2 C 0 67.4 2.6 70 5.8 70 L 43 70 C 46.2 70 48.8 67.4 48.8 64.2 A 5.914 5.914 0 0 0 46.848 59.773 A 5.737 5.737 0 0 0 43 58.3 Z M 515.6 26 L 505.7 48.9 L 496.1 26.1 C 495.7 25.2 495.1 24.4 494.3 23.8 C 493.9 23.4 493.4 23.1 492.9 22.9 C 489.904 21.602 486.41 22.996 485.106 25.987 A 6.068 6.068 0 0 0 485.1 26 L 475.2 48.9 L 465.6 26.1 C 464.3 23.1 460.9 21.7 457.9 22.9 C 455.436 23.886 453.984 26.424 454.264 28.961 A 5.687 5.687 0 0 0 454.7 30.6 L 469.6 66.4 C 470.6 68.6 472.7 70 475.1 70 C 477.5 70 479.6 68.6 480.5 66.4 L 490.5 43.4 L 500.1 66.4 C 501.1 68.6 503.2 70 505.6 70 C 507.9 70 510.1 68.6 511 66.4 L 526.4 30.7 A 5.801 5.801 0 0 0 526.874 29.16 C 527.279 26.623 525.935 24.054 523.503 22.946 A 6.03 6.03 0 0 0 523.4 22.9 C 520.404 21.602 516.91 22.996 515.606 25.987 A 6.068 6.068 0 0 0 515.6 26 Z M 305.8 70 L 344.6 70 C 347.8 70 350.4 67.4 350.4 64.2 A 5.914 5.914 0 0 0 348.448 59.773 A 5.737 5.737 0 0 0 344.6 58.3 L 311.7 58.3 L 311.7 5.8 C 311.7 2.6 309 0 305.8 0 C 302.6 0 300 2.6 300 5.8 L 300 64.2 C 300 67.4 302.6 70 305.8 70 Z M 365.7 50.3 L 394.2 50.2 L 394.8 50.2 C 397.6 49.8 399.8 47.3 399.8 44.4 A 21.869 21.869 0 0 0 380.265 22.59 A 24.622 24.622 0 0 0 377.2 22.4 C 364.1 22.4 353.5 33 353.5 46.1 A 23.523 23.523 0 0 0 372.234 69.414 A 26.992 26.992 0 0 0 375.2 69.9 A 42.876 42.876 0 0 0 377.541 70.071 C 385.255 70.418 390.548 68.432 394.1 65.7 A 8.151 8.151 0 0 0 396.86 63.185 C 397.757 61.833 398.105 60.246 397.617 58.642 A 5.397 5.397 0 0 0 397.5 58.3 C 396.4 55.5 393.2 55.2 390.2 56.1 C 386.64 58.372 383.195 59.096 379.952 59.096 A 25.185 25.185 0 0 1 376.9 58.9 A 15.24 15.24 0 0 1 370.885 56.876 A 11.675 11.675 0 0 1 365.7 50.3 Z M 214.3 58.3 L 212.9 58.2 A 11.729 11.729 0 0 1 208.473 57.402 C 204.509 55.801 202.552 51.995 202.102 47.897 A 17.403 17.403 0 0 1 202 46 L 202 33.6 L 212.5 33.6 C 215.5 33.6 217.9 31.2 217.9 28.2 C 217.9 25.1 215.5 22.7 212.5 22.7 L 202 22.7 L 202 5.8 A 5.824 5.824 0 0 0 196.177 0.001 A 6.268 6.268 0 0 0 196.1 0 C 192.9 0 190.3 2.6 190.3 5.8 L 190.3 46 A 29.298 29.298 0 0 0 191.519 54.655 C 194.816 65.361 204.25 70 212.9 70 L 214.3 70 A 5.824 5.824 0 0 0 220.1 64.177 A 6.268 6.268 0 0 0 220.1 64.1 C 220.1 60.9 217.5 58.3 214.3 58.3 Z M 248.7 58.3 L 247.3 58.2 A 11.729 11.729 0 0 1 242.873 57.402 C 238.909 55.801 236.952 51.995 236.502 47.897 A 17.403 17.403 0 0 1 236.4 46 L 236.4 33.6 L 246.9 33.6 C 249.9 33.6 252.3 31.2 252.3 28.2 C 252.3 25.1 249.9 22.7 246.9 22.7 L 236.4 22.7 L 236.4 5.8 A 5.824 5.824 0 0 0 230.577 0.001 A 6.268 6.268 0 0 0 230.5 0 C 227.3 0 224.7 2.6 224.7 5.8 L 224.7 46 A 29.298 29.298 0 0 0 225.919 54.655 C 229.216 65.361 238.65 70 247.3 70 L 248.7 70 A 5.824 5.824 0 0 0 254.5 64.177 A 6.268 6.268 0 0 0 254.5 64.1 C 254.5 60.9 251.9 58.3 248.7 58.3 Z M 67.5 47.5 L 67.5 5.9 C 67.5 2.6 64.8 0 61.6 0 A 5.843 5.843 0 0 0 55.713 5.498 A 6.217 6.217 0 0 0 55.7 5.9 L 55.7 47.5 C 55.7 61.1 64.1 70 77.1 70 A 5.843 5.843 0 0 0 82.987 64.503 A 6.217 6.217 0 0 0 83 64.1 A 5.843 5.843 0 0 0 77.502 58.213 A 6.217 6.217 0 0 0 77.1 58.2 A 11.119 11.119 0 0 1 71.96 57.123 C 69.234 55.71 67.5 52.768 67.5 47.5 Z M 97.7 47.5 L 97.7 5.9 C 97.7 2.6 95 0 91.8 0 A 5.843 5.843 0 0 0 85.913 5.498 A 6.217 6.217 0 0 0 85.9 5.9 L 85.9 47.5 C 85.9 61.1 94.3 70 107.3 70 A 5.843 5.843 0 0 0 113.187 64.503 A 6.217 6.217 0 0 0 113.2 64.1 A 5.843 5.843 0 0 0 107.702 58.213 A 6.217 6.217 0 0 0 107.3 58.2 A 11.119 11.119 0 0 1 102.16 57.123 C 99.434 55.71 97.7 52.768 97.7 47.5 Z M 161.2 70.3 C 174.2 70.3 185 59.7 185 46.5 C 185 33.5 174.2 22.7 161.2 22.7 C 148 22.7 137.4 33.5 137.4 46.5 C 137.4 59.7 148 70.3 161.2 70.3 Z M 428.6 70.3 C 441.6 70.3 452.4 59.7 452.4 46.5 C 452.4 33.5 441.6 22.7 428.6 22.7 C 415.4 22.7 404.8 33.5 404.8 46.5 C 404.8 59.7 415.4 70.3 428.6 70.3 Z M 130.7 64.1 L 130.7 28.4 C 130.7 25.2 128 22.5 124.7 22.5 C 121.5 22.5 118.9 25.2 118.9 28.4 L 118.9 64.1 A 5.914 5.914 0 0 0 120.852 68.528 A 5.737 5.737 0 0 0 124.7 70 C 128 70 130.7 67.4 130.7 64.1 Z M 161.2 58.6 C 154.6 58.6 149.1 53.1 149.1 46.5 C 149.1 39.9 154.6 34.4 161.2 34.4 C 167.8 34.4 173.3 39.9 173.3 46.5 C 173.3 53.1 167.8 58.6 161.2 58.6 Z M 428.6 58.6 C 422 58.6 416.5 53.1 416.5 46.5 C 416.5 39.9 422 34.4 428.6 34.4 C 435.2 34.4 440.7 39.9 440.7 46.5 C 440.7 53.1 435.2 58.6 428.6 58.6 Z M 388.1 42 L 365.6 42.1 A 11.782 11.782 0 0 1 368.112 37.092 A 11.774 11.774 0 0 1 377.2 33.2 A 11.765 11.765 0 0 1 382.737 34.504 C 385.486 35.958 387.403 38.543 388.069 41.843 A 12.489 12.489 0 0 1 388.1 42 Z M 124.8 17.5 C 128.4 17.5 131.3 14.4 131.3 10.9 A 6.471 6.471 0 0 0 129.589 6.458 A 6.49 6.49 0 0 0 124.8 4.4 A 6.416 6.416 0 0 0 118.329 10.26 A 6.947 6.947 0 0 0 118.3 10.9 C 118.3 14.4 121.2 17.5 124.8 17.5 Z" vector-effect="non-scaling-stroke" class="svg-elem-1"></path></g></svg>');
-    
-    backdrop-filter: saturate(2) brightness(2.5) blur(12px); 
-    width: min(500px, 100%);
-}  */
 
 header svg {
     width: min(500px, 100%);
@@ -182,9 +183,6 @@ header svg::before {
                  animate-svg-fill-1 0.7s cubic-bezier(0.47, 0, 0.745, 0.715) 0.8s both;
   }
   
-  
-  
-
 header p {
     -webkit-mask: linear-gradient(to right, #fff 45%, transparent 55%) 0 0/220% 100% no-repeat;
     opacity: clamp(.7, .75 * var(--scroll, 0) + .7, .85);
@@ -193,6 +191,34 @@ header p {
     font-weight: normal;
     font-size: clamp(18px, 3vmin, 25px);
 }
+
+.social-links {
+    display: flex;
+    gap: 25px;
+    margin-top: 10px;
+}
+
+@media (width < 880px) {
+    .social-links {
+        justify-content: center;
+    }
+}
+
+.social-links a {
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity var(--transition-speed);
+}
+
+.social-links a:hover {
+    opacity: 1;
+}
+
+.social-links svg {
+    height: 30px;
+    width: 30px;
+}
+
 
 @keyframes bio {
     0% {
@@ -242,7 +268,6 @@ body[style*='.'] #arrow {
     margin-bottom: calc(1vh * min(var(--scroll), 1));
     min-height: calc(100vh - 20vh - 20vh);
     flex: 1 0 auto;
-
 }
 
 @media (width < 1300px) {
@@ -370,17 +395,6 @@ main {
     margin-top: 10px;
 }
 
-.widget[style*='--rows: 1;'] .content {
-    flex-direction: row;
-    align-items: center;
-}
-
-.widget[style*='--rows: 1;'] .meta {
-    margin-top: 0;
-    margin-left: 20px;
-    white-space: nowrap;
-}
-
 @media (width < 880px) {
     .widget[style*='--m-'] {
         --c: min(var(--m-columns, 2), var(--template-columns));
@@ -424,6 +438,23 @@ main {
     align-items: center;
     overflow: hidden;
     border-radius: 10px;
+}
+
+.widget .image-container[data-size="cover"] img {
+    object-fit: cover;
+}
+
+.widget .image-container[data-size="contain"] img {
+    object-fit: contain;
+    background-color: #000; /* Added for better visibility of contained images */
+}
+
+.widget .image-container[data-size="crop-center"] img {
+    transform: scale(2);
+}
+
+.widget .image-container[data-size="crop-center"]:hover img {
+    transform: scale(2.05);
 }
 
 .widget .image-container img {
@@ -623,89 +654,6 @@ main {
     color: #0009;
 }
 
-aside {
-    display: flex;
-    grid-column: span 4;
-    flex-direction: column;
-    gap: 20px;
-}
-
-@media (width < 1300px) {
-    aside {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (width < 880px) {
-    aside {
-        display: flex;
-    }
-}
-
-.project {
-    transition: transform .2s linear, background-color .2s linear;
-    border-radius: 16px;
-    background: #defa;
-    overflow: hidden;
-}
-
-.project:hover {
-    background-color: #defc;
-}
-
-.project:active {
-    transform: perspective(300px) translateZ(-10px);
-}
-
-.project a {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-    box-sizing: border-box;
-    padding: 15px 20px;
-    width: 100%;
-    height: 100%;
-    color: #000;
-}
-
-.project b {
-    color: #06b;
-    font-size: 1.1em;
-}
-
-.project .meta {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    width: 100%;
-    color: #000b;
-}
-
-.project .meta svg {
-    fill: #000b;
-}
-
-.project .meta div {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 5px;
-}
-
-.project .lang {
-    flex: 1;
-    justify-content: flex-end;
-}
-
-.project .lang .color {
-    margin-right: .1em;
-    border-radius: 50%;
-    width: .6em;
-    height: .6em;
-}
-
 footer {
     display: flex;
     justify-content: center;
@@ -717,18 +665,6 @@ footer {
     width: 100%;
     margin-top: auto; /* Ensures footer stays at the bottom */
 }
-
-
-footer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: auto;
-    height: 15vh;
-    font-size: 20px;
-    position: relative;
-    z-index: 1;
-} 
 
 footer p {
     opacity: .65;
@@ -809,25 +745,6 @@ html {
     display: none;
 }
 
-@font-face {
-    src: url('/font.woff2') format('woff2');
-    font-family: Inter;
-    font-display: swap;
-}
-
-
-.float-container {
-    border: 3px solid #fff;
-    padding: 20px;
-}
-
-.float-child {
-    width: 50%;
-    float: left;
-    padding: 20px;
-    border: 2px solid red;
-} 
-
 /* Image Modal Styles */
 .modal-overlay {
     display: none;
@@ -906,4 +823,24 @@ html {
 
 .image-container {
     cursor: pointer;
+}
+
+aside {
+    display: flex;
+    grid-column: span 4;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (width < 1300px) {
+    aside {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (width < 880px) {
+    aside {
+        display: flex;
+    }
 }

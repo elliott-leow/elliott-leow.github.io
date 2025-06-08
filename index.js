@@ -46,13 +46,6 @@ document.querySelector('footer span').addEventListener('click', async () => {
     });
 });
 
-fetch('/stats').then(r => r.json()).then(repos => {
-    const stats = repos.pop();
-    document.querySelectorAll('.stat').forEach((stat, i) => stat.textContent = stats[i]);
-    document.querySelectorAll('.star').forEach((star, i) => star.textContent = repos[i][0]);
-    document.querySelectorAll('.fork').forEach((fork, i) => fork.textContent = repos[i][1]);
-});
-
 const visit = new Date(new Date().setSeconds(0, 0)).getTime();
 const map = new Map();
 
@@ -143,6 +136,7 @@ function update(selector, value = '') {
     if (map.get(selector) === value) return;
 
     const e = document.querySelector(selector);
+    if (!e) return;
 
     if (value.startsWith('rotate')) e.style.transform = value;
     else if (value.match(/^#[a-f0-9]+$/)) e.style.backgroundColor = value;
@@ -166,6 +160,8 @@ function setRpcTimestamp(timestamp) {
     update('#timestamp', `${hour ? `${format(hour)}:` : ''}${format(minute)}:${format(second)} ${timestamp > Date.now() ? 'left' : 'elapsed'}`);
 }
 
+console.log('Modal script loaded');
+
 function closeModal() {
     const modal = document.getElementById('imageModal');
     if (modal) {
@@ -175,11 +171,10 @@ function closeModal() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const imageContainers = document.querySelectorAll('.image-container');
+    const containers = document.querySelectorAll('.image-container');
     const modal = document.getElementById('imageModal');
     
     if (!modal) {
-        console.error('Modal element not found');
         return;
     }
 
@@ -187,38 +182,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitle = modal.querySelector('.modal-description h3');
     const modalDescription = modal.querySelector('.modal-description p');
 
-    imageContainers.forEach(container => {
-        const img = container.querySelector('img');
-        if (!img) return;
+    containers.forEach(container => {
+        container.style.cursor = 'pointer'; // Visual feedback
+        
+        container.onclick = function() {
+            const img = container.querySelector('img');
+            if (!img) {
+                return;
+            }
 
-        container.addEventListener('click', () => {
-            console.log('Image clicked!');
             modalImage.src = img.src;
             modalImage.alt = img.alt;
-            modalTitle.textContent = img.dataset.title || img.alt;
-            modalDescription.textContent = img.dataset.description || '';
+            modalTitle.textContent = container.dataset.title || img.alt;
+            modalDescription.textContent = container.dataset.description || '';
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
-        });
+        };
     });
 
-    // Close modal when clicking outside the image
-    modal.addEventListener('click', (e) => {
+    modal.onclick = function(e) {
         if (e.target === modal) {
             closeModal();
         }
-    });
+    };
 
-    // Close modal when pressing escape key
-    document.addEventListener('keydown', (e) => {
+    document.onkeydown = function(e) {
         if (e.key === 'Escape' && modal.classList.contains('active')) {
             closeModal();
         }
-    });
+    };
 
-    // Close modal when clicking the close button
     const closeButton = modal.querySelector('.modal-close');
     if (closeButton) {
-        closeButton.addEventListener('click', closeModal);
+        closeButton.onclick = closeModal;
     }
 });
+
+function applyCustomImageTransforms() {
+    const containers = document.querySelectorAll('.image-container[data-scale-x], .image-container[data-scale-y]');
+
+    containers.forEach(container => {
+        const img = container.querySelector('img');
+        if (!img) return;
+
+        const scaleX = container.dataset.scaleX || '1';
+        const scaleY = container.dataset.scaleY || '1';
+        const originX = container.dataset.originX || 'center';
+        const originY = container.dataset.originY || 'center';
+
+        img.style.transformOrigin = `${originX} ${originY}`;
+        img.style.transform = `scale(${scaleX}, ${scaleY})`;
+
+        container.addEventListener('mouseenter', () => {
+            const hoverScaleX = parseFloat(scaleX) * 1.05;
+            const hoverScaleY = parseFloat(scaleY) * 1.05;
+            img.style.transform = `scale(${hoverScaleX}, ${hoverScaleY})`;
+        });
+
+        container.addEventListener('mouseleave', () => {
+            img.style.transform = `scale(${scaleX}, ${scaleY})`;
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', applyCustomImageTransforms);
