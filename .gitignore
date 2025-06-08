@@ -1,2 +1,12 @@
 .vscode/
+.well-known/
+blog/
+functions/
+.nojekyll
+Modulus Pro Bold.otf
+Modulus Pro Regular.otf
+font.woff2
+jhmi.jpg
+sf.jpg
+robots.txt
 extras.html
