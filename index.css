@@ -186,7 +186,7 @@ header svg::before {
 header p {
     -webkit-mask: linear-gradient(to right, #fff 45%, transparent 55%) 0 0/220% 100% no-repeat;
     opacity: clamp(.7, .75 * var(--scroll, 0) + .7, .85);
-    animation: 2s ease-in-out 1.9s both bio;
+    animation: 2s ease-in-out 0.8s both bio;
     color: var(--text-color);
     font-weight: normal;
     font-size: clamp(18px, 3vmin, 25px);
@@ -196,7 +196,7 @@ header p {
     display: flex;
     gap: 25px;
     margin-top: 10px;
-    animation: move-socials-down 2s ease-in-out 1.9s both;
+    animation: move-socials-down 2s ease-in-out 0.4s both;
 }
 
 @media (width < 880px) {
@@ -272,7 +272,7 @@ body[style*='.'] #arrow {
 #main {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 15px;
     opacity: calc(var(--scroll) / 0.15);
     margin-top: calc(35vh * (1 - min(var(--scroll), 1)));
     margin-bottom: calc(1vh * min(var(--scroll), 1));
@@ -312,7 +312,7 @@ body[style*='.'] #arrow {
 }
 
 .collapsible-section summary {
-    padding: 20px 0;
+    padding: 15px 0;
     cursor: pointer;
     list-style: none;
     display: flex;
@@ -337,8 +337,20 @@ body[style*='.'] #arrow {
 }
 
 .collapsible-section .content {
-    padding: 0 0 20px 0;
     overflow: hidden;
+    box-sizing: border-box;
+}
+
+.collapsible-section .content::after {
+    content: '';
+    display: block;
+    height: 15px;
+}
+
+.collapsible-section .content:has(.experience-item) {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
 }
 
 .collapsible-section .content ul {
@@ -355,10 +367,6 @@ body[style*='.'] #arrow {
     display: flex;
     justify-content: space-between;
     gap: 20px;
-}
-
-.experience-item:not(:last-child) {
-    margin-bottom: 25px;
 }
 
 .experience-main {

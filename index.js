@@ -29,10 +29,9 @@ document.querySelector('#arrow svg').addEventListener('click', () => {
         return 1 - Math.pow(1 - x, 3);
     }
 });
-
 document.addEventListener('DOMContentLoaded', () => {
-    const animationEasing = 'cubic-bezier(0.42, 0, 0.58, 1)'; // Customize your bezier curve here
-    const animationDuration = 350;
+    const animationEasing = 'cubic-bezier(.78,.07,.28,.89)'; // Customize your bezier curve here
+    const animationDuration = 600;
 
     document.querySelectorAll('.collapsible-section summary').forEach(summary => {
         summary.addEventListener('click', e => {
@@ -45,7 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (details.open) {
                 const currentHeight = content.offsetHeight + 'px';
-                const anim = content.animate({ maxHeight: [currentHeight, '0px'] }, {
+                const anim = content.animate({ 
+                    maxHeight: [currentHeight, '0px'],
+                    opacity: [1, 0],
+                    transform: ['translateY(0px)', 'translateY(-15px)']
+                }, {
                     duration: animationDuration,
                     easing: animationEasing
                 });
@@ -57,7 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 details.setAttribute('open', '');
                 const targetHeight = content.offsetHeight + 'px';
-                const anim = content.animate({ maxHeight: ['0px', targetHeight] }, {
+                const anim = content.animate({ 
+                    maxHeight: ['0px', targetHeight],
+                    opacity: [0, 1],
+                    transform: ['translateY(-15px)', 'translateY(0px)']
+                }, {
                     duration: animationDuration,
                     easing: animationEasing
                 });
@@ -69,3 +76,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
