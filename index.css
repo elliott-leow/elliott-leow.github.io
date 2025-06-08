@@ -163,7 +163,7 @@ header svg::before {
 header p {
     -webkit-mask: linear-gradient(to right, #fff 45%, transparent 55%) 0 0/220% 100% no-repeat;
     opacity: clamp(.7, .75 * var(--scroll, 0) + .7, .85);
-    animation: 2s ease-in-out 0.8s both bio;
+    animation: 1.7s ease-in-out 0.3s both bio;
     color: var(--text-color);
     font-weight: normal;
     font-size: clamp(18px, 3vmin, 25px);
@@ -171,9 +171,9 @@ header p {
 
 .social-links {
     display: flex;
-    gap: 25px;
+    gap: 15px;
     margin-top: 10px;
-    animation: move-socials-down 2s ease-in-out 0.4s both;
+    animation: move-socials-down 1.7s ease-out 0.3s both;
 }
 
 @media (width < 880px) {
@@ -210,7 +210,7 @@ header p {
 
 @keyframes move-socials-down {
     from {
-        transform: translateY(-68px);
+        transform: translateY(-80px);
     }
     to {
         transform: translateY(0);
