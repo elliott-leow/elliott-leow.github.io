@@ -18,7 +18,7 @@
 }
 
 :root {
-    --background: image-set(url('bg2.jpg') type('image/jpg'));
+    --background: image-set(url('bg2.webp') type('image/webp'), url('bg2.jpg') type('image/jpeg'));
     --primary-color: #9af;
     --text-color: #fff;
     --transition-speed: 0.2s;
