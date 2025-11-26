@@ -34,6 +34,9 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    padding-right: 0;
 }
 
 @media (width < 880px) {
@@ -256,8 +259,10 @@ body[style*='.'] #arrow {
     min-height: calc(100vh - 20vh - 20vh);
     flex: 1 0 auto;
     max-width: 950px;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
+    box-sizing: border-box;
 }
 
 @media (width < 880px) {
@@ -284,8 +289,19 @@ body[style*='.'] #arrow {
     opacity: 0.9;
 }
 
+.collapsible-section {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
 .collapsible-section details {
     color: var(--text-color);
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .collapsible-section summary {
@@ -297,14 +313,19 @@ body[style*='.'] #arrow {
     gap: 15px;
 }
 
-.collapsible-section summary::before {
+.collapsible-section summary::after {
     content: '►';
     font-size: 1em;
     transition: transform 0.2s;
+    margin-left: auto;
 }
 
-.collapsible-section details[open] summary::before {
+.collapsible-section details[open] summary::after {
     transform: rotate(90deg);
+}
+
+.collapsible-section summary::before {
+    display: none;
 }
 
 .collapsible-section summary h2 {
@@ -316,6 +337,9 @@ body[style*='.'] #arrow {
 .collapsible-section .content {
     overflow: hidden;
     box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    width: 100%;
 }
 
 .collapsible-section .content::after {
@@ -442,10 +466,25 @@ p {
 
 html {
     -webkit-tap-highlight-color: transparent;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
     user-select: none;
+    overflow-y: scroll;
+}
+
+body {
+    overflow-y: scroll;
+    position: relative;
 }
 
 ::-webkit-scrollbar {
-    display: none;
+    width: 17px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
 }
