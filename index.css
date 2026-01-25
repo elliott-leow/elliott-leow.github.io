@@ -275,6 +275,10 @@ body[style*='.'] #arrow {
 
 .bio {
     color: var(--text-color);
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
 }
 
 .bio h2 {
@@ -298,10 +302,13 @@ body[style*='.'] #arrow {
 
 .collapsible-section details {
     color: var(--text-color);
-    padding: 0;
+    padding: 15px 20px;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
 }
 
 .collapsible-section summary {
