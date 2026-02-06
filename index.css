@@ -50,7 +50,7 @@ body {
     position: fixed;
     transform: translate(calc(var(--tx, 0) * var(--multiplier, 1)), calc(var(--ty, 0) * var(--multiplier, 1)));
     z-index: -1;
-    filter: blur(clamp(0px, calc(50px * var(--scroll, 0) + -5px), 10px)) brightness(clamp(.7, calc(-.5 * var(--scroll, 0) + .85), .8));
+    filter: blur(clamp(0px, calc(50px * var(--scroll, 0) + -5px), 10px)) brightness(clamp(.3, calc(-.45 * var(--scroll, 0) + .8), .8));
     inset: -30px;
     background: var(--primary-color) var(--background) center/cover no-repeat;
 }
@@ -275,10 +275,6 @@ body[style*='.'] #arrow {
 
 .bio {
     color: var(--text-color);
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
 }
 
 .bio h2 {
@@ -302,13 +298,10 @@ body[style*='.'] #arrow {
 
 .collapsible-section details {
     color: var(--text-color);
-    padding: 15px 20px;
+    padding: 0;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
 }
 
 .collapsible-section summary {
@@ -388,6 +381,50 @@ body[style*='.'] #arrow {
 
 .experience-main p, .experience-aside p {
     margin: 0;
+}
+
+/* Project Cards */
+.content:has(.project-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.project-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px 24px;
+    border-left: 3px solid var(--primary-color);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 0 8px 8px 0;
+}
+
+.project-title {
+    margin: 0;
+    font-size: 1.3em;
+    color: var(--text-color);
+    font-weight: bold;
+}
+
+.project-tagline {
+    margin: 0;
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 0.95em;
+}
+
+.project-description {
+    margin: 4px 0 0 0;
+    opacity: 0.85;
+    line-height: 1.5;
+}
+
+@media (width < 600px) {
+    .project-card {
+        align-items: center;
+        text-align: center;
+    }
 }
 
 footer {

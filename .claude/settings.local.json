@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python generate_manifest.py:*)"
+      "Bash(python generate_manifest.py:*)",
+      "Bash(git add:*)"
     ]
   }
 }
