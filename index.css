@@ -1,13 +1,13 @@
 @font-face {
     font-family: Modulus;
-    src: url("Modulus Pro Regular.otf") format("opentype");
+    src: url("Modulus-Pro-Regular.woff2") format("woff2");
     font-display: swap;
 }
 
 @font-face {
     font-family: Modulus;
     font-weight: bold;
-    src: url("Modulus Pro Bold.otf") format("opentype");
+    src: url("Modulus-Pro-Bold.woff2") format("woff2");
     font-display: swap;
 }
 
@@ -19,7 +19,6 @@
 
 /* ── Design Tokens ── */
 :root {
-    --background: image-set(url('bg2.webp') type('image/webp'), url('bg2.jpg') type('image/jpeg'));
     --primary-color: #9af;
     --primary-glow: rgba(153, 170, 255, 0.2);
     --text-color: #fff;
@@ -74,17 +73,59 @@ body {
 
 /* ── Background ── */
 #bg {
-    --multiplier: clamp(0, calc(-5 * var(--scroll, 0) + 1.5), 1);
     position: fixed;
-    transform: translate(calc(var(--tx, 0) * var(--multiplier, 1)), calc(var(--ty, 0) * var(--multiplier, 1)));
     z-index: -1;
     filter: blur(clamp(0px, calc(50px * var(--scroll, 0) + -5px), 10px)) brightness(clamp(.3, calc(-.45 * var(--scroll, 0) + .8), .8));
     inset: -30px;
-    background: var(--primary-color) var(--background) center/cover no-repeat;
+    overflow: hidden;
+    background: #0e1f2f;
+}
+
+#bg > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    filter: blur(.44px);
+}
+
+@media (width < 600px) {
+    #bg > svg > g[id^="planet-"] > .scene-planet-entrance > g {
+        stroke-width: .45;
+    }
+
+    #bg > svg > g#trail-main > g {
+        stroke-width: 16;
+    }
+
+    #bg > svg {
+        filter: blur(.33px);
+    }
+}
+
+.scene-planet-entrance {
+    animation: scene-planet-pop 1.24s cubic-bezier(.22, .1, .36, 1)
+        var(--planet-pop-delay, 0ms) both;
+    opacity: 0;
+    transform: scale(var(--planet-pop-scale, .68));
+    transform-box: fill-box;
+    transform-origin: center;
+    will-change: opacity, transform;
+}
+
+@keyframes scene-planet-pop {
+    from {
+        opacity: 0;
+        transform: scale(var(--planet-pop-scale, .68));
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* ── Header / Hero ── */
 header {
+    --hero-sequence-duration: 3.08s;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -115,7 +156,7 @@ header {
 
 /* Avatar — Gestalt: Figure-Ground (ring + shadow separate from bg) */
 header img {
-    animation: 1s ease-in-out .2s both avatar;
+    animation: var(--hero-sequence-duration) linear both hero-avatar;
     border-radius: 50%;
     width: clamp(130px, 26vmin, 200px);
     height: clamp(130px, 26vmin, 200px);
@@ -130,9 +171,23 @@ header img:hover {
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), 0 0 24px var(--primary-glow);
 }
 
-@keyframes avatar {
-    0% { transform: scale(.8); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+@keyframes hero-avatar {
+    0%, 59.75% {
+        visibility: hidden;
+        transform: scale(.88);
+        opacity: 0;
+    }
+    59.8% {
+        visibility: visible;
+        transform: scale(.88);
+        opacity: 0;
+        animation-timing-function: cubic-bezier(.28, .1, .42, 1);
+    }
+    77.2%, 100% {
+        visibility: visible;
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 header section {
@@ -145,36 +200,531 @@ header svg {
     width: min(500px, 100%);
 }
 
-/* SVG name draw animation */
-@keyframes animate-svg-stroke-1 {
-    0% { stroke-dashoffset: 2505.140625px; stroke-dasharray: 2505.140625px; }
-    100% { stroke-dashoffset: 0; stroke-dasharray: 2505.140625px; }
+/* Elliott Leow title — 154 frames at the reference GIF's 20 ms cadence. */
+header h1 {
+    position: relative;
+    height: 70.3px;
+    line-height: 0;
 }
 
-@keyframes animate-svg-fill-1 {
-    0% { fill: transparent; }
-    100% { fill: rgb(255, 255, 255); }
+header h1 > svg {
+    --logo-duration: 3.08s;
+    --logo-ink: #fff;
+    --logo-accent: #ffd51f;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: min(500px, 100%);
+    height: auto;
+    overflow: visible;
+    opacity: 1;
+    shape-rendering: geometricPrecision;
 }
 
-.svg-elem-1 {
-    animation: animate-svg-stroke-1 20s ease-out 0s both,
-               animate-svg-fill-1 0.7s cubic-bezier(0.47, 0, 0.745, 0.715) 0.9s both;
+#logo-opening-slash,
+#logo-elliott,
+#logo-elliott-i-dot,
+#logo-leow-outline,
+#logo-orbit-stroke,
+#logo-leow-yellow,
+.logo-elliott-reveal,
+.logo-elliott-letter-reveal,
+.logo-elliott-e-mask-line,
+.logo-e-shooting-trace,
+.logo-e-shooting-head,
+.logo-leow-outline-reveal,
+.logo-leow-white-clip,
+.logo-leow-yellow-window {
+    animation-duration: var(--logo-duration);
+    animation-fill-mode: both;
+    animation-iteration-count: 1;
+    animation-timing-function: linear;
+}
+
+#logo-opening-slash {
+    fill: none;
+    stroke: var(--logo-ink);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+#logo-opening-slash {
+    animation-name: logo-opening-slash;
+    transform: translateX(114px);
+    stroke-dasharray: 59.1 59.1;
+    stroke-dashoffset: 59.1;
+    stroke-width: 1.9;
+}
+
+.logo-elliott-e-mask-line {
+    animation-name: logo-elliott-e-draw;
+    fill: none;
+    stroke: #fff;
+    stroke-dasharray: 2278 2278;
+    stroke-dashoffset: 2278;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    stroke-width: 150;
+}
+
+.logo-e-shooting-trace,
+.logo-e-shooting-head {
+    fill: none;
+    opacity: 0;
+    stroke: var(--logo-ink);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.logo-e-shooting-trace {
+    stroke-width: 24;
+}
+
+.logo-e-shooting-head {
+    stroke-width: 30;
+}
+
+.logo-e-shooting-spine {
+    animation-name: logo-e-shooting-spine;
+    stroke-dasharray: 1015 2030;
+    stroke-dashoffset: 1015;
+}
+
+.logo-e-shooting-spine-head {
+    animation-name: logo-e-shooting-spine-head;
+    stroke-dasharray: 80 2030;
+    stroke-dashoffset: 80;
+}
+
+.logo-e-shooting-top {
+    animation-name: logo-e-shooting-top;
+    stroke-dasharray: 430 860;
+    stroke-dashoffset: 430;
+}
+
+.logo-e-shooting-top-head {
+    animation-name: logo-e-shooting-top-head;
+    stroke-dasharray: 50 860;
+    stroke-dashoffset: 50;
+}
+
+.logo-e-shooting-middle {
+    animation-name: logo-e-shooting-middle;
+    stroke-dasharray: 400 800;
+    stroke-dashoffset: 400;
+}
+
+.logo-e-shooting-middle-head {
+    animation-name: logo-e-shooting-middle-head;
+    stroke-dasharray: 50 800;
+    stroke-dashoffset: 50;
+}
+
+#logo-elliott {
+    animation-name: logo-elliott-transform;
+    fill: var(--logo-ink);
+    transform-box: view-box;
+    transform-origin: 0 174px;
+}
+
+.logo-elliott-l1-reveal {
+    animation-name: logo-elliott-l1-reveal;
+    width: 0;
+}
+
+.logo-elliott-l2-reveal {
+    animation-name: logo-elliott-l2-reveal;
+    width: 0;
+}
+
+.logo-elliott-i-reveal {
+    animation-name: logo-elliott-i-reveal;
+    height: 0;
+}
+
+.logo-elliott-o-reveal {
+    animation-name: logo-elliott-o-reveal;
+    height: 0;
+}
+
+.logo-elliott-t1-reveal {
+    animation-name: logo-elliott-t1-reveal;
+    width: 0;
+}
+
+.logo-elliott-t2-reveal {
+    animation-name: logo-elliott-t2-reveal;
+    width: 0;
+}
+
+#logo-elliott-i-dot {
+    animation-name: logo-elliott-i-dot;
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0;
+}
+
+#logo-leow-outline {
+    animation-name: logo-leow-outline;
+    fill: none;
+    stroke: var(--logo-ink);
+    stroke-width: 1.8;
+    vector-effect: non-scaling-stroke;
+}
+
+.logo-leow-outline-reveal {
+    animation-name: logo-leow-outline-reveal;
+    width: 0;
+}
+
+#logo-orbit-stroke {
+    animation-name: logo-orbit-stroke;
+    fill: none;
+    stroke: var(--logo-ink);
+    stroke-dasharray: 0 1;
+    stroke-linecap: round;
+    stroke-width: 2.2;
+}
+
+#logo-leow-white {
+    fill: var(--logo-ink);
+}
+
+.logo-leow-white-clip {
+    animation-name: logo-leow-white-clip;
+    width: 0;
+}
+
+#logo-leow-yellow {
+    animation-name: logo-leow-yellow;
+    fill: url(#logo-yellow-gradient);
+}
+
+.logo-leow-yellow-window {
+    animation-name: logo-leow-yellow-window;
+    transform-box: view-box;
+}
+
+@keyframes logo-opening-slash {
+    0%, 2.5% {
+        opacity: 0;
+        stroke-dashoffset: 59.1;
+        d: path("M140 152L116 206");
+    }
+    2.6% {
+        opacity: .35;
+    }
+    4.6% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+        d: path("M140 152L116 206");
+    }
+    4.7%, 5.2% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+        d: path("M140 152L116 206");
+    }
+    5.3% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+        d: path("M140 152L116 206");
+        animation-timing-function: cubic-bezier(.32, .2, .68, .8);
+    }
+    10.4% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+        d: path("M97 154L97 199");
+    }
+    12.2%, 100% {
+        opacity: 0;
+        stroke-dashoffset: 0;
+        d: path("M97 154L97 199");
+    }
+}
+
+@keyframes logo-e-shooting-spine {
+    0%, 8.7% {
+        opacity: 0;
+        stroke-dashoffset: 1015;
+    }
+    8.8% {
+        opacity: 0;
+        stroke-dashoffset: 1015;
+    }
+    15.2% {
+        opacity: .62;
+        stroke-dashoffset: 0;
+    }
+    19.1%, 100% {
+        opacity: 0;
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes logo-e-shooting-spine-head {
+    0%, 8.7% { opacity: 0; stroke-dashoffset: 80; }
+    8.8% { opacity: 0; stroke-dashoffset: 80; }
+    9.8% { opacity: 1; stroke-dashoffset: -91.09375; }
+    14.2% { opacity: 1; stroke-dashoffset: -843.90625; }
+    15.2%, 100% { opacity: 0; stroke-dashoffset: -1015; }
+}
+
+@keyframes logo-e-shooting-top {
+    0%, 10.7% { opacity: 0; stroke-dashoffset: 430; }
+    10.8% {
+        opacity: 0;
+        stroke-dashoffset: 430;
+    }
+    15.6% { opacity: .7; stroke-dashoffset: 0; }
+    19.1%, 100% { opacity: 0; stroke-dashoffset: 0; }
+}
+
+@keyframes logo-e-shooting-top-head {
+    0%, 10.7% { opacity: 0; stroke-dashoffset: 50; }
+    10.8% { opacity: 0; stroke-dashoffset: 50; }
+    11.6% { opacity: 1; stroke-dashoffset: -30; }
+    14.8% { opacity: 1; stroke-dashoffset: -350; }
+    15.6%, 100% { opacity: 0; stroke-dashoffset: -430; }
+}
+
+@keyframes logo-e-shooting-middle {
+    0%, 12.7% { opacity: 0; stroke-dashoffset: 400; }
+    12.8% {
+        opacity: 0;
+        stroke-dashoffset: 400;
+    }
+    16.8% { opacity: .78; stroke-dashoffset: 0; }
+    19.1%, 100% { opacity: 0; stroke-dashoffset: 0; }
+}
+
+@keyframes logo-e-shooting-middle-head {
+    0%, 12.7% { opacity: 0; stroke-dashoffset: 50; }
+    12.8% { opacity: 0; stroke-dashoffset: 50; }
+    13.6% { opacity: 1; stroke-dashoffset: -40; }
+    16% { opacity: 1; stroke-dashoffset: -310; }
+    16.8%, 100% { opacity: 0; stroke-dashoffset: -400; }
+}
+
+@keyframes logo-elliott-e-draw {
+    0%, 19.6% {
+        stroke-dashoffset: 2278;
+    }
+    19.7% {
+        stroke-dashoffset: 2278;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    23.6%, 100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes logo-elliott-transform {
+    0%, 8.7% { opacity: 0; transform: translateX(114px); }
+    8.8%, 46.1% { opacity: 1; transform: translateX(114px); }
+    46.75% { opacity: 1; transform: translateX(76.7px); }
+    48.7% {
+        opacity: 1;
+        transform: translateX(51.2px);
+        animation-timing-function: cubic-bezier(.11, .113, .222, .699);
+    }
+    59.75%, 100% { opacity: 1; transform: none; }
+}
+
+@keyframes logo-elliott-l1-reveal {
+    0%, 23.6% { width: 0; }
+    23.7% {
+        width: 0;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    26.7%, 100% { width: 190px; }
+}
+
+@keyframes logo-elliott-l2-reveal {
+    0%, 26.6% { width: 0; }
+    26.7% {
+        width: 0;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    29.6%, 100% { width: 190px; }
+}
+
+@keyframes logo-elliott-i-reveal {
+    0%, 29.5% { height: 0; }
+    29.6% {
+        height: 0;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    32.6%, 100% { height: 550px; }
+}
+
+@keyframes logo-elliott-o-reveal {
+    0%, 32.5% { height: 0; }
+    32.6% {
+        height: 0;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    35.7%, 100% { height: 554px; }
+}
+
+@keyframes logo-elliott-t1-reveal {
+    0%, 35.6% { width: 0; }
+    35.7% {
+        width: 0;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    38.7%, 100% { width: 440px; }
+}
+
+@keyframes logo-elliott-t2-reveal {
+    0%, 38.6% { width: 0; }
+    38.7% {
+        width: 0;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    41.6%, 100% { width: 440px; }
+}
+
+@keyframes logo-elliott-i-dot {
+    0%, 32.5% { opacity: 0; transform: translateY(0); }
+    32.6% {
+        opacity: .15;
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(.35, 0, .2, 1);
+    }
+    36% {
+        opacity: 1;
+        transform: translateY(174px);
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    }
+    41.6%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes logo-leow-outline {
+    0%, 48.05% { opacity: 0; }
+    48.7% { opacity: .35; }
+    49.35%, 70.5% { opacity: 1; }
+    73%, 100% { opacity: 0; }
+}
+
+@keyframes logo-leow-outline-reveal {
+    0%, 48.05% { width: 0; }
+    48.7% { width: 12px; }
+    50.2% { width: 28px; }
+    58.5%, 100% { width: 199px; }
+}
+
+@keyframes logo-orbit-stroke {
+    0%, 53.5% { opacity: 0; stroke-dasharray: 0 1; stroke-dashoffset: 0; }
+    53.6% { opacity: 1; stroke-dasharray: 0 1; stroke-dashoffset: 0; }
+    59.2% { opacity: 1; stroke-dasharray: 1 0; stroke-dashoffset: 0; }
+    76.6% { opacity: .1; stroke-dasharray: 0 1; stroke-dashoffset: -1; }
+    77.2%, 100% { opacity: 0; stroke-dasharray: 0 1; stroke-dashoffset: -1; }
+}
+
+@keyframes logo-leow-white-clip {
+    0%, 61.6% { width: 0; }
+    61.7% {
+        width: 0;
+        animation-timing-function: cubic-bezier(.25, .1, .35, 1);
+    }
+    71.5%, 100% { width: 199px; }
+}
+
+@keyframes logo-leow-yellow {
+    0%, 60.8% { opacity: 0; }
+    61%, 71.7% { opacity: 1; }
+    72.5% { opacity: .25; }
+    72.7%, 100% { opacity: 0; }
+}
+
+@keyframes logo-leow-yellow-window {
+    0%, 60.8% { width: 26px; transform: translateX(20px); }
+    61.7% {
+        width: 34px;
+        transform: translateX(22px);
+        animation-timing-function: cubic-bezier(.3, .1, .5, 1);
+    }
+    63% { width: 70px; }
+    64.5% { width: 64px; }
+    66% { width: 50px; }
+    67.5% { width: 42px; }
+    69% { width: 34px; }
+    70.5% { width: 34px; }
+    71.5% { width: 34px; }
+    72.7% { width: 34px; transform: translateX(205px); }
+    72.71%, 100% { width: 0; transform: translateX(229px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scene-planet-entrance {
+        animation: none;
+        opacity: 1;
+        transform: none;
+        will-change: auto;
+    }
+
+    #logo-opening-slash,
+    #logo-elliott-e-outline,
+    #logo-orbit-stroke,
+    #logo-leow-outline,
+    #logo-leow-yellow {
+        display: none;
+    }
+
+    #logo-elliott,
+    #logo-elliott-i-dot,
+    #logo-leow-white,
+    .logo-elliott-reveal,
+    .logo-elliott-letter-reveal,
+    .logo-elliott-e-mask-line,
+    .logo-leow-white-clip {
+        animation: none;
+    }
+
+    #logo-elliott,
+    #logo-elliott-i-dot,
+    #logo-leow-white {
+        opacity: 1;
+        transform: none;
+    }
+
+    .logo-elliott-l1-reveal,
+    .logo-elliott-l2-reveal { width: 190px; }
+    .logo-elliott-i-reveal { height: 550px; }
+    .logo-elliott-o-reveal { height: 554px; }
+    .logo-elliott-t1-reveal,
+    .logo-elliott-t2-reveal { width: 440px; }
+    .logo-elliott-e-mask-line { stroke-dashoffset: 0; }
+    .logo-leow-white-clip { width: 199px; }
 }
 
 /* Header tagline */
 header p {
     -webkit-mask: linear-gradient(to right, #fff 45%, transparent 55%) 0 0/220% 100% no-repeat;
     opacity: clamp(.7, .75 * var(--scroll, 0) + .7, .85);
-    animation: 1.7s ease-in-out 0.3s both bio;
+    animation: var(--hero-sequence-duration) linear both hero-description;
     color: var(--text-color);
     font-weight: normal;
     font-size: clamp(17px, 2.8vmin, 24px);
     letter-spacing: 0.01em;
 }
 
-@keyframes bio {
-    0% { -webkit-mask-position: 100% 0; }
-    100% { -webkit-mask-position: 0% 0; }
+@keyframes hero-description {
+    0%, 59.75% {
+        visibility: hidden;
+        -webkit-mask-position: 100% 0;
+    }
+    59.8% {
+        visibility: visible;
+        -webkit-mask-position: 100% 0;
+        animation-timing-function: cubic-bezier(.28, .1, .42, 1);
+    }
+    77.2%, 100% {
+        visibility: visible;
+        -webkit-mask-position: 0% 0;
+    }
 }
 
 /* Social Links — HCI: Fitts's Law (44px targets), Feedback (hover transform) */
@@ -182,7 +732,7 @@ header p {
     display: flex;
     gap: 12px;
     margin-top: 8px;
-    animation: move-socials-down 1.7s ease-out 0.3s both;
+    animation: var(--hero-sequence-duration) linear both hero-socials;
 }
 
 @media (width < 880px) {
@@ -216,9 +766,35 @@ header p {
     width: 22px;
 }
 
-@keyframes move-socials-down {
-    from { transform: translateY(-80px); }
-    to { transform: translateY(0); }
+@keyframes hero-socials {
+    0%, 59.75% {
+        visibility: hidden;
+        transform: translateY(-24px);
+        opacity: 0;
+    }
+    59.8% {
+        visibility: visible;
+        transform: translateY(-24px);
+        opacity: 0;
+        animation-timing-function: cubic-bezier(.28, .1, .42, 1);
+    }
+    77.2%, 100% {
+        visibility: visible;
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    header img,
+    header p,
+    .social-links {
+        visibility: visible;
+        animation: none;
+        transform: none;
+        opacity: 1;
+        -webkit-mask-position: 0 0;
+    }
 }
 
 /* ── Scroll Arrow — HCI: Affordance + Feedback ── */
@@ -345,22 +921,34 @@ body[style*='.'] #arrow {
     gap: 15px;
 }
 
-/* Chevron indicator — HCI: Affordance */
+/* Native marker is replaced by an SVG pull-arrow with morphable geometry. */
 .collapsible-section summary::after {
-    content: '';
-    width: 9px;
-    height: 9px;
-    border-right: 2px solid var(--text-color);
-    border-bottom: 2px solid var(--text-color);
-    transform: rotate(-45deg);
-    transition: transform 0.3s ease;
-    margin-left: auto;
-    opacity: 0.4;
-    flex-shrink: 0;
+    display: none;
 }
 
-.collapsible-section details[open] summary::after {
-    transform: rotate(45deg);
+.section-motion-arrow {
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    overflow: visible;
+    flex: 0 0 auto;
+    color: var(--text-color);
+    opacity: .5;
+    transition: opacity .25s ease;
+}
+
+.section-motion-arrow path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.collapsible-section summary:hover .section-motion-arrow,
+.collapsible-section summary:focus-visible .section-motion-arrow {
+    opacity: .9;
 }
 
 .collapsible-section summary::before {
