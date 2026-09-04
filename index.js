@@ -3,6 +3,25 @@
 
 
 const bg = document.querySelector('#bg');
+
+// The scene's paths ask for non-scaling-stroke, which pins the stroke to 0.55
+// device pixels but forces the rasterizer to rebuild every stroke outline
+// whenever a planet group's transform changes — i.e. every frame of the
+// entrance pop and every frame of the mouse parallax. index.css trades that for
+// an ordinary stroke whose width we scale ourselves, so the geometry stays
+// cacheable across transforms. Each group is drawn at scale(.1), and the scene
+// itself is scaled viewBox -> viewport, so the width that reproduces 0.55
+// device pixels is 0.55 / (0.1 * sceneScale). Recomputed only on resize.
+(window.setSceneStroke = () => {
+    if (!bg) return;
+    const { width, height } = bg.getBoundingClientRect();
+    const sceneScale = Math.max(width / 5120, height / 2880);
+    if (!sceneScale) return;
+    // Set on <html>, not <body>: the #arrow rule keys off body's style attribute.
+    document.documentElement.style.setProperty('--scene-stroke-width', .55 / (.1 * sceneScale));
+})();
+addEventListener('resize', setSceneStroke);
+
 let parallaxInitialized = false;
 
 function initializeParallax() {
