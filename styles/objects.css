@@ -423,26 +423,8 @@
   display: block;
   width: 100%;
   height: auto;
-  overflow: visible;
+  aspect-ratio: 354 / 150;
 }
 .signature[data-interactive] {
   cursor: pointer;
-}
-.sig-layer {
-  fill: currentColor;
-}
-.sig-layer--ink {
-  color: #111;
-}
-/* the wet ink at the nib, a moment ahead of the rest */
-.sig-layer--lead {
-  color: #ffa500;
-}
-/* the pen strokes that reveal each letter: white in the mask shows, and nothing shows until the pen starts */
-.sig-reveal {
-  fill: none;
-  stroke: #fff;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0;
 }

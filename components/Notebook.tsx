@@ -28,7 +28,11 @@ export default function Notebook({ children }: { children: ReactNode }) {
     <SheetContext.Provider value={sheetRef}>
       <div className="workspace">
         <div className="sheet-texture" aria-hidden />
-        <div className="rules" key={`rules-${turns}`} aria-hidden />
+        <div className="rules" key={`rules-${turns}`} aria-hidden>
+          <div className="rules-sweep">
+            <div className="rules-dots" />
+          </div>
+        </div>
         <div className="notebook">
           <div ref={sheetRef} className={`sheet ${turning ? 'is-turning' : ''}`}>
             <main id="page" className="sheet-body" key={turns}>

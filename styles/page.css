@@ -7,26 +7,45 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  overflow: clip;
 }
-.rules::before {
-  content: '';
+/*
+ * The sweep is a soft diagonal mask sliding across the dots. Animating mask-position would
+ * repaint the whole page every frame, so instead the mask rides on a layer 2.6 windows wide
+ * that slides right while the dots inside it slide left by the same amount. Both are
+ * transforms, which the GPU runs off the main thread, and the dots never move on screen.
+ */
+.rules-sweep {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: -160%;
+  width: 260%;
+  mask-image: linear-gradient(118deg, #000 44%, transparent 56%);
+  transform: translateX(calc(100% * 16 / 26));
+  animation: rules-sweep 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) 0.2s both;
+}
+.rules-dots {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(100% * 16 / 26);
+  width: calc(100% * 10 / 26);
   background-image: radial-gradient(circle, var(--dot) 0.85px, transparent 1.3px);
   background-size: 16px 16px;
   /* on the same dots the A4 sheet had, so the content sits on the grid as before */
   background-position: calc(50% - 8px) calc(clamp(28px, 6vh, 64px) + 28px);
-  mask-image: linear-gradient(118deg, #000 44%, transparent 56%);
-  mask-size: 260% 100%;
-  mask-repeat: no-repeat;
-  animation: rules-in 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) 0.2s both;
+  transform: translateX(-160%);
+  animation: rules-hold 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) 0.2s both;
 }
-@keyframes rules-in {
+@keyframes rules-sweep {
   from {
-    mask-position: 100% 0;
+    transform: none;
   }
-  to {
-    mask-position: 0 0;
+}
+@keyframes rules-hold {
+  from {
+    transform: none;
   }
 }
 
@@ -676,7 +695,7 @@ span.hand-write {
   .corner {
     --fold: 34px;
   }
-  .rules::before {
+  .rules-dots {
     background-position: 52px 32px;
   }
 }
@@ -687,7 +706,8 @@ span.hand-write {
   .pg-notes,
   .pg-links li,
   .ink-link-icon path,
-  .rules::before {
+  .rules-sweep,
+  .rules-dots {
     animation: none;
     opacity: 1;
   }

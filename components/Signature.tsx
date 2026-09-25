@@ -6,9 +6,13 @@
  * a wide stroke running along the letter's centreline, in writing order. The pen keeps
  * one average speed across the word, eases in and out of each stroke, and pauses briefly
  * wherever it lifts. The "lead" layer runs 120ms ahead of the ink, which reads as wet ink
- * at the nib. Until the pen starts the masks are empty, so it never flashes in finished.
+ * at the nib. Until the pen starts the canvas is empty, so it never flashes in finished.
+ *
+ * It's drawn on a canvas, one frame at a time, rather than as animated SVG masks: phones
+ * re-rasterise every mask on the CPU each frame, which is what used to drop their frame rate.
+ * Here each frame is a handful of clipped strokes, at whatever rate the display refreshes.
  */
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 /** Shantell Sans SemiBold outlines, font units (1000/em, y up) */
 const glyphs = {
@@ -31,7 +35,6 @@ const marks: [seg: string, glyph: keyof typeof glyphs, x: number][] = [
   ['t2', 't', 326.09],
   ['period', 'period', 375.01],
 ]
-const place = (x: number) => `translate(${x} 185) scale(0.108 -0.108)`
 
 const L = 'M150 690C140 520 126 340 128 220C130 110 165 52 215 52C240 52 255 62 265 66'
 const T_STEM = 'M150 650C145 500 128 330 128 230C128 110 190 50 280 50C330 50 360 68 385 78'
@@ -56,35 +59,85 @@ const INK_LAG = 120
 const PEN_LIFT = 24
 const MIN_STROKE = 45
 // a stroke that carries on without a lift keeps its speed through the join
-const EASE_IN = 'cubic-bezier(.4,0,.7,.7)'
-const EASE_OUT = 'cubic-bezier(.3,.3,.55,1)'
-const EASE_BOTH = 'cubic-bezier(.4,0,.45,1)'
+const EASE_IN = bezier(0.4, 0, 0.7, 0.7)
+const EASE_OUT = bezier(0.3, 0.3, 0.55, 1)
+const EASE_BOTH = bezier(0.4, 0, 0.45, 1)
 
-const layers = ['lead', 'ink'] as const
+/** the part of the word that's drawn, in the word's units: trimmed to the letters on the left and right */
+const VIEW = { x: 48, y: 60, w: 354, h: 150 }
+/** the pen colours, wet ink a moment ahead of the rest */
+const layers = [
+  { color: '#ffa500', lag: 0 },
+  { color: '#111', lag: INK_LAG },
+]
+
+/** a CSS cubic-bezier() timing function, as a function of progress */
+function bezier(x1: number, y1: number, x2: number, y2: number) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  const X = (t: number) => ((ax * t + bx) * t + cx) * t
+  const Y = (t: number) => ((ay * t + by) * t + cy) * t
+  const dX = (t: number) => (3 * ax * t + 2 * bx) * t + cx
+  return (x: number) => {
+    if (x <= 0) return 0
+    if (x >= 1) return 1
+    let t = x
+    for (let i = 0; i < 8; i++) {
+      const e = X(t) - x
+      if (Math.abs(e) < 1e-6) return Y(t)
+      const d = dX(t)
+      if (Math.abs(d) < 1e-6) break
+      t -= e / d
+    }
+    let lo = 0
+    let hi = 1
+    t = x
+    while (hi - lo > 1e-6) {
+      if (X(t) < x) lo = t
+      else hi = t
+      t = (lo + hi) / 2
+    }
+    return Y(t)
+  }
+}
+
+/** stroke lengths, measured once by the browser's own SVG geometry */
+let lengths: number[] | undefined
+function measure() {
+  if (lengths) return lengths
+  const ns = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(ns, 'svg')
+  svg.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden')
+  document.body.append(svg)
+  lengths = strokes.map(([, , , d]) => {
+    const p = document.createElementNS(ns, 'path')
+    p.setAttribute('d', d)
+    svg.append(p)
+    return p.getTotalLength()
+  })
+  svg.remove()
+  return lengths
+}
 
 type Props = { delay?: number; duration?: number; className?: string; replayable?: boolean }
 
 export default function Signature({ delay = 400, duration = 1250, className, replayable = true }: Props) {
-  const svgRef = useRef<SVGSVGElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const play = useRef<() => void>(() => {})
-  // ids for the masks and glyphs, unique to this signature and safe inside url(#…)
-  const uid = `sig${useId().replace(/[^a-zA-Z0-9]/g, '')}`
 
   useEffect(() => {
-    const svg = svgRef.current
-    if (!svg) return
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
     const reduce = matchMedia('(prefers-reduced-motion: reduce)')
-    const reveals = [...svg.querySelectorAll<SVGPathElement>('.sig-reveal')]
-    const uses = [...svg.querySelectorAll<SVGUseElement>('.sig-mark')]
-    const length = new Map(reveals.map((p) => [p, p.getTotalLength()]))
-    let running: Animation[] = []
-    let runId = 0
+    const glyph = Object.fromEntries(Object.entries(glyphs).map(([g, d]) => [g, new Path2D(d)])) as Record<keyof typeof glyphs, Path2D>
+    const pens = strokes.map(([, , , d]) => new Path2D(d))
+    const len = measure()
 
     // one average pen speed along the whole word (very short strokes get a minimum); lifts cost a fixed beat
-    const lengths = strokes.map((_, i) => length.get(reveals.find((p) => p.dataset.layer === 'lead' && Number(p.dataset.stroke) === i)!)!)
-    const sum = lengths.reduce((a, b) => a + b, 0)
+    const sum = len.reduce((a, b) => a + b, 0)
     const writing = duration - INK_LAG - strokes.filter(([, , lift], i) => lift && i > 0).length * PEN_LIFT
-    const weights = lengths.map((l) => Math.max(l, (MIN_STROKE / writing) * sum))
+    const weights = len.map((l) => Math.max(l, (MIN_STROKE / writing) * sum))
     const totalWeight = weights.reduce((a, b) => a + b, 0)
     let cursor = 0
     const timeline = strokes.map(([, , lift], i) => {
@@ -92,94 +145,110 @@ export default function Signature({ delay = 400, duration = 1250, className, rep
       const d = (weights[i] / totalWeight) * writing
       const joinsNext = strokes[i + 1] && !strokes[i + 1][2]
       const joinedPrev = i > 0 && !lift
-      const t = { delay: cursor, duration: d, easing: joinsNext ? EASE_IN : joinedPrev ? EASE_OUT : EASE_BOTH }
+      const t = { delay: cursor, duration: d, ease: joinsNext ? EASE_IN : joinedPrev ? EASE_OUT : EASE_BOTH }
       cursor += d
       return t
     })
+    const end = cursor + INK_LAG
+    const bySegment = marks.map(([seg]) => strokes.flatMap(([s], i) => (s === seg ? [i] : [])))
 
-    const mark = (layer: string, seg: string) => uses.find((u) => u.dataset.layer === layer && u.dataset.segment === seg)
-    // once a letter's last stroke lands, drop its mask so the whole glyph shows crisply
-    const unmask = (u?: SVGUseElement) => u?.removeAttribute('mask')
-    const remask = () => uses.forEach((u) => u.setAttribute('mask', u.dataset.mask!))
+    /** the word as it stands `t` ms after the pen starts */
+    const draw = (t: number) => {
+      const sx = canvas.width / VIEW.w
+      const sy = canvas.height / VIEW.h
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      for (const [l, { color, lag }] of layers.entries()) {
+        ctx.fillStyle = ctx.strokeStyle = color
+        marks.forEach(([, g, x], m) => {
+          const progress = (i: number, lag: number) => timeline[i].ease((t - lag - timeline[i].delay) / timeline[i].duration)
+          const p = bySegment[m].map((i) => progress(i, lag))
+          if (p.every((v) => v <= 0)) return
+          // under a finished letter the wet ink would only show as a fringe round its edge
+          if (l === 0 && bySegment[m].every((i) => progress(i, INK_LAG) >= 1)) return
+          ctx.setTransform(sx, 0, 0, sy, -VIEW.x * sx, -VIEW.y * sy)
+          ctx.transform(0.108, 0, 0, -0.108, x, 185)
+          // once a letter's last stroke lands, the whole glyph shows crisply
+          if (p.every((v) => v >= 1)) return ctx.fill(glyph[g])
+          ctx.save()
+          ctx.clip(glyph[g])
+          bySegment[m].forEach((i, k) => {
+            if (p[k] <= 0) return
+            ctx.lineWidth = strokes[i][1]
+            ctx.setLineDash([len[i], len[i]])
+            ctx.lineDashOffset = len[i] * (1 - p[k])
+            ctx.stroke(pens[i])
+          })
+          ctx.restore()
+        })
+      }
+    }
 
-    const settle = () => {
-      running.forEach((a) => a.cancel())
-      running = []
-      uses.forEach(unmask)
+    let frame = 0
+    let start = 0
+    let now = -Infinity
+
+    // the backing store follows the canvas's size on screen, in device pixels, so the ink stays sharp
+    let dpr = 0
+    let unwatch = () => {}
+    const resize = () => {
+      if (dpr !== window.devicePixelRatio) {
+        // zooming or moving to another screen changes the pixel ratio without changing the layout
+        unwatch()
+        dpr = window.devicePixelRatio || 1
+        const mq = matchMedia(`(resolution: ${dpr}dppx)`)
+        mq.addEventListener('change', resize)
+        unwatch = () => mq.removeEventListener('change', resize)
+      }
+      const w = Math.round(canvas.clientWidth * dpr)
+      const h = Math.round(canvas.clientHeight * dpr)
+      if (!w || !h || (w === canvas.width && h === canvas.height)) return
+      canvas.width = w
+      canvas.height = h
+      draw(now)
+    }
+    const ro = new ResizeObserver(resize)
+    ro.observe(canvas)
+
+    const tick = (time: number) => {
+      now = time - start
+      draw(now)
+      frame = now < end ? requestAnimationFrame(tick) : 0
     }
 
     const run = (startDelay: number) => {
-      runId += 1
-      const id = runId
-      running.forEach((a) => a.cancel())
-      running = []
-      remask()
-      if (reduce.matches) return settle()
-      for (const p of reveals) {
-        const i = Number(p.dataset.stroke)
-        const t = timeline[i]
-        const len = length.get(p)!
-        const dash = `${len} ${len}`
-        const a = p.animate(
-          [
-            { opacity: 1, strokeDasharray: dash, strokeDashoffset: `${len}` },
-            { opacity: 1, strokeDasharray: dash, strokeDashoffset: '0' },
-          ],
-          { duration: t.duration, delay: startDelay + t.delay + (p.dataset.layer === 'ink' ? INK_LAG : 0), easing: t.easing, fill: 'forwards' },
-        )
-        running.push(a)
-        const seg = strokes[i][0]
-        if (strokes[i + 1]?.[0] !== seg) a.finished.then(() => id === runId && unmask(mark(p.dataset.layer!, seg))).catch(() => {})
+      cancelAnimationFrame(frame)
+      if (reduce.matches) {
+        now = Infinity
+        return draw(now)
       }
+      start = performance.now() + startDelay
+      now = -Infinity
+      draw(now)
+      frame = requestAnimationFrame(tick)
     }
 
     play.current = () => run(0)
     run(delay)
-    return () => running.forEach((a) => a.cancel())
+    return () => {
+      cancelAnimationFrame(frame)
+      ro.disconnect()
+      unwatch()
+    }
   }, [delay, duration])
 
   return (
-    <svg
-      ref={svgRef}
+    <canvas
+      ref={canvasRef}
       className={`signature ${className ?? ''}`}
-      // trimmed to the letters on the left and right, so the name lines up with the text under it
-      viewBox="48 60 354 150"
+      width={VIEW.w}
+      height={VIEW.h}
       role="img"
       aria-label="Elliott."
       onClick={replayable ? () => play.current() : undefined}
       data-interactive={replayable || undefined}
-    >
-      <title>Elliott.</title>
-      <defs>
-        {Object.entries(glyphs).map(([g, d]) => (
-          <path key={g} id={`${uid}-${g}`} d={d} />
-        ))}
-        {layers.map((layer) =>
-          marks.map(([seg]) => (
-            <mask key={`${layer}-${seg}`} id={`${uid}-${layer}-${seg}`} maskUnits="userSpaceOnUse" x={-500} y={-500} width={2000} height={2000}>
-              {strokes.map(([s, width, , d], i) =>
-                s === seg ? <path key={i} className="sig-reveal" data-layer={layer} data-stroke={i} d={d} strokeWidth={width} /> : null,
-              )}
-            </mask>
-          )),
-        )}
-      </defs>
-      {layers.map((layer) => (
-        <g key={layer} className={`sig-layer sig-layer--${layer}`}>
-          {marks.map(([seg, g, x]) => (
-            <use
-              key={seg}
-              className="sig-mark"
-              data-layer={layer}
-              data-segment={seg}
-              data-mask={`url(#${uid}-${layer}-${seg})`}
-              mask={`url(#${uid}-${layer}-${seg})`}
-              href={`#${uid}-${g}`}
-              transform={place(x)}
-            />
-          ))}
-        </g>
-      ))}
-    </svg>
+    />
   )
 }
