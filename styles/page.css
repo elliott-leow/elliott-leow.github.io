@@ -1,0 +1,708 @@
+/* ================================================================== dot grid */
+
+/* 5mm dots, printed faintly across the whole window;
+   they sweep in from the top left as the page lands */
+.rules {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.rules::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, var(--dot) 0.85px, transparent 1.3px);
+  background-size: 16px 16px;
+  /* on the same dots the A4 sheet had, so the content sits on the grid as before */
+  background-position: calc(50% - 8px) calc(clamp(28px, 6vh, 64px) + 28px);
+  mask-image: linear-gradient(118deg, #000 44%, transparent 56%);
+  mask-size: 260% 100%;
+  mask-repeat: no-repeat;
+  animation: rules-in 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) 0.2s both;
+}
+@keyframes rules-in {
+  from {
+    mask-position: 100% 0;
+  }
+  to {
+    mask-position: 0 0;
+  }
+}
+
+/* ================================================================== the page */
+
+.page {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  /* the page is only as wide as the name and the links beside it, and sits in the middle */
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  column-gap: clamp(28px, 5vw, 60px);
+  align-items: start;
+  padding-bottom: 20px;
+}
+span.hand-write {
+  display: inline-block;
+}
+
+/* with a photo of me at the top left, the intro moves over beside it */
+.page:has(> .pg-me) {
+  grid-template-columns: auto 1fr;
+}
+.pg-me {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 6px 0 0 -10px;
+}
+.pg-intro {
+  grid-column: -2;
+  grid-row: 1;
+  padding-top: 38px;
+}
+.pg-name {
+  position: relative;
+  width: 307px;
+  max-width: 100%;
+  margin: 0;
+}
+.pg-line {
+  max-width: 34ch;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--mono-ink);
+  text-shadow: var(--mono-halo);
+}
+
+/* ---------------------------------------------------------------- typed */
+
+.typed-ch {
+  animation: ch-in 90ms ease-out var(--d) both, caret var(--step) steps(1) var(--d);
+}
+.typed-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: var(--blue-pen);
+  opacity: 0;
+  animation: blink 1.05s steps(1) var(--d) 4 forwards;
+}
+@keyframes ch-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes caret {
+  from {
+    box-shadow: 2px 0 0 var(--blue-pen);
+  }
+}
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- loose photos */
+
+.pg-photos {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 310px;
+  margin-top: 52px;
+}
+.pg-photos > .photo-slot {
+  position: absolute;
+}
+.pg-city {
+  left: 3%;
+  top: 44px;
+}
+.pg-moon {
+  left: 41%;
+  top: 0;
+}
+.pg-dusk {
+  left: 72%;
+  top: 34px;
+}
+.pg-hint {
+  position: absolute;
+  left: 43%;
+  top: 204px;
+  width: 190px;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 20px;
+  pointer-events: none;
+}
+.pg-hint .doodle {
+  rotate: -90deg;
+  margin-top: -6px;
+}
+.hint-touch {
+  display: none;
+}
+@media (hover: none) {
+  .hint-mouse {
+    display: none;
+  }
+  .hint-touch {
+    display: inline;
+  }
+}
+
+/* ---------------------------------------------------------------- links */
+
+/* up by the signature, on the right, like contact details pencilled in the corner */
+.page {
+  grid-template-columns: 1fr auto;
+}
+.pg-intro {
+  grid-column: 1;
+}
+.page:has(> .pg-me) {
+  grid-template-columns: auto 1fr auto;
+}
+.page:has(> .pg-me) .pg-intro {
+  grid-column: 2;
+}
+.pg-links {
+  grid-column: -2;
+  grid-row: 1;
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-top: 64px;
+  rotate: 1.5deg;
+}
+.pg-links li {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.pg-links li:nth-child(1) {
+  animation-delay: 1.1s;
+}
+.pg-links li:nth-child(2) {
+  animation-delay: 1.2s;
+}
+.pg-links li:nth-child(3) {
+  animation-delay: 1.3s;
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+.ink-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 26px;
+  color: var(--blue-pen);
+  text-decoration: none;
+  transition: translate 0.3s cubic-bezier(0.3, 0.7, 0.2, 1.4), rotate 0.3s;
+}
+.ink-link:hover,
+.ink-link:focus-visible {
+  translate: 0 -2px;
+  rotate: -1.5deg;
+}
+.ink-link-text {
+  position: relative;
+}
+.ink-link-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* each icon sketches itself in as its line lands */
+.ink-link-icon path {
+  stroke-dasharray: 1 2;
+  animation: icon-draw 0.45s cubic-bezier(0.55, 0.05, 0.35, 1) both;
+  animation-delay: calc(var(--li-d, 1.1s) + 0.15s + var(--k) * 0.22s);
+}
+.pg-links li:nth-child(2) {
+  --li-d: 1.2s;
+}
+.pg-links li:nth-child(3) {
+  --li-d: 1.3s;
+}
+@keyframes icon-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.ink-link-line {
+  position: absolute;
+  left: -6%;
+  bottom: -4px;
+  width: 112%;
+  height: 10px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--red-pen);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.ink-link-line path {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.28s cubic-bezier(0.55, 0.05, 0.35, 1);
+}
+.ink-link:hover .ink-link-line path,
+.ink-link:focus-visible .ink-link-line path {
+  stroke-dashoffset: 0;
+  transition-duration: 0.4s;
+}
+
+/* ---------------------------------------------------------------- notes, on the front page */
+
+.pg-notes {
+  grid-column: 1 / -1;
+  /* takes the width the name and links give it, and never widens the page itself */
+  contain: inline-size;
+  margin: 30px 0 0 4px;
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.8s both;
+}
+.pg-notes-h {
+  display: block;
+  width: max-content;
+  font-size: 32px;
+  rotate: -1deg;
+  margin-bottom: 6px;
+}
+.pg-notes-all {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 21px;
+  color: var(--pencil);
+  text-decoration: none;
+}
+.pg-notes-all:hover {
+  color: var(--blue-pen);
+}
+
+/* ================================================================== the folded corner */
+
+@property --fold {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 26px;
+}
+/* the bottom corner of the window is turned up, so the page beneath shows */
+.corner {
+  --fold: 26px;
+  transition: --fold 0.4s cubic-bezier(0.3, 0.7, 0.2, 1.25);
+  position: fixed;
+  z-index: 4;
+  right: 0;
+  bottom: 0;
+  width: var(--fold);
+  height: var(--fold);
+}
+.corner:hover,
+.corner:focus-visible {
+  --fold: 58px;
+}
+.corner-fold {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, #efe8d8 0%, #e4dbc8 49.6%, #d9d0bd 50%);
+  filter: drop-shadow(-2px -2px 3px rgba(50, 35, 20, 0.16));
+}
+.corner-note {
+  position: absolute;
+  right: calc(100% + 10px);
+  bottom: 6px;
+  font-size: 20px;
+  white-space: nowrap;
+  color: var(--pencil);
+  opacity: 0;
+  translate: 6px 0;
+  transition: opacity 0.25s, translate 0.3s;
+  pointer-events: none;
+}
+.corner:hover .corner-note,
+.corner:focus-visible .corner-note {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* turning the page over and letting it fall back: it lifts off the binding,
+   goes blank, and lands with everything still to be written */
+.sheet.is-turning {
+  transform-origin: 0 50%;
+  animation: page-turn 0.9s cubic-bezier(0.45, 0.05, 0.3, 1);
+}
+.sheet.is-turning .sheet-body {
+  animation: page-blank 0.9s ease-in-out;
+}
+@keyframes page-turn {
+  0% {
+    transform: none;
+  }
+  42% {
+    transform: perspective(1800px) rotateY(-24deg) translateX(-12px);
+    filter: brightness(0.94);
+  }
+  80% {
+    transform: perspective(1800px) rotateY(1.2deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes page-blank {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  38%,
+  46% {
+    opacity: 0;
+  }
+}
+
+/* ================================================================== notes */
+
+/* every page you go to slides out from under the last one */
+.page-in {
+  animation: page-in 0.5s cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+@keyframes page-in {
+  from {
+    opacity: 0.3;
+    translate: 14px 0;
+  }
+}
+
+.page-title {
+  font-size: clamp(44px, 6vw, 68px);
+  line-height: 1;
+  display: inline-block;
+  rotate: -1deg;
+}
+.back-link {
+  display: inline-block;
+  margin-bottom: 26px;
+  font-size: 22px;
+  color: var(--pencil);
+  text-decoration: none;
+}
+.back-link:hover {
+  color: var(--ink);
+}
+.notes-head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 40px;
+  justify-items: start;
+}
+.notes-page .note-row {
+  font-size: 15.5px;
+}
+.notes-page .note-index {
+  max-width: 540px;
+}
+
+.note-head {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  margin-bottom: 34px;
+}
+.note-page-date {
+  font-size: 12px;
+  color: var(--mono-ink);
+  text-shadow: var(--mono-halo);
+}
+.note-page-title {
+  font-size: clamp(38px, 5vw, 56px);
+  line-height: 1.02;
+  max-width: 16ch;
+}
+.note-body {
+  position: relative;
+  max-width: 600px;
+}
+.note-body.typed {
+  font-family: var(--mono);
+  font-size: 14.5px;
+  line-height: 32px;
+  color: var(--mono-ink);
+  text-shadow: var(--mono-halo);
+}
+.note-body.serif {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 19px;
+  line-height: 32px;
+  color: #2a2724;
+}
+.note-body p,
+.note-body ul,
+.note-body ol,
+.note-body pre,
+.note-body .note-figure {
+  margin: 0 0 32px;
+}
+.note-body li {
+  padding-left: 24px;
+  position: relative;
+}
+.note-body ul li::before {
+  content: '–';
+  position: absolute;
+  left: 4px;
+}
+.note-body ol {
+  counter-reset: n;
+}
+.note-body ol li {
+  counter-increment: n;
+}
+.note-body ol li::before {
+  content: counter(n) '.';
+  position: absolute;
+  left: 0;
+  font-family: var(--hand);
+  font-size: 21px;
+  color: var(--pencil);
+}
+.note-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: rgba(36, 35, 33, 0.06);
+  padding: 1px 4px;
+}
+.note-pre {
+  padding: 14px 18px;
+  background: #fbfaf5;
+  box-shadow: var(--shadow-rest);
+  rotate: -0.4deg;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 22px;
+}
+.note-pre code {
+  text-shadow: none;
+  background: none;
+  padding: 0;
+}
+.note-a {
+  color: var(--blue-pen);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.note-h2 {
+  font-size: 32px;
+  line-height: 32px;
+  margin: 0 0 0 -4px;
+}
+.note-h3 {
+  font-size: 25px;
+  line-height: 32px;
+  margin: 0;
+  color: var(--pencil);
+}
+.note-quote {
+  margin: 0 0 32px;
+  padding-left: 18px;
+  border-left: 2px solid var(--blue-pen);
+  font-style: italic;
+}
+.note-quote p {
+  margin: 0;
+}
+.note-hr {
+  border: 0;
+  height: 32px;
+  margin: 0 0 32px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 10'%3E%3Cpath d='M4 5 C 20 2, 30 8, 44 5 S 70 2, 80 5' stroke='%2366625c' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")
+    left center / 120px 10px no-repeat;
+}
+.note-body .margin-note {
+  right: -250px;
+  margin-top: -60px;
+  color: var(--blue-pen);
+}
+.note-body .note-pen {
+  display: inline-block;
+  font-size: 25px;
+  line-height: 32px;
+}
+.note-figure {
+  position: relative;
+  max-width: 100%;
+  padding: 7px 7px 0;
+  background: #fdfcf8;
+  box-shadow: var(--shadow-rest);
+}
+.note-figure img {
+  height: auto;
+}
+.note-figure-caption {
+  display: block;
+  padding: 6px 2px 8px;
+  font-size: 20px;
+  color: var(--pencil);
+}
+.sticky.is-expandable {
+  cursor: pointer;
+}
+.note-sticky {
+  margin: 0 0 40px auto;
+}
+.note-end {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 56px;
+  font-size: 23px;
+}
+.note-end a {
+  color: var(--blue-pen);
+  text-decoration: none;
+}
+@media (max-width: 1240px) {
+  .note-body .margin-note {
+    position: relative;
+    right: auto;
+    margin: -16px 0 24px auto;
+    display: block;
+  }
+}
+
+/* ================================================================== 404 */
+
+.lost {
+  padding: 16vh 0;
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+.lost-big {
+  font-size: 56px;
+}
+.lost a {
+  font-size: 23px;
+}
+
+/* ================================================================== sizes */
+
+@media (max-width: 760px) {
+  .page,
+  .page:has(> .pg-me) {
+    grid-template-columns: 1fr;
+  }
+  .pg-me {
+    margin: 0;
+  }
+  .pg-intro,
+  .pg-links {
+    grid-column: 1;
+  }
+  .pg-links {
+    grid-row: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 32px;
+    margin: 26px 0 0 4px;
+    padding-top: 0;
+    rotate: none;
+  }
+  .page:has(> .pg-me) .pg-intro {
+    grid-column: 1;
+    grid-row: 2;
+    padding-top: 30px;
+  }
+  .pg-photos {
+    height: 440px;
+    margin-top: 40px;
+  }
+  .pg-city {
+    left: 0;
+    top: 8px;
+  }
+  .pg-moon {
+    left: 6%;
+    top: 214px;
+  }
+  .pg-dusk {
+    left: auto;
+    right: 0;
+    top: 130px;
+  }
+  .pg-hint {
+    left: 10%;
+    top: 400px;
+  }
+  .pg-hint .doodle {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .workspace {
+    padding: 20px 16px 64px;
+  }
+  .sheet {
+    padding: 26px 12px 0;
+  }
+  .corner {
+    --fold: 34px;
+  }
+  .rules::before {
+    background-position: 52px 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typed-ch,
+  .page-in,
+  .pg-notes,
+  .pg-links li,
+  .ink-link-icon path,
+  .rules::before {
+    animation: none;
+    opacity: 1;
+  }
+  .typed-caret {
+    display: none;
+  }
+}
+
+/* ================================================================== photos in a note */
+
+.note-photos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 28px 34px;
+  margin: 0 0 40px;
+  padding-top: 14px;
+}

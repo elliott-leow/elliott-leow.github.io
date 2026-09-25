@@ -1,10 +1,6 @@
-.vscode/
-.well-known/
-blog/
-functions/
-jhmi.jpg
-sf.jpg
-bg.png
-bg1.png
-extras.html
-.claude/
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store

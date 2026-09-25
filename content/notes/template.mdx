@@ -1,0 +1,76 @@
+This is a template. It uses everything a note can do, so there's something to copy from. Delete it once there's a real one.
+
+Plain paragraphs are typed. Things can be <Hl>highlighted</Hl>, <U>underlined</U>, <O>circled</O>, or <X>crossed out</X> (hover to read what was crossed out). There's also *italics*, **bold**, `inline code`, and [links](https://github.com/elliott-leow).
+
+<Pen>and a line in blue pen, for asides.</Pen>
+
+## a heading
+
+<Margin>margin notes sit out<br/>to the side of the page</Margin>
+
+Lists work too:
+
+- one thing
+- another thing
+- a third thing, which is a bit longer so you can see how it wraps onto the next line
+
+1. numbered
+2. lists
+3. too
+
+### a smaller heading
+
+> A quote gets a pen line down the left side.
+
+```
+code blocks look like a printout
+taped into the notebook
+```
+
+<Figure src="/photos/city.jpg" alt="City lights across a valley at night" caption="a taped-in picture, with a caption" width={380} />
+
+---
+
+## photos
+
+These are the photos that used to be on the front page. Each one is taped down and can be pulled on (or tapped, on a phone). Their pictures, captions, tilt and tape all live in `lib/content.ts`, under `photos`. In a note, use `<Photo id="city" width={220} />`.
+
+<div className="note-photos">
+  <Photo id="me" width={170} />
+  <Photo id="city" width={230} />
+  <Photo id="moon" width={170} />
+  <Photo id="dusk" width={110} />
+</div>
+
+To put them back on the front page, add this to `app/page.tsx`. The layout for all of it is still in `styles/page.css`, so nothing else needs to change.
+
+```
+// at the top
+import { links, photos } from '@/lib/content'
+import Photo from '@/components/Photo'
+import { DoodleArrow } from '@/components/Doodles'
+
+// first thing inside <div className="page">, where the comment is.
+// the intro moves over to make room for it on its own.
+<Photo photo={photos.me} width={196} className="pg-me" settleDelay={0.55} priority />
+
+// between the intro and the notes section
+<div className="pg-photos">
+  <Photo photo={photos.city} width={250} className="pg-city" settleDelay={3.5} />
+  <Photo photo={photos.moon} width={180} className="pg-moon" settleDelay={3.72} />
+  <Photo photo={photos.dusk} width={118} className="pg-dusk" settleDelay={3.94} />
+  <div className="pg-hint" aria-hidden>
+    <DoodleArrow variant="curve-up-right" width={34} ink="pencil" delay={4.5} />
+    <Hand ink="pencil" rotation={-3} delay={4.7}>
+      <span className="hint-mouse">pull one</span>
+      <span className="hint-touch">tap one</span>
+    </Hand>
+  </div>
+</div>
+```
+
+---
+
+<Sticky front="a sticky note">Click it to unfold. Anything can go inside.</Sticky>
+
+That's all of it.

@@ -1,0 +1,62 @@
+/* ================================================================== the paper */
+
+/* the whole window is the page: dotted paper edge to edge, with the content in an A4-wide column */
+.workspace {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: clamp(28px, 6vh, 64px) clamp(14px, 4vw, 64px) clamp(90px, 10vw, 130px);
+  display: flex;
+  justify-content: center;
+  background-color: var(--paper);
+  isolation: isolate;
+  overflow-x: clip;
+}
+.notebook {
+  position: relative;
+  animation: notebook-down 0.8s cubic-bezier(0.3, 0.8, 0.3, 1) both;
+  width: 100%;
+  max-width: 640px;
+}
+.sheet {
+  position: relative;
+  z-index: 3;
+  aspect-ratio: 210 / 297;
+  display: flex;
+  flex-direction: column;
+  padding: 52px var(--pad-x) 0;
+  isolation: isolate;
+}
+.sheet-texture {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('/textures/paper-grain.webp'), url('/textures/paper-grain.webp'),
+    radial-gradient(ellipse 30% 18% at 88% 6%, rgba(170, 130, 70, 0.1), transparent 70%),
+    radial-gradient(ellipse 40% 12% at 12% 96%, rgba(150, 120, 70, 0.08), transparent 70%),
+    radial-gradient(ellipse 20% 30% at 3% 40%, rgba(140, 110, 60, 0.06), transparent 70%);
+  background-size: 640px 640px, 1011px 1011px, 100% 1400px, 100% 100%, 100% 1800px;
+  background-position: 0 0, 217px 389px, 0 0, 0 0, 0 0;
+  background-repeat: repeat, repeat, no-repeat, no-repeat, repeat-y;
+  opacity: 0.55;
+}
+/* opened on your lap: a little above it at first, the shadow tightening as it lands */
+@keyframes notebook-down {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) rotate(-0.8deg) scale(1.015);
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+  }
+}
+.sheet-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding-bottom: 56px;
+}

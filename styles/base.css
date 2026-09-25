@@ -1,0 +1,155 @@
+/* ------------------------------------------------------------------ tokens */
+:root {
+  --paper: #f3eee1;
+  --paper-dark: #ebe5d8;
+  --paper-edge: #e2dac9;
+  --ink: #1f1e1c;
+  /* the typed voice (Plex Mono) prints in pure black */
+  --mono-ink: #000;
+  /* a paper-coloured halo, so the dot grid never cuts through the letters */
+  --mono-halo: 0 0 1px var(--paper), 0 0 2px var(--paper), 0 0 4px var(--paper);
+  --pencil: #66625c;
+  --faded-ink: #858078;
+  --blue-pen: #2c4674;
+  --red-pen: #c0432d;
+  --highlight: rgba(238, 213, 111, 0.45);
+  --highlight-pink: rgba(232, 150, 160, 0.32);
+  --highlight-green: rgba(160, 200, 140, 0.36);
+  --dot: rgba(70, 90, 100, 0.34);
+  --shu: #c23b22;
+  --tape: rgba(214, 196, 150, 0.8);
+
+  --shadow-rest: 0 2px 4px rgba(30, 25, 20, 0.12), 0 8px 18px rgba(30, 25, 20, 0.06);
+  --shadow-lift: 0 12px 24px rgba(30, 25, 20, 0.18), 0 3px 6px rgba(30, 25, 20, 0.1);
+
+  /* the pen voice: neat marker handwriting, for the name, links and headings */
+  --hand: var(--font-hand), 'Shantell Sans', 'Segoe Print', 'Bradley Hand', sans-serif;
+  --mono: var(--font-mono), 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --pad-x: clamp(18px, 6vw, 52px);
+  color-scheme: light;
+}
+
+/* ------------------------------------------------------------------ reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  overflow-x: hidden;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  scrollbar-color: rgba(70, 60, 50, 0.3) transparent;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.7;
+  /* nothing may hang past the window's edge, so the page can never be scrolled sideways */
+  overflow-x: hidden;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+a {
+  color: inherit;
+}
+p,
+h1,
+h2,
+h3,
+ul,
+ol,
+figure,
+dl,
+dd {
+  margin: 0;
+}
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+::selection {
+  background: var(--highlight);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 1.5px dashed var(--blue-pen);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ voices */
+.hand {
+  font-family: var(--hand);
+  font-weight: 500;
+  /* halfway between print and handwriting */
+  font-variation-settings: 'INFM' 50;
+  /* sizes around the site were set for a handwriting face with a small x-height; this keeps them in proportion */
+  font-size-adjust: 0.42;
+  line-height: 1.15;
+}
+.mono {
+  font-family: var(--mono);
+}
+.small {
+  font-size: 0.86em;
+}
+.tiny {
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.big {
+  font-size: 1.6em;
+}
+.ink-blue {
+  color: var(--blue-pen);
+}
+.ink-red {
+  color: var(--red-pen);
+}
+.ink-pencil {
+  color: var(--pencil);
+}
+.ink-ink {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
