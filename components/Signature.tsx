@@ -1,18 +1,19 @@
-'use client'
-
 /*
  * The signature from ../name_animation/index-v3.html: the name in Shantell Sans SemiBold
- * outlines, written in by a pen. Each letter is masked, and the mask is revealed by
- * a wide stroke running along the letter's centreline, in writing order. The pen keeps
- * one average speed across the word, eases in and out of each stroke, and pauses briefly
- * wherever it lifts. The "lead" layer runs 120ms ahead of the ink, which reads as wet ink
- * at the nib. Until the pen starts the canvas is empty, so it never flashes in finished.
+ * outlines, written in by a pen. Each letter is revealed by a wide stroke running along
+ * its centreline, in writing order. The pen keeps one average speed across the word, eases
+ * in and out of each stroke, and pauses briefly wherever it lifts. The "lead" layer runs
+ * 120ms ahead of the ink, which reads as wet ink at the nib.
  *
- * It's drawn on a canvas, one frame at a time, rather than as animated SVG masks: phones
- * re-rasterise every mask on the CPU each frame, which is what used to drop their frame rate.
- * Here each frame is a handful of clipped strokes, at whatever rate the display refreshes.
+ * Nothing here runs in JavaScript. Each stroke is cut, when the page is built, into short
+ * pieces a few milliseconds of pen travel long, each clipped to its letter, and each piece
+ * just fades in on cue with a CSS opacity animation. Opacity is the one thing every browser
+ * animates on the GPU, off the main thread, so the pen keeps moving at the display's full
+ * rate even while the page is still loading its scripts. (Animating the stroke itself, as a
+ * dash or a mask, has to be redrawn by the main thread every frame, and Safari stutters.)
  */
-import { useEffect, useRef } from 'react'
+import type { CSSProperties } from 'react'
+import SignatureReplay from './SignatureReplay'
 
 /** Shantell Sans SemiBold outlines, font units (1000/em, y up) */
 const glyphs = {
@@ -58,6 +59,10 @@ const strokes: [seg: string, width: number, lift: boolean, d: string][] = [
 const INK_LAG = 120
 const PEN_LIFT = 24
 const MIN_STROKE = 45
+/** how much pen travel, in ms, each piece covers. each one fades in over that time, so the nib moves smoothly between them */
+const PIECE_MS = 9
+/** a finished letter swaps to its crisp outline over this long */
+const SETTLE_MS = 16
 // a stroke that carries on without a lift keeps its speed through the join
 const EASE_IN = bezier(0.4, 0, 0.7, 0.7)
 const EASE_OUT = bezier(0.3, 0.3, 0.55, 1)
@@ -65,11 +70,8 @@ const EASE_BOTH = bezier(0.4, 0, 0.45, 1)
 
 /** the part of the word that's drawn, in the word's units: trimmed to the letters on the left and right */
 const VIEW = { x: 48, y: 60, w: 354, h: 150 }
-/** the pen colours, wet ink a moment ahead of the rest */
-const layers = [
-  { color: '#ffa500', lag: 0 },
-  { color: '#111', lag: INK_LAG },
-]
+const SCALE = 0.108
+const BASELINE = 185
 
 /** a CSS cubic-bezier() timing function, as a function of progress */
 function bezier(x1: number, y1: number, x2: number, y2: number) {
@@ -77,178 +79,224 @@ function bezier(x1: number, y1: number, x2: number, y2: number) {
   const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
   const X = (t: number) => ((ax * t + bx) * t + cx) * t
   const Y = (t: number) => ((ay * t + by) * t + cy) * t
-  const dX = (t: number) => (3 * ax * t + 2 * bx) * t + cx
   return (x: number) => {
     if (x <= 0) return 0
     if (x >= 1) return 1
-    let t = x
-    for (let i = 0; i < 8; i++) {
-      const e = X(t) - x
-      if (Math.abs(e) < 1e-6) return Y(t)
-      const d = dX(t)
-      if (Math.abs(d) < 1e-6) break
-      t -= e / d
-    }
     let lo = 0
     let hi = 1
-    t = x
-    while (hi - lo > 1e-6) {
+    for (let i = 0; i < 40; i++) {
+      const t = (lo + hi) / 2
       if (X(t) < x) lo = t
       else hi = t
-      t = (lo + hi) / 2
     }
-    return Y(t)
+    return Y((lo + hi) / 2)
   }
 }
 
-/** stroke lengths, measured once by the browser's own SVG geometry */
-let lengths: number[] | undefined
-function measure() {
-  if (lengths) return lengths
-  const ns = 'http://www.w3.org/2000/svg'
-  const svg = document.createElementNS(ns, 'svg')
-  svg.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden')
-  document.body.append(svg)
-  lengths = strokes.map(([, , , d]) => {
-    const p = document.createElementNS(ns, 'path')
-    p.setAttribute('d', d)
-    svg.append(p)
-    return p.getTotalLength()
-  })
-  svg.remove()
-  return lengths
+type Pt = [x: number, y: number]
+/** a path of absolute M, L, C and Z commands as a polyline, with the distance along it at each point */
+function flatten(d: string) {
+  const tok = d.match(/[MLCZ]|-?\d*\.?\d+/gi)!
+  const pts: Pt[] = []
+  const at: number[] = []
+  let i = 0
+  let cur: Pt = [0, 0]
+  let start: Pt = [0, 0]
+  let cmd = ''
+  const num = () => +tok[i++]
+  const push = (p: Pt, jump = false) => {
+    const last = pts[pts.length - 1]
+    at.push(!last || jump ? (at[at.length - 1] ?? 0) : at[at.length - 1] + Math.hypot(p[0] - last[0], p[1] - last[1]))
+    pts.push(p)
+  }
+  while (i < tok.length) {
+    if (/[a-z]/i.test(tok[i])) cmd = tok[i++].toUpperCase()
+    if (cmd === 'M') {
+      cur = start = [num(), num()]
+      push(cur, true)
+      cmd = 'L'
+    } else if (cmd === 'L') {
+      cur = [num(), num()]
+      push(cur)
+    } else if (cmd === 'C') {
+      const [x0, y0] = cur
+      const [x1, y1, x2, y2, x3, y3] = [num(), num(), num(), num(), num(), num()]
+      for (let k = 1; k <= 48; k++) {
+        const t = k / 48
+        const u = 1 - t
+        push([u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3, u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3])
+      }
+      cur = [x3, y3]
+    } else if (cmd === 'Z') {
+      cur = start
+      push(cur)
+      cmd = ''
+    } else i++
+  }
+  return { pts, at, length: at[at.length - 1] }
 }
+
+/** a box around the points of a polyline between two distances along it, grown by `pad` */
+function boxAlong({ pts, at }: ReturnType<typeof flatten>, from: number, to: number, pad: number): Box {
+  const lerp = (s: number): Pt => {
+    const k = Math.max(1, at.findIndex((a) => a >= s))
+    const f = at[k] === at[k - 1] ? 0 : (s - at[k - 1]) / (at[k] - at[k - 1])
+    return [pts[k - 1][0] + (pts[k][0] - pts[k - 1][0]) * f, pts[k - 1][1] + (pts[k][1] - pts[k - 1][1]) * f]
+  }
+  const inside = pts.filter((_, k) => at[k] > from && at[k] < to)
+  const all = [lerp(from), lerp(to), ...inside]
+  const xs = all.map((p) => p[0])
+  const ys = all.map((p) => p[1])
+  return { x0: Math.min(...xs) - pad, y0: Math.min(...ys) - pad, x1: Math.max(...xs) + pad, y1: Math.max(...ys) + pad }
+}
+
+/** a box in glyph units, placed at `x` in the word, as a box in the word's units */
+const toWord = (b: Box, x: number) => ({
+  x0: x + b.x0 * SCALE,
+  x1: x + b.x1 * SCALE,
+  y0: BASELINE - b.y1 * SCALE,
+  y1: BASELINE - b.y0 * SCALE,
+})
+const r = (n: number) => Math.round(n * 100) / 100
+type Box = { x0: number; y0: number; x1: number; y1: number }
+const WORD: Box = { x0: VIEW.x, y0: VIEW.y, x1: VIEW.x + VIEW.w, y1: VIEW.y + VIEW.h }
+/** absolutely placed inside `within` (both in the word's units), in % of it, showing that same part of the word */
+function frame(b: Box, within: Box = WORD) {
+  const x0 = Math.max(within.x0, b.x0)
+  const y0 = Math.max(within.y0, b.y0)
+  const x1 = Math.min(within.x1, b.x1)
+  const y1 = Math.min(within.y1, b.y1)
+  const w = within.x1 - within.x0
+  const h = within.y1 - within.y0
+  return {
+    box: { x0, y0, x1, y1 },
+    viewBox: `${r(x0)} ${r(y0)} ${r(x1 - x0)} ${r(y1 - y0)}`,
+    style: {
+      left: `${r(((x0 - within.x0) / w) * 100)}%`,
+      top: `${r(((y0 - within.y0) / h) * 100)}%`,
+      width: `${r(((x1 - x0) / w) * 100)}%`,
+      height: `${r(((y1 - y0) / h) * 100)}%`,
+    },
+  }
+}
+
+type Piece = { stroke: number; from: number; to: number; delay: number; duration: number }
+
+/** where and when every piece of every stroke is written, and when each letter is finished */
+function plan(duration: number) {
+  const pens = strokes.map(([, , , d]) => flatten(d))
+  const lengths = pens.map((p) => p.length)
+  // one average pen speed along the whole word (very short strokes get a minimum); lifts cost a fixed beat
+  const sum = lengths.reduce((a, b) => a + b, 0)
+  const writing = duration - INK_LAG - strokes.filter(([, , lift], i) => lift && i > 0).length * PEN_LIFT
+  const weights = lengths.map((l) => Math.max(l, (MIN_STROKE / writing) * sum))
+  const totalWeight = weights.reduce((a, b) => a + b, 0)
+  let cursor = 0
+  const pieces: Piece[] = []
+  const done: Record<string, number> = {}
+  strokes.forEach(([seg, , lift], i) => {
+    if (lift && i > 0) cursor += PEN_LIFT
+    const d = (weights[i] / totalWeight) * writing
+    const joinsNext = strokes[i + 1] && !strokes[i + 1][2]
+    const joinedPrev = i > 0 && !lift
+    const ease = joinsNext ? EASE_IN : joinedPrev ? EASE_OUT : EASE_BOTH
+    // cut evenly in time, so the pen's easing carries over into where each cut falls
+    const n = Math.max(1, Math.round(d / PIECE_MS))
+    for (let k = 0; k < n; k++) {
+      pieces.push({ stroke: i, from: ease(k / n), to: ease((k + 1) / n), delay: cursor + (k * d) / n, duration: d / n })
+    }
+    cursor += d
+    done[seg] = cursor
+  })
+  return { pens, pieces, done }
+}
+
+const glyphBoxes = Object.fromEntries(
+  Object.entries(glyphs).map(([g, d]) => {
+    const { pts } = flatten(d)
+    const xs = pts.map((p) => p[0])
+    const ys = pts.map((p) => p[1])
+    return [g, { x0: Math.min(...xs) - 4, y0: Math.min(...ys) - 4, x1: Math.max(...xs) + 4, y1: Math.max(...ys) + 4 }]
+  }),
+) as Record<keyof typeof glyphs, Box>
+
+const ms = (n: number) => `${Math.round(n * 10) / 10}ms`
+const t = (delay: number, duration?: number) =>
+  ({ '--d': `calc(var(--sig-delay) + ${ms(delay)})`, ...(duration !== undefined && { '--t': ms(duration) }) }) as CSSProperties
 
 type Props = { delay?: number; duration?: number; className?: string; replayable?: boolean }
 
 export default function Signature({ delay = 400, duration = 1250, className, replayable = true }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const play = useRef<() => void>(() => {})
+  const { pens, pieces, done } = plan(duration)
+  const place = (x: number) => `translate(${x} ${BASELINE}) scale(${SCALE} ${-SCALE})`
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)')
-    const glyph = Object.fromEntries(Object.entries(glyphs).map(([g, d]) => [g, new Path2D(d)])) as Record<keyof typeof glyphs, Path2D>
-    const pens = strokes.map(([, , , d]) => new Path2D(d))
-    const len = measure()
+  // each letter's outline, as a mask: the pieces inside are plain pen strokes, and the letter's edge
+  // comes from this one shape rather than from every piece's own clip, so the pieces can't show seams
+  const letters = Object.fromEntries(
+    marks.map(([seg, g, x]) => {
+      const f = frame(toWord(glyphBoxes[g], x))
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${f.viewBox}" preserveAspectRatio="none"><path transform="${place(x)}" d="${glyphs[g]}"/></svg>`
+      const mask = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+      return [seg, { ...f, mask, x }]
+    }),
+  )
 
-    // one average pen speed along the whole word (very short strokes get a minimum); lifts cost a fixed beat
-    const sum = len.reduce((a, b) => a + b, 0)
-    const writing = duration - INK_LAG - strokes.filter(([, , lift], i) => lift && i > 0).length * PEN_LIFT
-    const weights = len.map((l) => Math.max(l, (MIN_STROKE / writing) * sum))
-    const totalWeight = weights.reduce((a, b) => a + b, 0)
-    let cursor = 0
-    const timeline = strokes.map(([, , lift], i) => {
-      if (lift && i > 0) cursor += PEN_LIFT
-      const d = (weights[i] / totalWeight) * writing
-      const joinsNext = strokes[i + 1] && !strokes[i + 1][2]
-      const joinedPrev = i > 0 && !lift
-      const t = { delay: cursor, duration: d, ease: joinsNext ? EASE_IN : joinedPrev ? EASE_OUT : EASE_BOTH }
-      cursor += d
-      return t
+  const layer = (name: 'lead' | 'ink', lag: number) =>
+    marks.map(([seg]) => {
+      const { box, style, mask, x } = letters[seg]
+      return (
+        // the pieces of one letter, put away once its crisp outline is down
+        <div
+          key={`${name}-${seg}`}
+          className={`sig-letter sig-${name}`}
+          style={{ ...style, maskImage: mask, WebkitMaskImage: mask, ...t(done[seg] + INK_LAG + SETTLE_MS) }}
+        >
+          {pieces.map((p, k) => {
+            const [s, width] = strokes[p.stroke]
+            if (s !== seg) return null
+            const L = pens[p.stroke].length
+            const f = frame(toWord(boxAlong(pens[p.stroke], p.from * L, p.to * L, width / 2 + 6), x), box)
+            return (
+              <svg key={k} className="sig-piece" viewBox={f.viewBox} preserveAspectRatio="none" style={{ ...f.style, ...t(p.delay + lag, p.duration) }} aria-hidden>
+                <use
+                  href={`#sig-stroke-${p.stroke}`}
+                  transform={place(x)}
+                  strokeDasharray={`${r((p.to - p.from) * 1000)} 2000`}
+                  strokeDashoffset={r(-p.from * 1000)}
+                />
+              </svg>
+            )
+          })}
+        </div>
+      )
     })
-    const end = cursor + INK_LAG
-    const bySegment = marks.map(([seg]) => strokes.flatMap(([s], i) => (s === seg ? [i] : [])))
 
-    /** the word as it stands `t` ms after the pen starts */
-    const draw = (t: number) => {
-      const sx = canvas.width / VIEW.w
-      const sy = canvas.height / VIEW.h
-      ctx.setTransform(1, 0, 0, 1, 0, 0)
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      for (const [l, { color, lag }] of layers.entries()) {
-        ctx.fillStyle = ctx.strokeStyle = color
-        marks.forEach(([, g, x], m) => {
-          const progress = (i: number, lag: number) => timeline[i].ease((t - lag - timeline[i].delay) / timeline[i].duration)
-          const p = bySegment[m].map((i) => progress(i, lag))
-          if (p.every((v) => v <= 0)) return
-          // under a finished letter the wet ink would only show as a fringe round its edge
-          if (l === 0 && bySegment[m].every((i) => progress(i, INK_LAG) >= 1)) return
-          ctx.setTransform(sx, 0, 0, sy, -VIEW.x * sx, -VIEW.y * sy)
-          ctx.transform(0.108, 0, 0, -0.108, x, 185)
-          // once a letter's last stroke lands, the whole glyph shows crisply
-          if (p.every((v) => v >= 1)) return ctx.fill(glyph[g])
-          ctx.save()
-          ctx.clip(glyph[g])
-          bySegment[m].forEach((i, k) => {
-            if (p[k] <= 0) return
-            ctx.lineWidth = strokes[i][1]
-            ctx.setLineDash([len[i], len[i]])
-            ctx.lineDashOffset = len[i] * (1 - p[k])
-            ctx.stroke(pens[i])
-          })
-          ctx.restore()
-        })
-      }
-    }
-
-    let frame = 0
-    let start = 0
-    let now = -Infinity
-
-    // the backing store follows the canvas's size on screen, in device pixels, so the ink stays sharp
-    let dpr = 0
-    let unwatch = () => {}
-    const resize = () => {
-      if (dpr !== window.devicePixelRatio) {
-        // zooming or moving to another screen changes the pixel ratio without changing the layout
-        unwatch()
-        dpr = window.devicePixelRatio || 1
-        const mq = matchMedia(`(resolution: ${dpr}dppx)`)
-        mq.addEventListener('change', resize)
-        unwatch = () => mq.removeEventListener('change', resize)
-      }
-      const w = Math.round(canvas.clientWidth * dpr)
-      const h = Math.round(canvas.clientHeight * dpr)
-      if (!w || !h || (w === canvas.width && h === canvas.height)) return
-      canvas.width = w
-      canvas.height = h
-      draw(now)
-    }
-    const ro = new ResizeObserver(resize)
-    ro.observe(canvas)
-
-    const tick = (time: number) => {
-      now = time - start
-      draw(now)
-      frame = now < end ? requestAnimationFrame(tick) : 0
-    }
-
-    const run = (startDelay: number) => {
-      cancelAnimationFrame(frame)
-      if (reduce.matches) {
-        now = Infinity
-        return draw(now)
-      }
-      start = performance.now() + startDelay
-      now = -Infinity
-      draw(now)
-      frame = requestAnimationFrame(tick)
-    }
-
-    play.current = () => run(0)
-    run(delay)
-    return () => {
-      cancelAnimationFrame(frame)
-      ro.disconnect()
-      unwatch()
-    }
-  }, [delay, duration])
+  const body = (
+    <>
+      <svg className="sig-defs" aria-hidden>
+        <defs>
+          {strokes.map(([, width, , d], i) => (
+            <path key={i} id={`sig-stroke-${i}`} d={d} pathLength={1000} strokeWidth={width} />
+          ))}
+        </defs>
+      </svg>
+      {layer('lead', 0)}
+      {layer('ink', INK_LAG)}
+      {/* each letter, once written, as one crisp outline */}
+      {marks.map(([seg, g, x]) => {
+        const f = frame(toWord(glyphBoxes[g], x))
+        return (
+          <svg key={seg} className="sig-glyph" viewBox={f.viewBox} preserveAspectRatio="none" style={{ ...f.style, ...t(done[seg] + INK_LAG, SETTLE_MS) }} aria-hidden>
+            <path d={glyphs[g]} transform={place(x)} />
+          </svg>
+        )
+      })}
+    </>
+  )
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={`signature ${className ?? ''}`}
-      width={VIEW.w}
-      height={VIEW.h}
-      role="img"
-      aria-label="Elliott."
-      onClick={replayable ? () => play.current() : undefined}
-      data-interactive={replayable || undefined}
-    />
+    <SignatureReplay className={`signature ${className ?? ''}`} delay={delay} duration={duration} replayable={replayable}>
+      {body}
+    </SignatureReplay>
   )
 }

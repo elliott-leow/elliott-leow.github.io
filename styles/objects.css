@@ -420,11 +420,75 @@
 /* ================================================================== signature */
 
 .signature {
+  position: relative;
   display: block;
   width: 100%;
-  height: auto;
   aspect-ratio: 354 / 150;
+  --sig-delay: 0ms;
 }
 .signature[data-interactive] {
   cursor: pointer;
+}
+.sig-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.sig-letter {
+  position: absolute;
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  /* the static state is the finished one: the pieces are put away under the crisp letters */
+  opacity: 0;
+  animation: sig-out 1ms linear var(--d) both;
+}
+.signature[data-written] .sig-letter {
+  display: none;
+}
+.sig-lead {
+  color: #ffa500;
+}
+/* the wet ink at the nib, a moment ahead of the rest */
+.sig-ink {
+  color: #111;
+}
+.sig-piece,
+.sig-glyph {
+  position: absolute;
+  overflow: visible;
+  animation: sig-in var(--t) linear var(--d) both;
+}
+.sig-piece {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sig-glyph {
+  fill: #111;
+}
+@keyframes sig-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sig-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sig-letter,
+  .sig-piece,
+  .sig-glyph {
+    animation: none;
+  }
 }

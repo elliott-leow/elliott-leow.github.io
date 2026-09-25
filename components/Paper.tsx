@@ -5,10 +5,11 @@
  * one "Card" with variants: a sticky note, an index card and a torn scrap are
  * different objects and behave differently.
  */
-import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef, useState, type CSSProperties, type ElementType, type ReactNode } from 'react'
 import { paperSpring, penEase } from '@/lib/motion'
 import { Tape } from './Photo'
+import Wipe from './Wipe'
 import type { Tape as TapeData } from '@/lib/content'
 
 type Pos = { rotation?: number; className?: string; style?: CSSProperties }
@@ -31,11 +32,6 @@ export function Depth({ speed = 0.97, children, className, style }: { speed?: nu
 /* ---------------------------------------------------------------- handwriting */
 
 /** handwriting that gets written left to right the first time you see it */
-/**
- * The visibility check watches the unclipped outer element; only the inner span is
- * clipped. (An element clipped to zero width can't be relied on to report itself
- * as visible to IntersectionObserver.)
- */
 export function Hand({
   as: Tag = 'span',
   children,
@@ -57,23 +53,15 @@ export function Hand({
   rotation?: number
   ink?: 'blue' | 'red' | 'pencil' | 'ink'
 }) {
-  const reduce = useReducedMotion()
-  const ref = useRef<HTMLElement>(null)
-  const seen = useInView(ref, { once: true, margin: '0px 0px -6% 0px' })
   const s: CSSProperties = { ...style, rotate: rotation ? `${rotation}deg` : undefined }
   const cls = `hand ${ink ? `ink-${ink}` : ''} ${className ?? ''}`
   const T = Tag as ElementType
-  if (!write || reduce) return <T className={cls} style={s}>{children}</T>
+  if (!write) return <T className={cls} style={s}>{children}</T>
   return (
-    <T ref={ref} className={cls} style={s}>
-      <motion.span
-        className="hand-write"
-        initial={{ clipPath: 'inset(-20% 100% -30% -2%)' }}
-        animate={seen ? { clipPath: 'inset(-20% -4% -30% -2%)' } : undefined}
-        transition={{ delay, duration, ease: penEase }}
-      >
+    <T className={cls} style={s}>
+      <Wipe className="hand-write" delay={delay} duration={duration}>
         {children}
-      </motion.span>
+      </Wipe>
     </T>
   )
 }

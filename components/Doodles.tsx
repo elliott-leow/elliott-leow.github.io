@@ -7,6 +7,7 @@
 import { motion, useReducedMotion } from 'motion/react'
 import type { CSSProperties, ReactNode } from 'react'
 import { penEase } from '@/lib/motion'
+import Wipe from './Wipe'
 
 type Ink = 'ink' | 'blue' | 'red' | 'pencil' | 'faded'
 const inkVar: Record<Ink, string> = {
@@ -147,11 +148,19 @@ const underlines = [
   'M2 7 C 40 10, 80 4, 120 8 C 134 9, 146 7, 158 5',
   'M4 8 C 50 4, 100 11, 156 6 M 20 13 C 60 10, 110 14, 140 11',
 ]
+/** an underline is near enough level that sweeping it in reads as drawing it, and a sweep runs on the GPU */
 export function DoodleUnderline({ variant = 0, ...p }: Base & { variant?: 0 | 1 | 2 }) {
   return (
-    <Svg viewBox="0 0 160 16" width={p.width ?? 140} strokeWidth={p.strokeWidth ?? 2.2} stretch {...p} style={{ ...p.style }}>
-      <Stroke d={underlines[variant]} delay={p.delay} duration={p.duration ?? 0.42} immediate={p.immediate} />
-    </Svg>
+    <Wipe
+      className={`doodle-wipe ${p.className ?? ''}`}
+      style={{ ...p.style, rotate: p.rotation ? `${p.rotation}deg` : undefined }}
+      delay={p.delay}
+      duration={p.duration ?? 0.42}
+    >
+      <Svg viewBox="0 0 160 16" width={p.width ?? 140} strokeWidth={p.strokeWidth ?? 2.2} stretch ink={p.ink}>
+        <path d={underlines[variant]} />
+      </Svg>
+    </Wipe>
   )
 }
 
