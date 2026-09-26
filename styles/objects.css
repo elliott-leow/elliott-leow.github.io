@@ -424,71 +424,31 @@
   display: block;
   width: 100%;
   aspect-ratio: 354 / 150;
-  --sig-delay: 0ms;
 }
 .signature[data-interactive] {
   cursor: pointer;
 }
-.sig-defs {
+.sig-canvas,
+.sig-video-slot,
+.sig-video {
   position: absolute;
-  width: 0;
-  height: 0;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
-.sig-letter {
-  position: absolute;
-  mask-size: 100% 100%;
-  -webkit-mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-  -webkit-mask-repeat: no-repeat;
-  /* the static state is the finished one: the pieces are put away under the crisp letters */
-  opacity: 0;
-  animation: sig-out 1ms linear var(--d) both;
-}
-.signature[data-written] .sig-letter {
+.sig-video-slot[hidden] {
   display: none;
 }
-.sig-lead {
-  color: #ffa500;
+.sig-video {
+  object-fit: fill;
+  pointer-events: none;
 }
-/* the wet ink at the nib, a moment ahead of the rest */
-.sig-ink {
-  color: #111;
+/* never a play button over it, even where autoplay is refused */
+.sig-video::-webkit-media-controls-start-playback-button,
+.sig-video::-webkit-media-controls {
+  display: none !important;
+  -webkit-appearance: none;
 }
-.sig-piece,
-.sig-glyph {
-  position: absolute;
-  overflow: visible;
-  animation: sig-in var(--t) linear var(--d) both;
-}
-.sig-piece {
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.sig-glyph {
-  fill: #111;
-}
-@keyframes sig-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes sig-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .sig-letter,
-  .sig-piece,
-  .sig-glyph {
-    animation: none;
-  }
-}
+
+
