@@ -23,7 +23,7 @@
   width: 260%;
   mask-image: linear-gradient(118deg, #000 44%, transparent 56%);
   transform: translateX(calc(100% * 16 / 26));
-  animation: rules-sweep 1.2s cubic-bezier(0.45, 0.1, 0.3, 1) both;
+  animation: rules-sweep 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) both;
 }
 .rules-dots {
   position: absolute;
@@ -36,7 +36,7 @@
   /* on the same dots the A4 sheet had, so the content sits on the grid as before */
   background-position: calc(50% - 8px) calc(clamp(28px, 6vh, 64px) + 28px);
   transform: translateX(-160%);
-  animation: rules-hold 1.2s cubic-bezier(0.45, 0.1, 0.3, 1) both;
+  animation: rules-hold 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) both;
 }
 @keyframes rules-sweep {
   from {
@@ -165,7 +165,7 @@
   vertical-align: -0.15em;
   background: var(--blue-pen);
   opacity: 0;
-  animation: blink 0.45s linear var(--d) 2 forwards;
+  animation: blink 0.35s linear var(--d) 4 forwards;
 }
 @keyframes ch-in {
   from {
@@ -267,11 +267,12 @@
   rotate: 1.5deg;
 }
 .pg-links li {
-  animation: ink-appear 0.4s ease-out both;
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
-@keyframes ink-appear {
+@keyframes rise {
   from {
     opacity: 0;
+    transform: translateY(8px);
   }
 }
 .ink-link {
@@ -307,6 +308,7 @@
 .ink-link-icon path {
   stroke-dasharray: 1 2;
   animation: icon-draw 0.45s cubic-bezier(0.55, 0.05, 0.35, 1) both;
+  animation-delay: calc(var(--k) * 0.22s);
 }
 @keyframes icon-draw {
   from {
@@ -347,12 +349,7 @@
   /* takes the width the name and links give it, and never widens the page itself */
   contain: inline-size;
   margin: 30px 0 0 4px;
-}
-/* All entrance effects begin together, including before hydration. */
-.pg-notes-h,
-.pg-notes .note-index,
-.pg-notes-all {
-  animation: ink-appear 0.4s ease-out both;
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 .pg-notes-h {
   display: block;
@@ -462,6 +459,7 @@
 @keyframes page-in {
   from {
     opacity: 0.3;
+    transform: translateX(14px);
   }
 }
 
@@ -749,9 +747,7 @@
 @media (prefers-reduced-motion: reduce) {
   .typed-ch,
   .page-in,
-  .pg-notes-h,
-  .pg-notes .note-index,
-  .pg-notes-all,
+  .pg-notes,
   .pg-links li,
   .ink-link-icon path,
   .rules-sweep,

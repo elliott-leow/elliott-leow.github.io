@@ -2,7 +2,7 @@
 
 /*
  * Hand-drawn marks. Every path here was drawn to wobble a little, and every one
- * draws itself once when the page loads.
+ * can draw itself the first time it scrolls into view (once, never again).
  */
 import { motion, useReducedMotion } from 'motion/react'
 import type { CSSProperties, ReactNode } from 'react'
@@ -25,7 +25,7 @@ type Base = {
   delay?: number
   duration?: number
   strokeWidth?: number
-  /** Retained for existing note markup; all marks now draw on mount. */
+  /** draw on mount instead of when scrolled into view */
   immediate?: boolean
   className?: string
   style?: CSSProperties
@@ -36,6 +36,7 @@ function Stroke({
   i = 0,
   delay = 0,
   duration = 0.5,
+  immediate,
 }: {
   d: string
   i?: number
@@ -48,7 +49,11 @@ function Stroke({
   const t = { pathLength: { delay: delay + i * duration * 0.85, duration, ease: penEase }, opacity: { delay: delay + i * duration * 0.85, duration: 0.01 } }
   // note: no vector-effect here. Chrome gets pathLength dashes wrong with non-scaling-stroke
   const common = { d, initial: { pathLength: 0, opacity: 0 }, transition: t }
-  return <motion.path {...common} animate={{ pathLength: 1, opacity: 1 }} />
+  return immediate ? (
+    <motion.path {...common} animate={{ pathLength: 1, opacity: 1 }} />
+  ) : (
+    <motion.path {...common} whileInView={{ pathLength: 1, opacity: 1 }} viewport={{ once: true, margin: '0px 0px -12% 0px' }} />
+  )
 }
 
 function Svg({
@@ -181,7 +186,8 @@ export function CrossOut({ children, ink = 'red', delay = 0 }: { children: React
       <motion.span
         className={`crossout-line crossout-line--${k}`}
         initial={{ clipPath: 'inset(0 100% 0 0)' }}
-        animate={{ clipPath: 'inset(0 0% 0 0)' }}
+        whileInView={{ clipPath: 'inset(0 0% 0 0)' }}
+        viewport={{ once: true }}
         transition={{ delay: delay + k * 0.28, duration: 0.32, ease: penEase }}
       />
     )
@@ -205,7 +211,8 @@ export function Highlight({ children, delay = 0, tone = 'yellow' }: { children: 
         className="highlight-ink"
         aria-hidden
         initial={reduce ? false : { scaleX: 0 }}
-        animate={{ scaleX: 1 }}
+        whileInView={{ scaleX: 1 }}
+        viewport={{ once: true, margin: '0px 0px -15% 0px' }}
         transition={{ delay, duration: 0.5, ease: [0.3, 0.1, 0.3, 1] }}
       />
       <span className="highlight-text">{children}</span>

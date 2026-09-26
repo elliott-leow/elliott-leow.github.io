@@ -34,7 +34,7 @@ export default function Home() {
       </ul>
 
       <section className="pg-notes" aria-labelledby="notes-h">
-        <Hand as="h2" className="pg-notes-h" write={false}>
+        <Hand as="h2" className="pg-notes-h">
           <span id="notes-h">notes</span>
         </Hand>
         <NoteIndex limit={3} compact />

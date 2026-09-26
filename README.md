@@ -35,7 +35,7 @@ same every time it's opened.
 ## How it works
 
 - **Opening**: the notebook, paper lines, signature, typing, links and notes begin
-  together. Entrance animations finish within 1.5 seconds; the typing cursor
+  together. Entrance animations finish within 2 seconds; the typing cursor
   stops in that window too.
 - **Sky**: `components/Sky.tsx`. Follows the visitor's clock (dawn, day, dusk,
   night); the footer's "sky" button cycles it. Clouds are generated on load from
