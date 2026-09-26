@@ -1,37 +1,24 @@
-'use client'
-
 /*
  * The signature from ../name_animation/index-v3.html: the name in Shantell Sans SemiBold
- * outlines, written in by a pen. Each letter is masked, and the mask is revealed by
- * a wide stroke running along the letter's centreline, in writing order. The pen keeps
- * one average speed across the word, eases in and out of each stroke, and pauses briefly
- * wherever it lifts. The "lead" layer runs 120ms ahead of the ink, which reads as wet ink
- * at the nib. Until the pen starts nothing shows, so it never flashes in finished.
+ * outlines, written in by a pen, with the orange "wet ink" running 120ms ahead of the black.
  *
- * Safari (and every browser on an iPhone, which are all Safari underneath) plays it as a
- * video: public/signature.mov, the same animation rendered frame by frame at 60fps, with
- * a transparent background. Video is decoded and shown by the system, not the page, so it
- * plays smoothly even while the page is still starting up, which is exactly when Safari
- * drops frames from anything the page draws itself. It's added by a tiny inline script as
- * the HTML arrives, so it doesn't wait for the page's scripts either. Once it ends, the
- * canvas takes over with the finished word, drawn crisply.
+ * It's played back from frames rather than drawn live. The original animation (an SVG with
+ * a mask per letter, revealed by wide pen strokes) was rendered at 60fps and 3x size, and
+ * for each frame only what changed since the last one was kept: a patch that, laid over the
+ * frame before, makes that frame exactly. The patches are packed into one image,
+ * public/signature-frames.png, and each is a plain element that switches on at its moment
+ * with a CSS opacity animation.
  *
- * Everywhere else, and in Safari if it won't autoplay (an iPhone in Low Power Mode), the
- * canvas draws it one frame at a time.
+ * That's deliberate. An opacity animation is played by the system compositor, on its own,
+ * which keeps it smooth everywhere, including an iPhone in Low Power Mode. Drawing the pen
+ * live needs the page to redraw every frame, and Low Power Mode throttles exactly that
+ * (and won't autoplay a video either). The typed line under the name works the same way.
  *
- * To change the animation, change it here and re-render the video: see scripts/signature/.
+ * Once the last frame is up, the letters themselves take over, as vectors, so the name stays
+ * crisp at any zoom. To change the animation, see scripts/signature/.
  */
-import { useEffect, useRef } from 'react'
-
-const VIDEO = '/signature.mov'
-/** the video starts with this much blank lead-in, the pause before the pen starts on first load */
-const VIDEO_LEAD = 0.25
-
-/** Safari's engine: the one that can play a video with a transparent background */
-const APPLE = "navigator.vendor === 'Apple Computer, Inc.'"
-const REDUCE = "matchMedia('(prefers-reduced-motion: reduce)').matches"
-/** runs as the HTML is parsed, before any of the page's scripts: puts the video in its slot so it can start at once */
-const SLOT = `<script>(function(){if(!(${APPLE})||${REDUCE})return;var v=document.createElement('video');v.className='sig-video';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.autoplay=true;v.preload='auto';v.setAttribute('playsinline','');v.setAttribute('aria-hidden','true');v.src='${VIDEO}';document.currentScript.parentNode.appendChild(v)})()</script>`
+import type { CSSProperties } from 'react'
+import SignatureReplay from './SignatureReplay'
 
 /** Shantell Sans SemiBold outlines, font units (1000/em, y up) */
 const glyphs = {
@@ -54,257 +41,138 @@ const marks: [seg: string, glyph: keyof typeof glyphs, x: number][] = [
   ['t2', 't', 326.09],
   ['period', 'period', 375.01],
 ]
+const place = (x: number) => `translate(${x} 185) scale(0.108 -0.108)`
 
-const L = 'M150 690C140 520 126 340 128 220C130 110 165 52 215 52C240 52 255 62 265 66'
-const T_STEM = 'M150 650C145 500 128 330 128 230C128 110 190 50 280 50C330 50 360 68 385 78'
-const T_CROSS = 'M175 430C240 440 320 450 385 452'
-/** pen centrelines in glyph font units, in writing order: [segment, nib width, pen lift before, path] */
-const strokes: [seg: string, width: number, lift: boolean, d: string][] = [
-  ['e', 105, true, 'M200 224C290 222 390 245 432 300'],
-  ['e', 140, false, 'M432 300C460 345 452 410 405 438C360 460 290 462 240 440C150 400 100 300 105 200C110 90 190 45 280 44C360 44 440 80 495 125'],
-  ['l1', 150, true, L],
-  ['l2', 150, true, L],
-  ['i', 160, true, 'M148 440L143 55'],
-  ['i', 170, true, 'M132 672L164 648'],
-  ['o', 165, true, 'M300 446C230 450 150 400 118 320C90 240 110 120 200 70C260 38 360 38 430 80C510 130 540 240 510 330C480 410 400 450 320 446C285 445 250 405 228 365'],
-  ['t1', 155, true, T_STEM],
-  ['t1', 150, true, T_CROSS],
-  ['t2', 155, true, T_STEM],
-  ['t2', 150, true, T_CROSS],
-  ['period', 170, true, 'M132 88L162 64'],
+/** the frames: 1062x450, 60fps, starting with the pause before the pen (see LEAD) */
+const W = 1062
+const H = 450
+const FPS = 60
+/** the frames begin with this much blank paper, the pause before the pen starts on first load */
+const LEAD = 250
+/** the packed patches, public/signature-frames.png */
+const ATLAS = { src: '/signature-frames.png', w: 2048, h: 959 }
+/** [frame, x, y, w, h, x in the atlas, y in the atlas], in the frames' pixels */
+const patches: [k: number, x: number, y: number, w: number, h: number, ax: number, ay: number][] = [
+  [16, 30, 281, 65, 41, 196, 906],
+  [17, 76, 265, 63, 56, 1694, 809],
+  [18, 102, 218, 55, 98, 1709, 686],
+  [19, 45, 203, 100, 55, 1761, 809],
+  [20, 0, 213, 79, 93, 1938, 686],
+  [21, 0, 252, 72, 117, 209, 686],
+  [22, 20, 331, 89, 53, 0, 906],
+  [23, 30, 281, 118, 102, 1405, 686],
+  [24, 70, 270, 99, 100, 1527, 686],
+  [25, 102, 229, 69, 117, 285, 686],
+  [26, 42, 203, 112, 115, 489, 686],
+  [27, 4, 123, 248, 170, 366, 505],
+  [28, 0, 159, 252, 199, 870, 265],
+  [29, 8, 199, 239, 185, 1126, 265],
+  [30, 79, 290, 180, 93, 0, 809],
+  [31, 117, 315, 167, 69, 740, 809],
+  [32, 140, 312, 143, 41, 265, 906],
+  [33, 0, 203, 171, 181, 1369, 265],
+  [34, 197, 123, 159, 75, 439, 809],
+  [35, 194, 156, 161, 110, 1095, 686],
+  [36, 190, 187, 162, 163, 995, 505],
+  [37, 190, 269, 189, 115, 605, 686],
+  [38, 208, 330, 180, 54, 1865, 809],
+  [39, 190, 123, 94, 261, 0, 0],
+  [40, 404, 205, 60, 64, 1234, 809],
+  [41, 301, 123, 163, 217, 413, 265],
+  [42, 296, 165, 166, 219, 243, 265],
+  [43, 294, 219, 56, 116, 429, 686],
+  [44, 297, 129, 165, 255, 277, 0],
+  [45, 347, 133, 121, 251, 725, 0],
+  [46, 294, 123, 175, 261, 98, 0],
+  [47, 404, 134, 60, 131, 1577, 505],
+  [48, 404, 204, 205, 119, 0, 686],
+  [49, 405, 205, 174, 177, 0, 505],
+  [50, 413, 219, 163, 165, 828, 505],
+  [51, 399, 129, 177, 240, 1804, 0],
+  [52, 411, 133, 230, 251, 850, 0],
+  [53, 437, 135, 239, 236, 0, 265],
+  [54, 399, 129, 275, 255, 446, 0],
+  [55, 544, 204, 70, 59, 1552, 809],
+  [56, 529, 205, 50, 74, 602, 809],
+  [57, 496, 214, 80, 74, 656, 809],
+  [58, 490, 256, 75, 99, 1630, 686],
+  [59, 511, 139, 249, 245, 1551, 0],
+  [60, 599, 173, 161, 208, 705, 265],
+  [61, 595, 201, 166, 97, 1768, 686],
+  [62, 589, 206, 184, 171, 178, 505],
+  [63, 546, 252, 275, 133, 1298, 505],
+  [64, 538, 264, 293, 115, 798, 686],
+  [65, 490, 204, 186, 180, 1776, 265],
+  [66, 748, 210, 24, 52, 93, 906],
+  [67, 706, 139, 106, 124, 1728, 505],
+  [68, 700, 190, 132, 90, 303, 809],
+  [69, 699, 248, 67, 117, 358, 686],
+  [70, 721, 139, 189, 246, 1084, 0],
+  [71, 789, 174, 121, 209, 580, 265],
+  [72, 848, 209, 63, 106, 1338, 686],
+  [73, 849, 252, 83, 131, 1641, 505],
+  [74, 748, 204, 228, 181, 1544, 265],
+  [75, 775, 203, 206, 169, 618, 505],
+  [76, 699, 139, 133, 246, 1277, 0],
+  [77, 856, 139, 68, 124, 1838, 505],
+  [78, 855, 172, 115, 91, 184, 809],
+  [79, 848, 146, 133, 152, 1161, 505],
+  [80, 848, 270, 74, 107, 1260, 686],
+  [81, 887, 316, 171, 69, 911, 809],
+  [82, 944, 322, 118, 63, 1430, 809],
+  [83, 992, 320, 70, 65, 1160, 809],
+  [84, 897, 210, 24, 52, 121, 906],
+  [85, 897, 204, 64, 59, 1626, 809],
+  [86, 938, 203, 43, 50, 149, 906],
+  [87, 848, 139, 133, 246, 1414, 0],
+  [88, 992, 316, 65, 64, 1298, 809],
+  [89, 1003, 321, 59, 64, 1367, 809],
+  [90, 992, 316, 70, 69, 1086, 809],
 ]
 
-const INK_LAG = 120
-const PEN_LIFT = 24
-const MIN_STROKE = 45
-// a stroke that carries on without a lift keeps its speed through the join
-const EASE_IN = bezier(0.4, 0, 0.7, 0.7)
-const EASE_OUT = bezier(0.3, 0.3, 0.55, 1)
-const EASE_BOTH = bezier(0.4, 0, 0.45, 1)
+const pc = (n: number) => `${Math.round(n * 10000) / 10000}%`
+const at = (ms: number) => ({ '--d': `calc(var(--sig-t0) + ${Math.round(ms * 100) / 100}ms)` }) as CSSProperties
+const last = Math.max(...patches.map(([k]) => k))
+/** the finished letters go down a frame after the last patch, and the patches are put away a frame after that */
+const SETTLED = ((last + 1) * 1000) / FPS
+const CLEARED = ((last + 2) * 1000) / FPS
 
-/** the part of the word that's drawn, in the word's units: trimmed to the letters on the left and right */
-const VIEW = { x: 48, y: 60, w: 354, h: 150 }
-/** the pen colours, wet ink a moment ahead of the rest */
-const layers = [
-  { color: '#ffa500', lag: 0 },
-  { color: '#111', lag: INK_LAG },
-]
-
-/** a CSS cubic-bezier() timing function, as a function of progress */
-function bezier(x1: number, y1: number, x2: number, y2: number) {
-  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx
-  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
-  const X = (t: number) => ((ax * t + bx) * t + cx) * t
-  const Y = (t: number) => ((ay * t + by) * t + cy) * t
-  const dX = (t: number) => (3 * ax * t + 2 * bx) * t + cx
-  return (x: number) => {
-    if (x <= 0) return 0
-    if (x >= 1) return 1
-    let t = x
-    for (let i = 0; i < 8; i++) {
-      const e = X(t) - x
-      if (Math.abs(e) < 1e-6) return Y(t)
-      const d = dX(t)
-      if (Math.abs(d) < 1e-6) break
-      t -= e / d
-    }
-    let lo = 0
-    let hi = 1
-    t = x
-    while (hi - lo > 1e-6) {
-      if (X(t) < x) lo = t
-      else hi = t
-      t = (lo + hi) / 2
-    }
-    return Y(t)
-  }
-}
-
-/** stroke lengths, measured once by the browser's own SVG geometry */
-let lengths: number[] | undefined
-function measure() {
-  if (lengths) return lengths
-  const ns = 'http://www.w3.org/2000/svg'
-  const svg = document.createElementNS(ns, 'svg')
-  svg.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden')
-  document.body.append(svg)
-  lengths = strokes.map(([, , , d]) => {
-    const p = document.createElementNS(ns, 'path')
-    p.setAttribute('d', d)
-    svg.append(p)
-    return p.getTotalLength()
-  })
-  svg.remove()
-  return lengths
-}
-
-type Props = { delay?: number; duration?: number; className?: string; replayable?: boolean }
-
-export default function Signature({ delay = 400, duration = 1250, className, replayable = true }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const slotRef = useRef<HTMLDivElement>(null)
-  const play = useRef<() => void>(() => {})
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)')
-    const glyph = Object.fromEntries(Object.entries(glyphs).map(([g, d]) => [g, new Path2D(d)])) as Record<keyof typeof glyphs, Path2D>
-    const pens = strokes.map(([, , , d]) => new Path2D(d))
-    const len = measure()
-
-    // one average pen speed along the whole word (very short strokes get a minimum); lifts cost a fixed beat
-    const sum = len.reduce((a, b) => a + b, 0)
-    const writing = duration - INK_LAG - strokes.filter(([, , lift], i) => lift && i > 0).length * PEN_LIFT
-    const weights = len.map((l) => Math.max(l, (MIN_STROKE / writing) * sum))
-    const totalWeight = weights.reduce((a, b) => a + b, 0)
-    let cursor = 0
-    const timeline = strokes.map(([, , lift], i) => {
-      if (lift && i > 0) cursor += PEN_LIFT
-      const d = (weights[i] / totalWeight) * writing
-      const joinsNext = strokes[i + 1] && !strokes[i + 1][2]
-      const joinedPrev = i > 0 && !lift
-      const t = { delay: cursor, duration: d, ease: joinsNext ? EASE_IN : joinedPrev ? EASE_OUT : EASE_BOTH }
-      cursor += d
-      return t
-    })
-    const end = cursor + INK_LAG
-    const bySegment = marks.map(([seg]) => strokes.flatMap(([s], i) => (s === seg ? [i] : [])))
-
-    /** the word as it stands `t` ms after the pen starts */
-    const draw = (t: number) => {
-      const sx = canvas.width / VIEW.w
-      const sy = canvas.height / VIEW.h
-      ctx.setTransform(1, 0, 0, 1, 0, 0)
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      for (const [l, { color, lag }] of layers.entries()) {
-        ctx.fillStyle = ctx.strokeStyle = color
-        marks.forEach(([, g, x], m) => {
-          const progress = (i: number, lag: number) => timeline[i].ease((t - lag - timeline[i].delay) / timeline[i].duration)
-          const p = bySegment[m].map((i) => progress(i, lag))
-          if (p.every((v) => v <= 0)) return
-          // under a finished letter the wet ink would only show as a fringe round its edge
-          if (l === 0 && bySegment[m].every((i) => progress(i, INK_LAG) >= 1)) return
-          ctx.setTransform(sx, 0, 0, sy, -VIEW.x * sx, -VIEW.y * sy)
-          ctx.transform(0.108, 0, 0, -0.108, x, 185)
-          // once a letter's last stroke lands, the whole glyph shows crisply
-          if (p.every((v) => v >= 1)) return ctx.fill(glyph[g])
-          ctx.save()
-          ctx.clip(glyph[g])
-          bySegment[m].forEach((i, k) => {
-            if (p[k] <= 0) return
-            ctx.lineWidth = strokes[i][1]
-            ctx.setLineDash([len[i], len[i]])
-            ctx.lineDashOffset = len[i] * (1 - p[k])
-            ctx.stroke(pens[i])
-          })
-          ctx.restore()
-        })
-      }
-    }
-
-    let frame = 0
-    let start = 0
-    let now = -Infinity
-
-    // the backing store follows the canvas's size on screen, in device pixels, so the ink stays sharp
-    let dpr = 0
-    let unwatch = () => {}
-    const resize = () => {
-      if (dpr !== window.devicePixelRatio) {
-        // zooming or moving to another screen changes the pixel ratio without changing the layout
-        unwatch()
-        dpr = window.devicePixelRatio || 1
-        const mq = matchMedia(`(resolution: ${dpr}dppx)`)
-        mq.addEventListener('change', resize)
-        unwatch = () => mq.removeEventListener('change', resize)
-      }
-      const w = Math.round(canvas.clientWidth * dpr)
-      const h = Math.round(canvas.clientHeight * dpr)
-      if (!w || !h || (w === canvas.width && h === canvas.height)) return
-      canvas.width = w
-      canvas.height = h
-      draw(now)
-    }
-    const ro = new ResizeObserver(resize)
-    ro.observe(canvas)
-
-    const tick = (time: number) => {
-      now = time - start
-      draw(now)
-      frame = now < end ? requestAnimationFrame(tick) : 0
-    }
-
-    const run = (startDelay: number) => {
-      cancelAnimationFrame(frame)
-      if (reduce.matches) {
-        now = Infinity
-        return draw(now)
-      }
-      start = performance.now() + startDelay
-      now = -Infinity
-      draw(now)
-      frame = requestAnimationFrame(tick)
-    }
-
-    // Safari: play the video, then hand over to the canvas with the finished word
-    const slot = slotRef.current!
-    let video = slot.querySelector('video')
-    const onCanvas = (startDelay: number) => {
-      video?.remove()
-      video = null
-      play.current = () => run(0)
-      run(startDelay)
-    }
-    const finished = () => {
-      now = Infinity
-      draw(now)
-      slot.hidden = true
-    }
-    if (navigator.vendor === 'Apple Computer, Inc.' && !reduce.matches) {
-      if (!video) {
-        // put in again after the page is turned, when the inline script doesn't run
-        video = document.createElement('video')
-        Object.assign(video, { className: 'sig-video', muted: true, defaultMuted: true, playsInline: true, preload: 'auto', src: VIDEO })
-        video.setAttribute('aria-hidden', 'true')
-        slot.append(video)
-      }
-      const v = video
-      v.addEventListener('ended', finished)
-      // shown again only once it's really playing, so a replay never flashes the finished word first
-      v.addEventListener('playing', () => (slot.hidden = false))
-      if (v.ended) finished()
-      else if (v.paused) v.play().catch(() => onCanvas(delay))
-      play.current = () => {
-        now = -Infinity
-        draw(now)
-        slot.hidden = true
-        v.currentTime = VIDEO_LEAD
-        v.play().catch(() => onCanvas(0))
-      }
-    } else onCanvas(delay)
-
-    return () => {
-      cancelAnimationFrame(frame)
-      ro.disconnect()
-      unwatch()
-    }
-  }, [delay, duration])
-
+export default function Signature({ className, replayable = true }: { className?: string; replayable?: boolean }) {
   return (
-    <div
-      className={`signature ${className ?? ''}`}
-      role="img"
-      aria-label="Elliott."
-      onClick={replayable ? () => play.current() : undefined}
-      data-interactive={replayable || undefined}
-    >
-      <canvas ref={canvasRef} className="sig-canvas" width={VIEW.w} height={VIEW.h} />
-      {/* left to the inline script and the effect above; React never touches what's inside */}
-      <div ref={slotRef} className="sig-video-slot" dangerouslySetInnerHTML={{ __html: SLOT }} suppressHydrationWarning />
-    </div>
+    <SignatureReplay className={`signature ${className ?? ''}`} lead={LEAD} settled={CLEARED} replayable={replayable}>
+      <div className="sig-frames" style={at(CLEARED)}>
+        {patches.map(([k, x, y, w, h, ax, ay]) => (
+          <div
+            key={k}
+            className="sig-patch"
+            style={{
+              left: pc((x / W) * 100),
+              top: pc((y / H) * 100),
+              width: pc((w / W) * 100),
+              height: pc((h / H) * 100),
+              backgroundImage: `url(${ATLAS.src})`,
+              backgroundSize: `${pc((ATLAS.w / w) * 100)} ${pc((ATLAS.h / h) * 100)}`,
+              backgroundPosition: `${pc(ATLAS.w === w ? 0 : (ax / (ATLAS.w - w)) * 100)} ${pc(ATLAS.h === h ? 0 : (ay / (ATLAS.h - h)) * 100)}`,
+              ...at((k * 1000) / FPS),
+            }}
+          />
+        ))}
+      </div>
+      {/* the word as the original leaves it: every letter unmasked, the wet ink under the black */}
+      <svg className="sig-final" viewBox="48 60 354 150" style={at(SETTLED)} aria-hidden>
+        <defs>
+          {Object.entries(glyphs).map(([g, d]) => (
+            <path key={g} id={`sig-g-${g}`} d={d} />
+          ))}
+        </defs>
+        {['#ffa500', '#111'].map((fill) => (
+          <g key={fill} fill={fill}>
+            {marks.map(([seg, g, x]) => (
+              <use key={seg} href={`#sig-g-${g}`} transform={place(x)} />
+            ))}
+          </g>
+        ))}
+      </svg>
+    </SignatureReplay>
   )
 }

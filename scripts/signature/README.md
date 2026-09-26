@@ -1,19 +1,24 @@
-# The signature video
+# The signature frames
 
-`public/signature.mov` is the "elliott." animation from `components/Signature.tsx`, rendered
-frame by frame at 60fps and 3× size, with a transparent background (HEVC with alpha). Safari
-plays it instead of drawing the animation live; see the comment at the top of the component.
+`public/signature-frames.png` holds the "elliott." animation as patches: the original SVG-mask
+animation rendered at 60fps and 3× size (1062×450) on a transparent background, and for each
+frame only what has to be laid over the frame before to make it. `components/Signature.tsx`
+lists where each patch goes and when it switches on. See the comment at the top of that file for
+why it's played back this way (it stays smooth even in iPhone Low Power Mode).
 
-`render.html` draws the original SVG-mask version of the animation at any moment you ask for.
-If the glyphs, strokes or timing in the component change, copy them into it, then:
+`render.html` draws the original animation at any moment you ask for. If the glyphs, strokes or
+timing change, change them there, then (needs Google Chrome):
 
 ```sh
-mkdir -p /tmp/sig-frames
-# 60fps, with 250ms of blank lead-in (the delay the home page gives it)
-node scripts/signature/frames.mjs "file://$PWD/scripts/signature/render.html" /tmp/sig-frames 60 250
-swiftc -O scripts/signature/encode.swift -o /tmp/sig-encode
-/tmp/sig-encode /tmp/sig-frames public/signature.mov 60 0
+python3 -m http.server 8710 -d scripts/signature &      # tiles.html reads the frames over http
+mkdir -p scripts/signature/fa
+# 60fps, starting with 250ms of blank paper (the pause before the pen on first load)
+node scripts/signature/frames.mjs "file://$PWD/scripts/signature/render.html" scripts/signature/fa 60 250
+node scripts/signature/tiles.mjs http://localhost:8710/tiles.html /tmp/signature-atlas
+cp /tmp/signature-atlas.png public/signature-frames.png
+rm -r scripts/signature/fa
 ```
 
-`frames.mjs` needs Google Chrome; `encode.swift` needs macOS (it uses AVFoundation). If the
-lead-in changes, change `VIDEO_LEAD` in the component to match.
+Then copy the size and the patch list from `/tmp/signature-atlas.json` into `ATLAS` and `patches`
+in the component (each patch is `[frame, x, y, w, h, ax, ay]`). If the frame count changes, change
+`N` in `tiles.html` to match what `frames.mjs` prints.

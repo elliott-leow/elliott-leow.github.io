@@ -424,31 +424,58 @@
   display: block;
   width: 100%;
   aspect-ratio: 354 / 150;
+  --sig-t0: 0ms;
 }
 .signature[data-interactive] {
   cursor: pointer;
 }
-.sig-canvas,
-.sig-video-slot,
-.sig-video {
+.sig-frames,
+.sig-final {
   position: absolute;
   inset: 0;
-  display: block;
   width: 100%;
   height: 100%;
 }
-.sig-video-slot[hidden] {
+/* each patch switches on at its frame; the patches all go once the finished letters are down */
+.sig-frames {
+  opacity: 0;
+  animation: sig-off 1ms linear var(--d) both;
+}
+.signature[data-written] .sig-frames {
   display: none;
 }
-.sig-video {
-  object-fit: fill;
-  pointer-events: none;
+.sig-patch {
+  position: absolute;
+  background-repeat: no-repeat;
+  animation: sig-on 1ms linear var(--d) both;
 }
-/* never a play button over it, even where autoplay is refused */
-.sig-video::-webkit-media-controls-start-playback-button,
-.sig-video::-webkit-media-controls {
-  display: none !important;
-  -webkit-appearance: none;
+.sig-final {
+  display: block;
+  overflow: visible;
+  animation: sig-on 1ms linear var(--d) both;
+}
+@keyframes sig-on {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sig-off {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sig-frames,
+  .sig-patch,
+  .sig-final {
+    animation: none;
+  }
 }
 
 

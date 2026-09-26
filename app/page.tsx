@@ -12,7 +12,7 @@ export default function Home() {
       <div className="pg-intro">
         <h1 className="sr-only">Elliott Leow</h1>
         <div className="pg-name">
-          <Signature delay={250} />
+          <Signature />
         </div>
         <Typed className="mono pg-line" text="almost done with undergrad." delay={500} speed={20} />
       </div>
