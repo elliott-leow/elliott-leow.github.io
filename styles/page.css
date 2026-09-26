@@ -293,6 +293,13 @@
 .ink-link-text {
   position: relative;
 }
+/* Reveal each label in pen, on the same clock as the other links.
+   Keep the hover underline outside the reveal so it is never clipped. */
+.ink-link-label {
+  --wipe-d: 0s;
+  --wipe-t: 1.2s;
+  vertical-align: top;
+}
 .ink-link-icon {
   flex: none;
   width: 22px;

@@ -61,7 +61,9 @@ export function InkLink({ href, children, i = 0, icon }: { href: string; childre
         </svg>
       )}
       <span className="ink-link-text">
-        {children}
+        <span className="ink-link-label wipe is-seen">
+          <span className="wipe-clip"><span className="wipe-in">{children}</span></span>
+        </span>
         <svg className="ink-link-line" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden>
           <path d={scribbles[i % scribbles.length]} pathLength={1} />
         </svg>
