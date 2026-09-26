@@ -63,3 +63,12 @@ same every time it's opened.
 
 Photos in `public/photos/` are from the old site, resized. The textures in
 `public/textures/` (paper grain, pencil, paperclip) were generated with `gpt-image-2`, then cropped and compressed.
+
+## Music
+
+`components/Music.tsx` reuses the template's taped Polaroid for current Spotify
+album art, with the song title and artist beside it. The static site polls a separate
+Cloudflare Worker; Spotify credentials never enter the site bundle. See
+[`services/spotify/README.md`](services/spotify/README.md) for authorization,
+local development, and deployment. The public endpoint URL is supplied through
+`NEXT_PUBLIC_SPOTIFY_ENDPOINT` at build time.

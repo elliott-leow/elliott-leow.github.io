@@ -3,6 +3,7 @@ import Signature from '@/components/Signature'
 import { Hand } from '@/components/Paper'
 import { InkLink, Typed } from '@/components/Ink'
 import NoteIndex from '@/components/NoteIndex'
+import Music from '@/components/Music'
 import Link from 'next/link'
 
 export default function Home() {
@@ -16,6 +17,8 @@ export default function Home() {
         </div>
         <Typed className="mono pg-line" text="almost done with undergrad." speed={20} />
       </div>
+
+      <Music />
 
       <ul className="pg-links">
         <li>
