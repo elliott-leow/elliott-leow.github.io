@@ -14,7 +14,7 @@ export default function Home() {
         <div className="pg-name">
           <Signature />
         </div>
-        <Typed className="mono pg-line" text="almost done with undergrad." delay={500} speed={20} />
+        <Typed className="mono pg-line" text="almost done with undergrad." delay={1550} speed={20} />
       </div>
 
       <ul className="pg-links">
@@ -34,7 +34,7 @@ export default function Home() {
       </ul>
 
       <section className="pg-notes" aria-labelledby="notes-h">
-        <Hand as="h2" className="pg-notes-h" delay={0.9}>
+        <Hand as="h2" className="pg-notes-h" write={false}>
           <span id="notes-h">notes</span>
         </Hand>
         <NoteIndex limit={3} compact />

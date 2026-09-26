@@ -267,21 +267,20 @@
   rotate: 1.5deg;
 }
 .pg-links li {
-  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: ink-appear 0.4s ease-out var(--li-d) both;
 }
 .pg-links li:nth-child(1) {
-  animation-delay: 1.1s;
+  --li-d: 2.15s;
 }
 .pg-links li:nth-child(2) {
-  animation-delay: 1.2s;
+  --li-d: 2.27s;
 }
 .pg-links li:nth-child(3) {
-  animation-delay: 1.3s;
+  --li-d: 2.39s;
 }
-@keyframes rise {
+@keyframes ink-appear {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
 }
 .ink-link {
@@ -317,13 +316,7 @@
 .ink-link-icon path {
   stroke-dasharray: 1 2;
   animation: icon-draw 0.45s cubic-bezier(0.55, 0.05, 0.35, 1) both;
-  animation-delay: calc(var(--li-d, 1.1s) + 0.15s + var(--k) * 0.22s);
-}
-.pg-links li:nth-child(2) {
-  --li-d: 1.2s;
-}
-.pg-links li:nth-child(3) {
-  --li-d: 1.3s;
+  animation-delay: calc(var(--li-d, 0s) + var(--k) * 0.08s);
 }
 @keyframes icon-draw {
   from {
@@ -364,9 +357,18 @@
   /* takes the width the name and links give it, and never widens the page itself */
   contain: inline-size;
   margin: 30px 0 0 4px;
-  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.8s both;
+}
+/* A single CSS clock keeps the heading ahead of its contents, including before hydration. */
+.pg-notes-h,
+.pg-notes .note-index,
+.pg-notes-all {
+  animation: ink-appear 0.4s ease-out both;
+}
+.pg-notes .note-index {
+  animation-delay: 2.8s;
 }
 .pg-notes-h {
+  animation-delay: 2.65s;
   display: block;
   width: max-content;
   font-size: 32px;
@@ -374,6 +376,7 @@
   margin-bottom: 6px;
 }
 .pg-notes-all {
+  animation-delay: 2.95s;
   display: inline-block;
   margin-top: 8px;
   font-size: 21px;
@@ -474,7 +477,6 @@
 @keyframes page-in {
   from {
     opacity: 0.3;
-    transform: translateX(14px);
   }
 }
 
@@ -696,7 +698,7 @@
 @media (max-width: 760px) {
   .page,
   .page:has(> .pg-me) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .pg-me {
     margin: 0;
@@ -762,7 +764,9 @@
 @media (prefers-reduced-motion: reduce) {
   .typed-ch,
   .page-in,
-  .pg-notes,
+  .pg-notes-h,
+  .pg-notes .note-index,
+  .pg-notes-all,
   .pg-links li,
   .ink-link-icon path,
   .rules-sweep,

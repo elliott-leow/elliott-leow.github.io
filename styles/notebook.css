@@ -17,6 +17,7 @@
   animation: notebook-down 0.8s cubic-bezier(0.3, 0.8, 0.3, 1) both;
   width: 100%;
   max-width: 640px;
+  min-width: 0;
 }
 .sheet {
   position: relative;
@@ -41,17 +42,16 @@
   background-repeat: repeat, repeat, no-repeat, no-repeat, repeat-y;
   opacity: 0.55;
 }
-/* opened on your lap: a little above it at first, the shadow tightening as it lands */
+/* Let the paper appear without moving the content against its own reveals. */
 @keyframes notebook-down {
   from {
     opacity: 0;
-    transform: translateY(-14px) rotate(-0.8deg) scale(1.015);
   }
   35% {
     opacity: 1;
   }
   to {
-    transform: none;
+    opacity: 1;
   }
 }
 .sheet-body {
