@@ -131,16 +131,36 @@ const patches: [k: number, x: number, y: number, w: number, h: number, ax: numbe
 ]
 
 const pc = (n: number) => `${Math.round(n * 10000) / 10000}%`
-const at = (ms: number) => ({ '--d': `calc(var(--sig-t0) + ${Math.round(ms * 100) / 100}ms)` }) as CSSProperties
 const last = Math.max(...patches.map(([k]) => k))
 /** the finished letters go down a frame after the last patch, and the patches are put away a frame after that */
 const SETTLED = ((last + 1) * 1000) / FPS
 const CLEARED = ((last + 2) * 1000) / FPS
+/** every animation here runs this long, from the same moment */
+const TOTAL = CLEARED + 100
+
+/*
+ * Everything starts together, when the page loads, and each part's keyframes hold it until its
+ * moment. Nothing waits on a delay: Safari only starts a delayed animation on one of the page's
+ * own updates, and in Low Power Mode it makes those only about 30 times a second, so seventy-odd
+ * delayed starts would step along at that rate. Keyframes are timed by the compositor instead,
+ * at the display's own rate.
+ */
+const step = (name: string, ms: number, from: number, to: number) => {
+  const at = Math.min(100, (ms / TOTAL) * 100)
+  return `@keyframes ${name}{0%,${pc(Math.max(0, at - 0.01))}{opacity:${from}}${pc(at)},100%{opacity:${to}}}`
+}
+const KEYFRAMES = [
+  ...patches.map(([k]) => step(`sig-p${k}`, (k * 1000) / FPS, 0, 1)),
+  step('sig-settle', SETTLED, 0, 1),
+  step('sig-clear', CLEARED, 1, 0),
+].join('')
+const run = (name: string) => ({ animationName: name, animationDuration: `${TOTAL}ms` }) as CSSProperties
 
 export default function Signature({ className, replayable = true }: { className?: string; replayable?: boolean }) {
   return (
     <SignatureReplay className={`signature ${className ?? ''}`} lead={LEAD} settled={CLEARED} replayable={replayable}>
-      <div className="sig-frames" style={at(CLEARED)}>
+      <style>{KEYFRAMES}</style>
+      <div className="sig-frames" style={run('sig-clear')}>
         {patches.map(([k, x, y, w, h, ax, ay]) => (
           <div
             key={k}
@@ -153,13 +173,13 @@ export default function Signature({ className, replayable = true }: { className?
               backgroundImage: `url(${ATLAS.src})`,
               backgroundSize: `${pc((ATLAS.w / w) * 100)} ${pc((ATLAS.h / h) * 100)}`,
               backgroundPosition: `${pc(ATLAS.w === w ? 0 : (ax / (ATLAS.w - w)) * 100)} ${pc(ATLAS.h === h ? 0 : (ay / (ATLAS.h - h)) * 100)}`,
-              ...at((k * 1000) / FPS),
+              ...run(`sig-p${k}`),
             }}
           />
         ))}
       </div>
       {/* the word as the original leaves it: every letter unmasked, the wet ink under the black */}
-      <svg className="sig-final" viewBox="48 60 354 150" style={at(SETTLED)} aria-hidden>
+      <svg className="sig-final" viewBox="48 60 354 150" style={run('sig-settle')} aria-hidden>
         <defs>
           {Object.entries(glyphs).map(([g, d]) => (
             <path key={g} id={`sig-g-${g}`} d={d} />
