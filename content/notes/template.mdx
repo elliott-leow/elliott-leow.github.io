@@ -52,16 +52,16 @@ import { DoodleArrow } from '@/components/Doodles'
 
 // first thing inside <div className="page">, where the comment is.
 // the intro moves over to make room for it on its own.
-<Photo photo={photos.me} width={196} className="pg-me" settleDelay={0.55} priority />
+<Photo photo={photos.me} width={196} className="pg-me" settleDelay={0} priority />
 
 // between the intro and the notes section
 <div className="pg-photos">
-  <Photo photo={photos.city} width={250} className="pg-city" settleDelay={3.5} />
-  <Photo photo={photos.moon} width={180} className="pg-moon" settleDelay={3.72} />
-  <Photo photo={photos.dusk} width={118} className="pg-dusk" settleDelay={3.94} />
+  <Photo photo={photos.city} width={250} className="pg-city" settleDelay={0} />
+  <Photo photo={photos.moon} width={180} className="pg-moon" settleDelay={0} />
+  <Photo photo={photos.dusk} width={118} className="pg-dusk" settleDelay={0} />
   <div className="pg-hint" aria-hidden>
-    <DoodleArrow variant="curve-up-right" width={34} ink="pencil" delay={4.5} />
-    <Hand ink="pencil" rotation={-3} delay={4.7}>
+    <DoodleArrow variant="curve-up-right" width={34} ink="pencil" />
+    <Hand ink="pencil" rotation={-3}>
       <span className="hint-mouse">pull one</span>
       <span className="hint-touch">tap one</span>
     </Hand>

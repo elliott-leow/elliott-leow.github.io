@@ -11,7 +11,6 @@
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
 import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { Photo as PhotoData, Tape as TapeData } from '@/lib/content'
-import { settleSpring } from '@/lib/motion'
 
 export function Tape({ t }: { t: TapeData }) {
   return (
@@ -36,7 +35,7 @@ type Props = {
   width: number
   className?: string
   style?: CSSProperties
-  /** entrance: settle onto the page after this many seconds */
+  /** Enable the entrance settle; retained for existing note markup. All entrances start together. */
   settleDelay?: number
   priority?: boolean
 }
@@ -108,7 +107,7 @@ export default function Photo({ photo, width, className, style, settleDelay, pri
         style={{ rotate }}
         initial={settle ? { opacity: 0, y: -30, scale: 1.08 } : false}
         animate={settle ? { opacity: 1, y: 0, scale: 1 } : undefined}
-        transition={settle ? { ...settleSpring, delay: settleDelay, opacity: { duration: 0.2, delay: settleDelay } } : undefined}
+        transition={settle ? { type: 'tween', duration: 0.6, opacity: { duration: 0.2 } } : undefined}
         onPointerEnter={(e) => e.pointerType === 'mouse' && !reduce && lift.set(1)}
         onPointerLeave={() => lift.set(0)}
         onPointerDown={(e) => {
@@ -172,7 +171,7 @@ export default function Photo({ photo, width, className, style, settleDelay, pri
             className="tape-wrap"
             initial={settle ? { opacity: 0, scale: 0.85 } : false}
             animate={settle ? { opacity: 1, scale: 1 } : undefined}
-            transition={settle ? { delay: (settleDelay ?? 0) + 0.28 + i * 0.12, duration: 0.18 } : undefined}
+            transition={settle ? { duration: 0.18 } : undefined}
           >
             <Tape t={t} />
           </motion.span>

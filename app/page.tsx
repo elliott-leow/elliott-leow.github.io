@@ -14,7 +14,7 @@ export default function Home() {
         <div className="pg-name">
           <Signature />
         </div>
-        <Typed className="mono pg-line" text="almost done with undergrad." delay={1550} speed={20} />
+        <Typed className="mono pg-line" text="almost done with undergrad." speed={20} />
       </div>
 
       <ul className="pg-links">

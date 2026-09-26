@@ -47,7 +47,7 @@ const place = (x: number) => `translate(${x} 185) scale(0.108 -0.108)`
 const W = 1062
 const H = 450
 const FPS = 60
-/** the frames begin with this much blank paper, the pause before the pen starts on first load */
+/** Trim the original blank lead-in so the pen starts with the other entrance effects. */
 const LEAD = 250
 /** the packed patches, public/signature-frames.png */
 const ATLAS = { src: '/signature-frames.png', w: 2048, h: 959 }
@@ -133,8 +133,8 @@ const patches: [k: number, x: number, y: number, w: number, h: number, ax: numbe
 const pc = (n: number) => `${Math.round(n * 10000) / 10000}%`
 const last = Math.max(...patches.map(([k]) => k))
 /** the finished letters go down a frame after the last patch, and the patches are put away a frame after that */
-const SETTLED = ((last + 1) * 1000) / FPS
-const CLEARED = ((last + 2) * 1000) / FPS
+const SETTLED = ((last + 1) * 1000) / FPS - LEAD
+const CLEARED = ((last + 2) * 1000) / FPS - LEAD
 /** every animation here runs this long, from the same moment */
 const TOTAL = CLEARED + 100
 
@@ -150,7 +150,7 @@ const step = (name: string, ms: number, from: number, to: number) => {
   return `@keyframes ${name}{0%,${pc(Math.max(0, at - 0.01))}{opacity:${from}}${pc(at)},100%{opacity:${to}}}`
 }
 const KEYFRAMES = [
-  ...patches.map(([k]) => step(`sig-p${k}`, (k * 1000) / FPS, 0, 1)),
+  ...patches.map(([k]) => step(`sig-p${k}`, (k * 1000) / FPS - LEAD, 0, 1)),
   step('sig-settle', SETTLED, 0, 1),
   step('sig-clear', CLEARED, 1, 0),
 ].join('')
@@ -158,7 +158,7 @@ const run = (name: string) => ({ animationName: name, animationDuration: `${TOTA
 
 export default function Signature({ className, replayable = true }: { className?: string; replayable?: boolean }) {
   return (
-    <SignatureReplay className={`signature ${className ?? ''}`} lead={LEAD} settled={CLEARED} replayable={replayable}>
+    <SignatureReplay className={`signature ${className ?? ''}`} lead={0} settled={CLEARED} replayable={replayable}>
       <style>{KEYFRAMES}</style>
       <div className="sig-frames" style={run('sig-clear')}>
         {patches.map(([k, x, y, w, h, ax, ay]) => (

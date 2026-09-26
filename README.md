@@ -34,10 +34,9 @@ same every time it's opened.
 
 ## How it works
 
-- **Opening**: the notebook drifts in and keeps gently floating, the dot grid
-  sweeps across the page, the photo settles and gets taped down, the signature is
-  written, a line is typed, then
-  the other photos land. Everything runs once, in about 5 seconds.
+- **Opening**: the notebook, paper lines, signature, typing, links and notes begin
+  together. Entrance animations finish within 1.5 seconds; the typing cursor
+  stops in that window too.
 - **Sky**: `components/Sky.tsx`. Follows the visitor's clock (dawn, day, dusk,
   night); the footer's "sky" button cycles it. Clouds are generated on load from
   tiling fractal noise and drift in three layers; the sun or moon glow and the

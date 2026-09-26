@@ -32,7 +32,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         <Hand as="h1" className="note-page-title" duration={0.8}>
           {meta.title}
         </Hand>
-        <DoodleUnderline width={180} ink="red" variant={1} delay={0.6} />
+        <DoodleUnderline width={180} ink="red" variant={1} />
       </header>
       <div className={`note-body ${meta.style}`}>
         <Body />

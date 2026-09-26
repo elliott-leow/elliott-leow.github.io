@@ -190,7 +190,7 @@ export function MarginNote({
   className,
   style,
   hidden,
-  delay = 0.2,
+  delay = 0,
 }: Pos & { children: ReactNode; side?: 'left' | 'right'; hidden?: boolean; delay?: number }) {
   const reduce = useReducedMotion()
   return (
@@ -198,8 +198,7 @@ export function MarginNote({
       className={`margin-note margin-note--${side} ${hidden ? 'is-hidden' : ''} hand ${className ?? ''}`}
       style={{ ...style, rotate: rotation }}
       initial={reduce || hidden ? false : { opacity: 0, x: side === 'right' ? -6 : 6 }}
-      whileInView={reduce || hidden ? undefined : { opacity: 1, x: 0 }}
-      viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+      animate={reduce || hidden ? undefined : { opacity: 1, x: 0 }}
       transition={{ delay, duration: 0.4, ease: penEase }}
       tabIndex={hidden ? 0 : undefined}
     >

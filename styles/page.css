@@ -23,7 +23,7 @@
   width: 260%;
   mask-image: linear-gradient(118deg, #000 44%, transparent 56%);
   transform: translateX(calc(100% * 16 / 26));
-  animation: rules-sweep 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) 0.2s both;
+  animation: rules-sweep 1.2s cubic-bezier(0.45, 0.1, 0.3, 1) both;
 }
 .rules-dots {
   position: absolute;
@@ -36,7 +36,7 @@
   /* on the same dots the A4 sheet had, so the content sits on the grid as before */
   background-position: calc(50% - 8px) calc(clamp(28px, 6vh, 64px) + 28px);
   transform: translateX(-160%);
-  animation: rules-hold 1.8s cubic-bezier(0.45, 0.1, 0.3, 1) 0.2s both;
+  animation: rules-hold 1.2s cubic-bezier(0.45, 0.1, 0.3, 1) both;
 }
 @keyframes rules-sweep {
   from {
@@ -165,7 +165,7 @@
   vertical-align: -0.15em;
   background: var(--blue-pen);
   opacity: 0;
-  animation: blink 1.05s linear var(--d) 4 forwards;
+  animation: blink 0.45s linear var(--d) 2 forwards;
 }
 @keyframes ch-in {
   from {
@@ -267,16 +267,7 @@
   rotate: 1.5deg;
 }
 .pg-links li {
-  animation: ink-appear 0.4s ease-out var(--li-d) both;
-}
-.pg-links li:nth-child(1) {
-  --li-d: 2.15s;
-}
-.pg-links li:nth-child(2) {
-  --li-d: 2.27s;
-}
-.pg-links li:nth-child(3) {
-  --li-d: 2.39s;
+  animation: ink-appear 0.4s ease-out both;
 }
 @keyframes ink-appear {
   from {
@@ -316,7 +307,6 @@
 .ink-link-icon path {
   stroke-dasharray: 1 2;
   animation: icon-draw 0.45s cubic-bezier(0.55, 0.05, 0.35, 1) both;
-  animation-delay: calc(var(--li-d, 0s) + var(--k) * 0.08s);
 }
 @keyframes icon-draw {
   from {
@@ -358,17 +348,13 @@
   contain: inline-size;
   margin: 30px 0 0 4px;
 }
-/* A single CSS clock keeps the heading ahead of its contents, including before hydration. */
+/* All entrance effects begin together, including before hydration. */
 .pg-notes-h,
 .pg-notes .note-index,
 .pg-notes-all {
   animation: ink-appear 0.4s ease-out both;
 }
-.pg-notes .note-index {
-  animation-delay: 2.8s;
-}
 .pg-notes-h {
-  animation-delay: 2.65s;
   display: block;
   width: max-content;
   font-size: 32px;
@@ -376,7 +362,6 @@
   margin-bottom: 6px;
 }
 .pg-notes-all {
-  animation-delay: 2.95s;
   display: inline-block;
   margin-top: 8px;
   font-size: 21px;

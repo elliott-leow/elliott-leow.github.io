@@ -16,7 +16,7 @@ export default function Notes() {
         <Hand as="h1" className="page-title">
           notes
         </Hand>
-        <DoodleUnderline width={110} ink="blue" variant={2} delay={0.4} />
+        <DoodleUnderline width={110} ink="blue" variant={2} />
       </header>
       <NoteIndex />
     </div>
