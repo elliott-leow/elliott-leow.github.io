@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Photo from './Photo'
-import { Hand } from './Paper'
 
 type Track = { title: string; album: string; artist: string; image: string; url: string }
 type Playback = { status: 'playing' | 'idle' | 'unavailable' | 'unconnected' | 'loading'; track: Track | null }
@@ -56,9 +55,7 @@ export default function Music() {
     : playback.status === 'unavailable' ? 'couldn’t tune in just now.'
     : playback.status === 'loading' ? 'tuning in…' : 'nothing playing here yet.'
   return (
-    <section className="pg-music" aria-labelledby="music-h">
-      <Hand as="h2" className="pg-notes-h"><span id="music-h">music</span></Hand>
-      <div className="music-entry">
+    <div className="music-entry">
         <Photo photo={{ id: 'music', src: track?.image ?? blank, alt: track ? `Album cover for ${track.album}` : 'An empty space for an album cover', caption: track ? '' : 'a space for a song', rotation: -3, aspect: 1, variant: 'polaroid', tape: [{ x: 30, y: -11, w: 68, rot: 5, opacity: 0.65 }] }} width={144} className="music-photo" />
         <div className="music-writing" aria-live="polite" aria-atomic="true">
           {track ? <>
@@ -68,6 +65,5 @@ export default function Music() {
           </> : <p className="music-empty hand">{message}</p>}
         </div>
       </div>
-    </section>
   )
 }

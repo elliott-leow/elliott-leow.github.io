@@ -18,7 +18,12 @@ export default function Home() {
         <Typed className="mono pg-line" text="almost done with undergrad." speed={20} />
       </div>
 
-      <Music />
+      <section className="pg-music" aria-labelledby="music-h">
+        <Hand as="h2" className="pg-notes-h" trigger="load">
+          <span id="music-h">music</span>
+        </Hand>
+        <Music />
+      </section>
 
       <ul className="pg-links">
         <li>
@@ -37,7 +42,7 @@ export default function Home() {
       </ul>
 
       <section className="pg-notes" aria-labelledby="notes-h">
-        <Hand as="h2" className="pg-notes-h">
+        <Hand as="h2" className="pg-notes-h" trigger="load">
           <span id="notes-h">notes</span>
         </Hand>
         <NoteIndex limit={3} compact />

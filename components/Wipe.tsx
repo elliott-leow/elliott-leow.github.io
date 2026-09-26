@@ -14,12 +14,15 @@ export default function Wipe({
   children,
   delay = 0,
   duration = 0.6,
+  trigger = 'view',
   className,
   style,
 }: {
   children: ReactNode
   delay?: number
   duration?: number
+  /** Load starts in the initial HTML, without waiting for hydration or visibility. */
+  trigger?: 'view' | 'load'
   className?: string
   style?: CSSProperties
 }) {
@@ -28,7 +31,7 @@ export default function Wipe({
   return (
     <span
       ref={ref}
-      className={`wipe ${seen ? 'is-seen' : ''} ${className ?? ''}`}
+      className={`wipe ${trigger === 'load' || seen ? 'is-seen' : ''} ${className ?? ''}`}
       style={{ ...style, '--wipe-d': `${delay}s`, '--wipe-t': `${duration}s` } as CSSProperties}
     >
       <span className="wipe-clip">

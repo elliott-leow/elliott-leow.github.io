@@ -40,6 +40,7 @@ export function Hand({
   delay = 0,
   duration = 0.6,
   write = true,
+  trigger = 'view',
   rotation,
   ink,
 }: {
@@ -50,6 +51,7 @@ export function Hand({
   delay?: number
   duration?: number
   write?: boolean
+  trigger?: 'view' | 'load'
   rotation?: number
   ink?: 'blue' | 'red' | 'pencil' | 'ink'
 }) {
@@ -59,7 +61,7 @@ export function Hand({
   if (!write) return <T className={cls} style={s}>{children}</T>
   return (
     <T className={cls} style={s}>
-      <Wipe className="hand-write" delay={delay} duration={duration}>
+      <Wipe className="hand-write" delay={delay} duration={duration} trigger={trigger}>
         {children}
       </Wipe>
     </T>
