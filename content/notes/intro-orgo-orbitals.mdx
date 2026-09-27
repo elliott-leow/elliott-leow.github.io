@@ -1,0 +1,267 @@
+import { POrbital, PiBond, Conjugation, Hybridization, Shapes, Twist, Allene, SCharacter, BentBonds, MODiagram, Carbocation, SN2, Carbonyl, Amide, Allyl, HomoLumoQuiz } from '@/components/orbitals'
+
+Atomic and molecular orbitals are fundamental in chemistry because they explain <U>why</U> chemistry occurs. However, if you are a pre-med student trying to pass organic chemistry, I doubt you will care, and you are the target audience. Here, I will simplify atomic and molecular orbitals to an <Hl>extremely basic level</Hl>.
+
+This explanation may make chemistry and physics majors unhappy. So this theory will be called <O>Intro Orgo Orbital Theory</O>, which will model actual orbital theory.
+
+> Do not use this theory outside an introductory organic chemistry class.
+
+Every drawing below is taped in so you can poke it. Press the buttons, drag the sliders, grab the molecules and spin them. Nothing breaks.
+
+<Pen>blue is one phase, red is the other. that's the whole colour key.</Pen>
+
+## the basics
+
+<Margin>"orbital" just means<br/>"where the electron<br/>probably is"</Margin>
+
+Orbitals are places where electrons live. Electrons come in "phases" which we will call <Hl>in phase</Hl> and <Hl tone="pink">out of phase</Hl>. The electrons with different phases don't like to be near each other.
+
+Atoms house electrons and thus atoms contain orbitals. Orbitals between atoms can interact, and this is what we call a **bond**. Single bonds are composed of "sigma" (σ) bonds. Any extra bonds are called "pi" (π) bonds. So:
+
+- a single bond is one σ
+- a double bond is one σ and one π
+- a triple bond is one σ and two π
+
+Think of a sigma bond as a bridge between atoms, and pi bonds as reinforcing structure around that bridge. Single bonds have no reinforcing structure while triple bonds have two extra layers of reinforcement.
+
+We call the electrons that form pi bonds "pi electrons" and those that form sigma bonds "sigma electrons".
+
+---
+
+## rule 1: pi electrons live in p orbitals
+
+A p orbital looks like an hourglass with the atom sitting in the middle. The two sides of the hourglass have opposite phases. The entire hourglass is <U>one orbital, not two</U>, and that one orbital can hold up to two electrons.
+
+<POrbital />
+
+Add one electron and watch where it goes: the dots show up in *both* halves at once. Turn it upside down and notice that nothing about the orbital changes. Which half is "in phase" is just a label.
+
+When two atoms with p orbitals sit next to each other, the p orbitals can interact. If their phases are the same, this interaction creates a pi bond. This is why a double bond contains both a sigma bond and a pi bond. The sigma bond connects the atoms directly, while the p orbitals overlap above and below that sigma bond to provide the extra reinforcement.
+
+<PiBond />
+
+If you see pi electrons, <Hl>imagine p orbitals</Hl>. This becomes especially helpful when you start dealing with resonance, conjugation, and reactions involving double bonds.
+
+## rule 2: a row of neighbouring p orbitals is a pi system
+
+If you have one double bond, the two atoms in that double bond each have a p orbital. If you have alternating double and single bonds, like in 1,3-butadiene, then four carbons in a row have p orbitals sitting next to each other. Instead of treating the two double bonds as completely separate, think of the four p orbitals as forming one larger system.
+
+This is what is meant by a **conjugated pi system**. In Intro Orgo Orbital Theory, conjugation just means there is a <U>continuous row of p orbitals</U> that can interact with one another. The pi electrons are therefore not stuck between only two atoms. They can spread across several atoms.
+
+<Conjugation />
+
+Tap a carbon in the middle of the row to make it sp³ and watch the cloud split in two. If you can draw a continuous row of neighbouring p orbitals, electrons may be able to "resonate" across that row. If the row is interrupted by an atom that cannot provide a p orbital, <Hl tone="pink">the conjugation stops there</Hl>.
+
+The reason resonance is usually stabilizing is that electrons generally prefer having more room. Spreading electron density over several atoms is usually better than forcing it to remain concentrated on only one atom.
+
+## rule 3: hybridization tells you what happened to the p orbitals
+
+You have probably already memorized sp³, sp², and sp. The practical reason these exist is that the atom reshapes its orbitals into forms that are more useful for bonding. You do not need to care about the mathematical details of this mixing. For Intro Orgo Orbital Theory, hybridization is simply <Hl>the atom rearranging its electron containers into better shapes</Hl>.
+
+An sp³ carbon mixes one s orbital and three p orbitals to make four sp³ hybrid orbitals. This leaves no unhybridized p orbitals behind. An sp² carbon mixes three and leaves one p orbital unused. An sp carbon mixes two and leaves two p orbitals unused.
+
+<Hybridization />
+
+The circled boxes are the whole point:
+
+1. sp³ has <O>zero</O> p orbitals left, so zero pi bonds
+2. sp² has <O>one</O> p orbital left, so one pi bond
+3. sp has <O>two</O> p orbitals left, so two pi bonds
+
+That is why a carbon involved only in ordinary single bonds is often sp³, a carbon in a double bond is usually sp², and a carbon in a triple bond is sp.
+
+## rule 4: hybridization also predicts shape
+
+An sp³ carbon is approximately tetrahedral with bond angles near 109.5°. An sp² carbon is trigonal planar with angles near 120°. An sp carbon is linear with an angle of 180°.
+
+<Shapes />
+
+<Margin>spin methane. it is<br/>not the flat cross<br/>you draw on paper</Margin>
+
+The leftover p orbitals help explain some of these shapes. In an alkene, each carbon needs one unhybridized p orbital to make the pi bond. Those p orbitals need to stay parallel so they can overlap. This forces the atoms around the double bond into a roughly planar arrangement.
+
+That is also why double bonds cannot freely rotate. Try it:
+
+<Twist />
+
+So instead of memorizing <X>"double bonds cannot rotate"</X> as an isolated fact, remember that <U>rotation would destroy the p-orbital overlap</U> responsible for the pi bond.
+
+### a confusing example: CH₂=C=CH₂
+
+The molecule CH₂=C=CH₂, called allene, looks confusing if your mental rule is simply <X>"double-bonded carbons are sp²"</X>. The two outside carbons are indeed sp², but the carbon in the middle is attached through **two double bonds**. It therefore needs two separate p orbitals, one for each pi bond.
+
+Remember rule 3. An sp² carbon only has one unused p orbital, while an sp carbon has two. The middle carbon must therefore be <O>sp</O> hybridized.
+
+This creates a geometry that looks strange at first. The middle carbon has two sp orbitals pointing in opposite directions, which form the sigma bonds to the two outside carbons. It also has two unused p orbitals. These two p orbitals point in different directions, at 90° to each other.
+
+One of those p orbitals overlaps with a p orbital on the left carbon to make the first pi bond. The other overlaps with a differently oriented p orbital on the right carbon to make the second pi bond. The two pi bonds therefore exist in **perpendicular planes**, which means the two CH₂ groups at the ends are also perpendicular to each other.
+
+<Allene />
+
+Hit "down the C=C=C" and you get a +. This is the part that usually feels wrong. You may have learned that a double bond forces everything around it to be planar. That is still true for each individual double bond. The catch is that allene has two different double bonds using two different p orbitals on the central carbon. Each double bond has its own plane, and those two planes are perpendicular.
+
+So do not use the shortcut <X>"a molecule with double bonds is planar"</X>. The better rule is that the atoms involved in <Hl>one ordinary pi bond</Hl> must orient their p orbitals parallel to one another.
+
+This is also a useful reminder that a double bond does not automatically mean every carbon involved is sp². Look at the number of pi bonds that each individual atom needs to make. One p orbital needed: sp². Two separate p orbitals needed, like the middle of allene: sp.
+
+---
+
+## rule 5: more s character means electrons live closer to the nucleus
+
+Hybrid orbitals contain different proportions of s and p character. An sp³ orbital is 25% s (1 part s, 3 parts p), an sp² orbital is about 33% s, and an sp orbital is 50% s.
+
+Why should you care? Because s orbitals hold electrons closer to the nucleus than p orbitals do. The nucleus is positive and electrons are negative, so electrons are generally stabilized when they are held closer in. <Hl tone="green">More s character means a negative charge is usually more stable.</Hl>
+
+<SCharacter />
+
+This is one reason terminal alkynes are more acidic than alkenes or alkanes. When a terminal alkyne loses a proton, the resulting lone pair sits in an sp orbital. That orbital has 50% s character and keeps the negative charge relatively close to the carbon nucleus.
+
+<Sticky front="exam answer, copy this">"The conjugate base puts the negative charge in an orbital with <em>more s character</em>, which holds the electrons closer to the nucleus and stabilizes the conjugate base."</Sticky>
+
+## rule 6: more p character matters when bonds are forced into bad angles
+
+Cyclopropane is the classic example. Its carbons are forced into bond angles of about 60°, while a normal sp³ carbon would prefer about 109.5°. Those angles are nowhere close.
+
+Because the geometry is so bad for normal sp³ overlap, the carbon-carbon bonding orbitals distort and gain <U>more p character</U>. Instead of forming perfectly straight sigma bonds between the nuclei, the electron density bends outward. These are called <O>banana bonds</O>, or [bent bonds](https://en.wikipedia.org/wiki/Bent_bond).
+
+<BentBonds />
+
+You do not need a detailed derivation. The useful version is that cyclopropane forces carbon into terrible bond angles, so its C–C bonds become bent and more p-like. This contributes to its ring strain and unusual reactivity.
+
+---
+
+## rule 7: two orbitals in, two orbitals out
+
+When two atomic orbitals interact, they do not simply merge into one new orbital. They create **two** molecular orbitals. One is lower in energy and is called the <Hl>bonding</Hl> orbital. The other is higher in energy and is called the <Hl tone="pink">antibonding</Hl> orbital. (Orbitals are conserved: two go in, two come out.)
+
+The bonding orbital comes from favorable overlap. In the phase model, this means matching phases are meeting each other. Electrons in this orbital help hold the atoms together.
+
+The antibonding orbital comes from unfavorable overlap: opposite phases are being forced together. This creates a node between the atoms and makes the orbital higher in energy.
+
+<MODiagram />
+
+Walk the electrons up from 0 to 4 and keep an eye on the bond meter. For Intro Orgo Orbital Theory, that gives you another simple rule: <U>matching phases give bonding orbitals, mismatched phases give antibonding orbitals</U>.
+
+## rule 8: antibonding orbitals have stars
+
+A sigma bonding orbital is written σ, and its antibonding partner is σ\*. A pi bonding orbital is written π, and its antibonding partner is π\*.
+
+The star is basically a <O>warning sign</O>. If electrons start entering that orbital, the corresponding bond gets weaker. Electrons in bonding orbitals strengthen bonds. Electrons in antibonding orbitals weaken them.
+
+## rule 9: electrons in an antibonding orbital weaken that bond
+
+Suppose you have a C–Br bond. The electrons holding carbon and bromine together occupy the σ<sub>C–Br</sub> bonding orbital. That bond also has a matching σ\*<sub>C–Br</sub> antibonding orbital, which is normally empty.
+
+If another molecule donates electrons into σ\*<sub>C–Br</sub>, the C–Br bond becomes weaker. If enough electron density goes in, the bond breaks. (You'll get to do this yourself in fig. 12.)
+
+This is one of the easiest ways to understand leaving groups. Instead of only memorizing that bromide <X>just "leaves"</X>, think of another molecule donating electrons into an orbital that actively weakens the C–Br bond.
+
+The shortcut is simple. Electrons entering σ\* weaken a sigma bond. Electrons entering π\* weaken a pi bond.
+
+## rule 10: HOMO = where the electrons are coming from
+
+**HOMO** stands for Highest Occupied Molecular Orbital: the highest-energy orbital that currently contains electrons. In most intro orgo reactions, it is <Hl>the orbital that donates electrons</Hl>. (Scroll back to fig. 10: the HOMO flag follows the top electron.)
+
+Common HOMOs are lone pairs, negative charges, and pi bonds. If you are looking at a nucleophile, the reactive electron pair is usually sitting in the orbital you should think of as the HOMO. For hydroxide, that's a lone pair on oxygen. For an alkene, it's usually the pi bonding orbital. You don't need anything fancier unless your professor asks for orbital diagrams.
+
+## rule 11: LUMO = where the electrons are going
+
+**LUMO** stands for Lowest Unoccupied Molecular Orbital. This is simply the lowest-energy empty orbital available to accept electrons. Common LUMOs are empty p orbitals on carbocations, σ\* orbitals, and π\* orbitals.
+
+<Hl>ELECTRONS IN THE HOMO ENTER THE LUMO.</Hl> Electrons move from a filled orbital into an empty orbital. That is the orbital version of a huge fraction of the curved arrows you will draw in organic chemistry.
+
+<Pen>stuck on a mechanism? where are the electrons now (HOMO)? what empty orbital is nearby (LUMO)?</Pen>
+
+## rule 12: nucleophiles bring the HOMO, electrophiles bring the LUMO
+
+A nucleophile has electrons to donate, so its important orbital is usually occupied. An electrophile needs electrons, so its important orbital is usually empty. So when you draw a curved arrow from a nucleophile to an electrophile, you can mentally translate it into a HOMO→LUMO interaction.
+
+This is not a perfect rule for every advanced situation, but it is extremely useful in introductory organic chemistry. Here it is three times:
+
+### example: carbocations
+
+A carbocation is usually sp² hybridized: three sp² orbitals and one leftover p orbital. Unlike the p orbital in an alkene, however, <U>this p orbital is empty</U>. That empty p orbital is a very good LUMO. A nucleophile can donate electrons from its HOMO into it, making a new bond.
+
+<Carbocation />
+
+Try both buttons. The useful heuristic: <Hl>a carbocation is a carbon with an empty p orbital waiting for electrons.</Hl>
+
+### example: SN2
+
+Consider hydroxide reacting with methyl bromide, `OH⁻ + CH₃Br`. Hydroxide has a lone pair on oxygen: that's the HOMO. The C–Br bond has an antibonding orbital, σ\*<sub>C–Br</sub>: that's the LUMO. The oxygen lone pair donates electron density into the C–Br antibonding orbital. As that happens, the C–Br bond weakens while the new C–O bond forms.
+
+<SN2 />
+
+This also explains <O>backside attack</O>. The useful part of σ\*<sub>C–Br</sub> sticks out from the side of carbon opposite bromine. The nucleophile approaches from that side because that is where it overlaps best with the LUMO. (Did you try coming in from the bromine side?)
+
+So the shortcut is that an SN2 reaction is <U>a nucleophile's HOMO attacking the backside of the C–LG σ\* LUMO</U>.
+
+### example: carbonyl attack
+
+A carbonyl contains one sigma bond and one pi bond between carbon and oxygen. That pi bond has a matching antibonding orbital, π\*<sub>C=O</sub>. Because oxygen is more electronegative than carbon, the carbonyl carbon is electrophilic, and π\*<sub>C=O</sub> is an important LUMO.
+
+<Carbonyl />
+
+Flip between "π" and "π\*": the filled one leans toward oxygen and the empty one leans toward carbon, which is exactly why the nucleophile goes for carbon. When the nucleophile donates into π\*, the C=O pi bond weakens. That is why, in a nucleophilic addition mechanism, the pi electrons move onto oxygen while the new bond to the nucleophile forms.
+
+<Margin>the ~107° approach has a<br/>name: the <a href="https://en.wikipedia.org/wiki/B%C3%BCrgi%E2%80%93Dunitz_angle">Bürgi–Dunitz angle</a>.<br/>not on your exam.</Margin>
+
+Instead of memorizing those two arrows as unrelated steps, think of the whole event as <Hl>electron donation into the carbonyl antibonding orbital</Hl>. Switch to "curved arrows" to see it drawn the usual way.
+
+## rule 13: pi bonds are common HOMOs
+
+Pi electrons are relatively exposed compared with sigma electrons, which makes pi bonds useful electron donors. This is why alkenes often act as nucleophiles. When an alkene attacks an electrophile, the alkene's pi bonding orbital is the HOMO and the electrophile provides the LUMO.
+
+So if you see a curved arrow starting at a double bond, think: <U>pi electrons donated from a HOMO into some electrophile's LUMO</U>.
+
+## rule 14: lone pairs can join pi systems if they live in p orbitals
+
+A lone pair can participate in resonance if it can occupy a p orbital that lines up with neighbouring p orbitals. The classic example is an amide. The nitrogen lone pair can occupy a p orbital that overlaps with the carbonyl pi system.
+
+<Amide />
+
+This lets the electrons spread over nitrogen, carbon, and oxygen. That is why the C–N bond in an amide has <Hl>partial double-bond character</Hl>. It is also why amides are planar and why the C–N bond does not freely rotate like an ordinary single bond. (Twist it in both modes and compare.)
+
+For exam purposes: if you see a lone pair next to a pi bond, ask whether that lone pair can sit in a p orbital. If it can, resonance is probably possible.
+
+## rule 15: resonance is electrons getting a bigger house
+
+A localized lone pair is mostly confined to one atom. If that lone pair joins a conjugated pi system, the electrons can spread across several atoms instead. That usually lowers their energy. This is why resonance stabilizes many molecules and ions.
+
+<Allyl />
+
+Resonance structures are not <X>separate molecules rapidly switching back and forth</X>. They are just different drawings we use because it is hard to draw the actual delocalized orbital system on paper.
+
+For intro orgo, the heuristic is enough: <Hl tone="green">if a charge can be spread over several atoms through resonance, that is usually more stable than trapping it on one atom.</Hl>
+
+---
+
+## the short version
+
+If you only care about getting through the exam, here's the printout to tape inside your cover:
+
+```
+orbitals        = places electrons live
+pi electrons    → live in p orbitals
+p, p, p in a row → conjugation → resonance
+
+sp3  →  0 p left   109.5°   25% s
+sp2  →  1 p left   120°     33% s
+sp   →  2 p left   180°     50% s
+
+more s character  → anion closer to nucleus → more stable
+2 orbitals in     → 1 bonding + 1 antibonding (*)
+electrons into *  → that bond gets weaker
+
+HOMO (nucleophile) ──electrons──▶ LUMO (electrophile)
+```
+
+Finally, remember that most reaction mechanisms can be reduced to one question: <O>where are the electrons, and where can they go?</O> The filled orbital providing the electrons is usually the HOMO. The empty orbital accepting them is usually the LUMO.
+
+One last drawing, and this one's a test:
+
+<HomoLumoQuiz />
+
+Find the electrons, find the empty orbital, and decide whether those two orbitals can interact. That will not replace learning the reactions, but it makes many of the rules <U>much less arbitrary</U>.
+
+<Sticky front="why do electrons even have phases?" tone="blue">Because electrons behave like <em>waves</em>, and a wave has crests and troughs. "In phase" and "out of phase" are the crest side and the trough side. That's as deep as intro orgo needs to go.</Sticky>
