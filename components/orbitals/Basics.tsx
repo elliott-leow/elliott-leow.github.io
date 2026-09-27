@@ -4,7 +4,8 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import Scene3D, { type Item, type V3 } from './Scene3D'
-import { Atom, Bond, Btn, Fig, LobeDots, Lobe, Meter, PH, POrb, Pulse, Seg, Slider, T, flip, useSpringValue, type Phase } from './kit'
+import { Atom, Bond, Btn, Fig, LobeDots, Lobe, Meter, PH, POrb, Pulse, Seg, Slider, Stick, T, flip, useSpringValue, type Phase } from './kit'
+import { sticks } from './sticks'
 
 /* ================================================================== 1. one p orbital */
 
@@ -33,12 +34,12 @@ export function POrbital() {
       }
       caption={
         e === 0
-          ? 'empty. the orbital is still there, it just has no one living in it.'
+          ? 'empty.'
           : e === 1
-            ? 'one electron. it isn’t in the top or the bottom: it’s in the whole hourglass.'
+            ? 'one electron, in the whole hourglass.'
             : full
-              ? 'full! two is the limit. a third electron has to find a different orbital.'
-              : 'two electrons, opposite spins. that’s a full orbital.'
+              ? 'full. two max.'
+              : 'two electrons, opposite spins: full.'
       }
     >
       <svg viewBox="0 0 560 320" className="orb-svg" role="img" aria-label={`A p orbital shaped like an hourglass, holding ${e} electron${e === 1 ? '' : 's'}`}>
@@ -121,10 +122,11 @@ export function PiBond() {
   return (
     <Fig
       n={2}
+      stick={<Stick spec={sticks.ethene} />}
       title="ethene: a σ bond and a π bond"
       hint="tap the right-hand p orbital to flip its phase"
       controls={<Btn onClick={flipIt}>flip the right p orbital</Btn>}
-      caption={match ? 'same phases side by side: the lobes merge above and below the σ bond. that’s the π bond.' : 'opposite phases side by side don’t like each other. no π bond, just a gap (a node) between them.'}
+      caption={match ? 'same phase: merged above and below σ. that’s π.' : 'opposite phase: a node, no π bond.'}
     >
       <svg viewBox="0 0 560 330" className="orb-svg" role="img" aria-label={match ? 'Ethene with a pi bond formed above and below the sigma bond' : 'Ethene with mismatched p orbitals and no pi bond'}>
         {/* the pi cloud */}
@@ -175,98 +177,6 @@ export function PiBond() {
   )
 }
 
-/* ================================================================== 3. a row of p orbitals */
-
-type Hyb = 'sp2' | 'sp3'
-const presets: { k: string; label: string; atoms: Hyb[] }[] = [
-  { k: 'diene', label: '2,4-hexadiene', atoms: ['sp3', 'sp2', 'sp2', 'sp2', 'sp2', 'sp3'] },
-  { k: 'split', label: '1,5-hexadiene', atoms: ['sp2', 'sp2', 'sp3', 'sp3', 'sp2', 'sp2'] },
-  { k: 'triene', label: '1,3,5-hexatriene', atoms: ['sp2', 'sp2', 'sp2', 'sp2', 'sp2', 'sp2'] },
-]
-
-function runs(atoms: Hyb[]) {
-  const out: [number, number][] = []
-  let s = -1
-  atoms.forEach((a, i) => {
-    if (a === 'sp2' && s < 0) s = i
-    if ((a !== 'sp2' || i === atoms.length - 1) && s >= 0) {
-      const e = a === 'sp2' ? i : i - 1
-      if (e > s) out.push([s, e])
-      s = -1
-    }
-  })
-  return out
-}
-
-export function Conjugation() {
-  const [atoms, setAtoms] = useState<Hyb[]>(presets[0].atoms)
-  const [touched, setTouched] = useState(false)
-  const X = (i: number) => 70 + i * 84
-  const Y = (i: number) => (i % 2 ? 200 : 170)
-  const rs = runs(atoms)
-  const preset = presets.find((p) => p.atoms.every((a, i) => a === atoms[i]))
-  const toggle = (i: number) => {
-    setTouched(true)
-    setAtoms(atoms.map((a, j) => (j === i ? (a === 'sp2' ? 'sp3' : 'sp2') : a)))
-  }
-  return (
-    <Fig
-      n={3}
-      title="neighbouring p orbitals become one system"
-      hint="tap any carbon to swap sp² ↔ sp³"
-      controls={
-        <Seg
-          label="molecule"
-          value={preset?.k ?? ''}
-          options={presets.map((p) => ({ k: p.k, label: p.label }))}
-          onChange={(k) => setAtoms(presets.find((p) => p.k === k)!.atoms)}
-        />
-      }
-      caption={
-        rs.length === 0
-          ? 'no two p orbitals touch, so there’s no π system at all.'
-          : rs.length === 1
-            ? `one unbroken row of ${rs[0][1] - rs[0][0] + 1} p orbitals: the π electrons can spread across all ${rs[0][1] - rs[0][0] + 1} atoms.`
-            : `an sp³ carbon breaks the row. you get ${rs.length} separate π systems (${rs.map(([a, b]) => b - a + 1).join(' + ')} atoms) that can’t share electrons.`
-      }
-    >
-      <svg viewBox="0 0 560 330" className="orb-svg" role="img" aria-label={`A six-carbon chain: ${atoms.join(', ')}`}>
-        {/* the shared cloud over each run */}
-        {rs.map(([a, b], k) => {
-          const x0 = X(a) - 30
-          const x1 = X(b) + 30
-          const dur = 1.2 + (b - a) * 0.5
-          return (
-            <motion.g key={`${a}-${b}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
-              <rect x={x0} y={82} width={x1 - x0} height={46} rx={23} fill={PH.in} fillOpacity={0.12} stroke={PH.in} strokeWidth={1.5} strokeDasharray="6 5" />
-              <rect x={x0} y={242} width={x1 - x0} height={46} rx={23} fill={PH.out} fillOpacity={0.12} stroke={PH.out} strokeWidth={1.5} strokeDasharray="6 5" />
-              {[0, 1].map((j) => (
-                <circle key={j} cx={x0 + 20} cy={j ? 265 : 105} r={4} fill={j ? PH.out : PH.in} className="orb-roam" style={{ '--dx': `${x1 - x0 - 40}px`, '--dur': `${dur}s`, animationDelay: `${-k * 0.4 - j * dur * 0.5}s` } as React.CSSProperties} />
-              ))}
-            </motion.g>
-          )
-        })}
-        {atoms.slice(1).map((_, i) => (
-          <Bond key={i} x1={X(i)} y1={Y(i)} x2={X(i + 1)} y2={Y(i + 1)} />
-        ))}
-        {atoms.map((a, i) => (
-          <g key={i} onClick={() => toggle(i)} style={{ cursor: 'pointer' }} role="button" aria-label={`carbon ${i + 1}, ${a}. tap to change`}>
-            <motion.g initial={false} animate={{ scale: a === 'sp2' ? 1 : 0, opacity: a === 'sp2' ? 1 : 0 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }} style={{ originX: `${X(i)}px`, originY: `${Y(i)}px` }}>
-              <POrb x={X(i)} y={Y(i)} L={70} W={24} />
-            </motion.g>
-            <rect x={X(i) - 34} y={Y(i) - 90} width={68} height={180} fill="transparent" />
-            <Atom x={X(i)} y={Y(i)} label="C" r={14} size={17} />
-            <T x={X(i)} y={i % 2 ? 318 : 60} size={17} ink={a === 'sp2' ? 'blue' : 'red'}>
-              {a === 'sp2' ? 'sp²' : 'sp³'}
-            </T>
-          </g>
-        ))}
-        <Pulse x={X(0)} y={Y(0)} r={24} show={!touched} />
-      </svg>
-    </Fig>
-  )
-}
-
 /* ================================================================== 4. hybridization: the recipe and the shape */
 
 type H = 'sp3' | 'sp2' | 'sp'
@@ -294,7 +204,7 @@ function hybridItems(h: H): Item[] {
           ]
   const ps: V3[] = h === 'sp3' ? [] : h === 'sp2' ? [[0, 1, 0]] : [[0, 1, 0], [0, 0, 1]]
   const items: Item[] = [{ k: 'atom', p: [0, 0, 0], label: 'C', r: 16 }]
-  dirs.forEach((d) => items.push({ k: 'lobe', o: [0, 0, 0], d, L: 118, W: 40, phase: 'hyb', fill: 0.22 }))
+  dirs.forEach((d) => items.push({ k: 'lobe', o: [0, 0, 0], d, L: 118, W: 40, phase: 'hyb' }))
   ps.forEach((d) => {
     items.push({ k: 'lobe', o: [0, 0, 0], d, L: 96, W: 28, phase: 'in' })
     items.push({ k: 'lobe', o: [0, 0, 0], d: [-d[0], -d[1], -d[2]], L: 96, W: 28, phase: 'out' })
@@ -309,10 +219,11 @@ export function Hybridization() {
   return (
     <Fig
       n={4}
+      stick={<Stick spec={{ sp3: sticks.methane, sp2: sticks.ethene, sp: sticks.ethyne }[h]} />}
       title="hybridization: mix, then look what's left"
       hint="pick one, and drag the drawing to turn it"
       controls={<Seg label="hybridization" value={h} options={(['sp3', 'sp2', 'sp'] as H[]).map((k) => ({ k, label: hyb[k].name }))} onChange={setH} />}
-      caption={`${info.name}: ${info.mixed} hybrid orbitals, ${4 - info.mixed} p orbital${4 - info.mixed === 1 ? '' : 's'} left over for π bonds. ${info.shape}, ${info.angle}.`}
+      caption={`${info.mixed} hybrids + ${4 - info.mixed} p left for π bonds.`}
     >
       <div className="orb-recipe" aria-hidden>
         <div className="orb-boxes">
@@ -385,14 +296,15 @@ export function Twist() {
   const msg =
     overlap > 0.9
       ? deg > 90
-        ? 'flat again, and the π bond is back. but the H’s have swapped sides: that’s a different molecule (cis ⇄ trans).'
-        : 'flat: the p orbitals are parallel and overlap fully. strong π bond.'
+        ? 'flat again: π bond back, but the H’s swapped sides (cis ⇄ trans).'
+        : 'parallel p orbitals: full overlap, full π bond.'
       : overlap < 0.15
-        ? 'at 90° the p orbitals are perpendicular. zero overlap: the π bond is gone. (breaking it costs ~65 kcal/mol, far too much at room temperature.)'
-        : 'the p orbitals are drifting out of line. less overlap, weaker π bond.'
+        ? '90°: zero overlap, no π bond (costs ~65 kcal/mol).'
+        : 'less overlap, weaker π bond.'
   return (
     <Fig
       n={6}
+      stick={<Stick spec={sticks.ethene} />}
       title="try to rotate a double bond"
       hint="drag the slider; drag the drawing to look around"
       controls={
@@ -479,6 +391,7 @@ export function Shapes() {
   return (
     <Fig
       n={5}
+      stick={<Stick spec={{ sp3: sticks.methane, sp2: sticks.ethene, sp: sticks.ethyne }[h]} />}
       title="the shapes, in 3D"
       hint="switch molecules; drag to turn"
       controls={<Seg label="molecule" value={h} options={(['sp3', 'sp2', 'sp'] as H[]).map((k) => ({ k, label: `${shapes[k].mol} (${hyb[k].name})` }))} onChange={setH} />}

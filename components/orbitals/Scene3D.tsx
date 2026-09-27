@@ -1,34 +1,160 @@
 'use client'
 
 /*
- * A very small 3D sketchbook: atoms, bonds and lobes placed in space, turned
- * with the pointer, and drawn back to front so near things cover far things.
- * A lobe is round about its own axis, so seen from any angle its outline is
- * still a teardrop, just a shorter one, and end-on it becomes a blob.
+ * Real 3D for the figures that need it: lobes are solid, lit teardrops of
+ * revolution with a pen outline (an inverted hull), atoms are spheres, bonds are
+ * rods. Drag to turn it. Labels are handwriting laid over the canvas, and fade
+ * when something is in front of their atom.
  */
 import { useReducedMotion } from 'motion/react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { PH, lobeD, type Phase } from './kit'
+import { useEffect, useRef, type ReactNode } from 'react'
+import * as THREE from 'three'
+import type { Phase } from './kit'
 
 export type V3 = [number, number, number]
 export type Item =
   | { k: 'atom'; p: V3; label: string; r?: number; tag?: string; tagInk?: 'blue' | 'red' | 'green' | 'pencil' }
-  | { k: 'bond'; a: V3; b: V3; w?: number; dash?: string; opacity?: number }
-  | { k: 'lobe'; o: V3; d: V3; L: number; W: number; phase: Phase; fill?: number; dashed?: boolean; opacity?: number }
+  | { k: 'bond'; a: V3; b: V3; w?: number; opacity?: number }
+  | { k: 'lobe'; o: V3; d: V3; L: number; W: number; phase: Phase; opacity?: number }
   | { k: 'band'; a: V3; b: V3; w: number; phase: Phase; opacity: number }
 
 export type View = { yaw: number; pitch: number; n: number }
 
-const S = 104 // px per ångström-ish unit
-const F = 9 // how far the eye is, in the same units
-
-function rot([x, y, z]: V3, yaw: number, pitch: number): V3 {
-  const x1 = x * Math.cos(yaw) + z * Math.sin(yaw)
-  const z1 = -x * Math.sin(yaw) + z * Math.cos(yaw)
-  const y2 = y * Math.cos(pitch) - z1 * Math.sin(pitch)
-  const z2 = y * Math.sin(pitch) + z1 * Math.cos(pitch)
-  return [x1, y2, z2]
+const D = 9 // camera distance, in units
+const tone: Record<Phase, { wash: string; pen: string }> = {
+  in: { wash: '#a7b7d9', pen: '#2c4674' },
+  out: { wash: '#ecb1a4', pen: '#c0432d' },
+  hyb: { wash: '#b9d2a8', pen: '#4f7a3f' },
+  empty: { wash: '#dedad2', pen: '#858078' },
 }
+
+/* ---------------------------------------------------------------- shared pieces */
+
+let gradient: THREE.DataTexture | null = null
+/** three flat steps of light, so the shading reads as marker, not plastic */
+function toonRamp() {
+  if (gradient) return gradient
+  gradient = new THREE.DataTexture(new Uint8Array([120, 190, 255]), 3, 1, THREE.RedFormat)
+  gradient.minFilter = THREE.NearestFilter
+  gradient.magFilter = THREE.NearestFilter
+  gradient.needsUpdate = true
+  return gradient
+}
+
+const lobeCache = new Map<string, THREE.LatheGeometry>()
+/** a teardrop of revolution along +y, pinched at the nucleus (y = 0), round at the far end */
+function lobeGeometry(L: number, R: number, grow = 0) {
+  const key = `${L.toFixed(3)}:${R.toFixed(3)}:${grow}`
+  let g = lobeCache.get(key)
+  if (g) return g
+  const n = 28
+  const raw: number[] = []
+  for (let i = 0; i <= n; i++) {
+    const t = i / n
+    raw.push(Math.pow(Math.sin(Math.PI * t), 0.8) * (0.45 + 0.55 * t))
+  }
+  const peak = Math.max(...raw)
+  const pts = raw.map((r, i) => new THREE.Vector2((r / peak) * R + (i > 0 && i < n ? grow : 0), (i / n) * (L + grow * 1.5) - grow * 0.5))
+  g = new THREE.LatheGeometry(pts, 36)
+  lobeCache.set(key, g)
+  return g
+}
+
+const spheres = new Map<number, THREE.SphereGeometry>()
+const sphereGeo = (r: number) => {
+  const k = Math.round(r * 1000)
+  if (!spheres.has(k)) spheres.set(k, new THREE.SphereGeometry(r, 32, 20))
+  return spheres.get(k)!
+}
+const rodGeo = new THREE.CylinderGeometry(1, 1, 1, 14)
+const up = new THREE.Vector3(0, 1, 0)
+
+type Label = { el: HTMLSpanElement; p: THREE.Vector3; mesh: THREE.Mesh; tag?: HTMLSpanElement }
+
+function disposeAll(root: THREE.Group) {
+  // geometries are cached and shared, except the π clouds, which own theirs
+  root.traverse((o) => {
+    if (o instanceof THREE.Mesh) {
+      ;(o.material as THREE.Material).dispose()
+      if (o.userData.own) o.geometry.dispose()
+    }
+  })
+  root.clear()
+}
+
+/** `S` is px per unit, at the width the figure is designed for */
+function build(items: Item[], root: THREE.Group, overlay: HTMLDivElement, S: number) {
+  disposeAll(root)
+  overlay.replaceChildren()
+  const labels: Label[] = []
+  const ramp = toonRamp()
+  const v = (p: V3) => new THREE.Vector3(...p)
+
+  for (const it of items) {
+    if (it.k === 'lobe') {
+      const L = it.L / S
+      const R = (it.W * 0.8) / S
+      const op = it.opacity ?? 1
+      const g = new THREE.Group()
+      const body = new THREE.Mesh(lobeGeometry(L, R), new THREE.MeshToonMaterial({ color: tone[it.phase].wash, gradientMap: ramp, transparent: op < 1, opacity: op }))
+      body.userData.solid = true
+      const hull = new THREE.Mesh(lobeGeometry(L, R, 0.018), new THREE.MeshBasicMaterial({ color: tone[it.phase].pen, side: THREE.BackSide, transparent: op < 1, opacity: op }))
+      g.add(hull, body)
+      g.position.copy(v(it.o))
+      g.quaternion.setFromUnitVectors(up, v(it.d).normalize())
+      root.add(g)
+    } else if (it.k === 'atom') {
+      const r = (it.r ?? 15) / S
+      const g = new THREE.Group()
+      const ball = new THREE.Mesh(sphereGeo(r), new THREE.MeshToonMaterial({ color: '#fdfcf8', gradientMap: ramp }))
+      ball.userData.solid = true
+      const hull = new THREE.Mesh(sphereGeo(r + 0.016), new THREE.MeshBasicMaterial({ color: '#1f1e1c', side: THREE.BackSide }))
+      g.add(hull, ball)
+      g.position.copy(v(it.p))
+      root.add(g)
+      const el = document.createElement('span')
+      el.className = 'orb-3d-label'
+      el.textContent = it.label
+      el.style.fontSize = `${Math.round(r * S * 1.2)}px`
+      overlay.appendChild(el)
+      let tag: HTMLSpanElement | undefined
+      if (it.tag) {
+        tag = document.createElement('span')
+        tag.className = `orb-3d-tag orb-ink--${it.tagInk ?? 'pencil'}`
+        tag.textContent = it.tag
+        overlay.appendChild(tag)
+      }
+      labels.push({ el, p: v(it.p), mesh: ball, tag })
+    } else if (it.k === 'bond') {
+      const op = it.opacity ?? 1
+      const m = new THREE.Mesh(rodGeo, new THREE.MeshBasicMaterial({ color: '#1f1e1c', transparent: op < 1, opacity: op }))
+      const a = v(it.a)
+      const d = v(it.b).sub(a)
+      const r = (it.w ?? 2.2) * 0.0095
+      m.position.copy(a).addScaledVector(d, 0.5)
+      m.quaternion.setFromUnitVectors(up, d.clone().normalize())
+      m.scale.set(r, d.length(), r)
+      root.add(m)
+    } else {
+      // a π cloud joining two lobes: a soft, see-through sausage
+      if (it.opacity < 0.01) continue
+      const a = v(it.a)
+      const b = v(it.b)
+      const m = new THREE.Mesh(
+        new THREE.CapsuleGeometry(it.w / S / 2, Math.max(0.001, a.distanceTo(b)), 8, 20),
+        new THREE.MeshBasicMaterial({ color: tone[it.phase].pen, transparent: true, opacity: it.opacity * 0.7, depthWrite: false }),
+      )
+      m.position.copy(a).lerp(b, 0.5)
+      m.quaternion.setFromUnitVectors(up, new THREE.Vector3().subVectors(b, a).normalize())
+      m.renderOrder = 2
+      m.userData.own = true
+      root.add(m)
+    }
+  }
+  return labels
+}
+
+/* ---------------------------------------------------------------- the component */
 
 export default function Scene3D({
   items,
@@ -39,6 +165,7 @@ export default function Scene3D({
   label,
   onGrab,
   children,
+  scale: S = 104,
 }: {
   items: Item[]
   width?: number
@@ -49,177 +176,190 @@ export default function Scene3D({
   label: string
   onGrab?: () => void
   children?: ReactNode
+  /** px per unit: smaller fits a longer molecule */
+  scale?: number
 }) {
   const reduce = useReducedMotion()
-  const [cam, setCam] = useState({ yaw: view.yaw, pitch: view.pitch })
-  const camRef = useRef(cam)
-  camRef.current = cam
+  const wrap = useRef<HTMLDivElement>(null)
+  const canvas = useRef<HTMLCanvasElement>(null)
+  const overlay = useRef<HTMLDivElement>(null)
+  const three = useRef<{
+    renderer: THREE.WebGLRenderer
+    scene: THREE.Scene
+    camera: THREE.PerspectiveCamera
+    root: THREE.Group
+    labels: Label[]
+    dirty: boolean
+  } | null>(null)
+  const cam = useRef({ yaw: view.yaw, pitch: view.pitch })
+  const fly = useRef<{ from: { yaw: number; pitch: number }; dy: number; dp: number; t0: number } | null>(null)
   const grabbed = useRef(false)
   const drag = useRef<{ x: number; y: number; yaw: number; pitch: number } | null>(null)
-  const flying = useRef(false)
+  const spinRef = useRef(spin)
+  spinRef.current = spin && !reduce
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+
+  // the renderer lives as long as the figure does
+  useEffect(() => {
+    const cv = canvas.current!
+    const el = wrap.current!
+    let renderer: THREE.WebGLRenderer
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true })
+    } catch {
+      return // no WebGL: the caption and controls still work
+    }
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio))
+    const scene = new THREE.Scene()
+    const fov = (2 * Math.atan(height / S / 2 / D) * 180) / Math.PI
+    const camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, 100)
+    camera.position.set(0, 0, D)
+    scene.add(new THREE.AmbientLight('#ffffff', 1.6))
+    const sun = new THREE.DirectionalLight('#ffffff', 2.4)
+    sun.position.set(-3, 5, 6)
+    scene.add(sun)
+    const root = new THREE.Group()
+    scene.add(root)
+    three.current = { renderer, scene, camera, root, labels: build(itemsRef.current, root, overlay.current!, S), dirty: true }
+
+    const resize = () => {
+      const w = el.clientWidth
+      renderer.setSize(w, (w * height) / width, false)
+      if (three.current) three.current.dirty = true
+    }
+    resize()
+    const ro = new ResizeObserver(resize)
+    ro.observe(el)
+
+    let visible = false
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting
+      if (visible && three.current) three.current.dirty = true
+    })
+    io.observe(el)
+
+    const ray = new THREE.Raycaster()
+    const tmp = new THREE.Vector3()
+    let raf = 0
+    let last = performance.now()
+    const frame = (now: number) => {
+      raf = requestAnimationFrame(frame)
+      const dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      const t = three.current
+      if (!t || !visible) return
+      const f = fly.current
+      if (f) {
+        const k = Math.min(1, (now - f.t0) / 750)
+        const e = 1 - Math.pow(1 - k, 3)
+        cam.current = { yaw: f.from.yaw + f.dy * e, pitch: f.from.pitch + f.dp * e }
+        if (k >= 1) fly.current = null
+        t.dirty = true
+      } else if (spinRef.current && !grabbed.current) {
+        cam.current.yaw += dt * 0.35
+        t.dirty = true
+      }
+      if (!t.dirty) return
+      t.dirty = false
+      t.root.rotation.set(cam.current.pitch, cam.current.yaw, 0, 'XYZ')
+      t.root.updateMatrixWorld(true)
+      t.renderer.render(t.scene, t.camera)
+
+      // lay the handwriting over the atoms
+      const w = el.clientWidth
+      const h = (w * height) / width
+      const k = w / width
+      const tagX: number[] = []
+      for (const l of t.labels) {
+        const world = l.p.clone().applyMatrix4(t.root.matrixWorld)
+        tmp.copy(world).project(t.camera)
+        const x = (tmp.x * 0.5 + 0.5) * w
+        const y = (-tmp.y * 0.5 + 0.5) * h
+        l.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -52%) scale(${Math.max(k, 0.7)})`
+        // behind a lobe or another atom? then the label fades back
+        ray.set(t.camera.position, world.clone().sub(t.camera.position).normalize())
+        const hit = ray.intersectObjects(t.root.children, true).find((i) => i.object.userData.solid)
+        const blocked = hit && hit.object !== l.mesh && hit.distance < t.camera.position.distanceTo(world) - 0.12
+        l.el.style.opacity = blocked ? '0.15' : '1'
+        if (l.tag) {
+          const clash = tagX.some((p) => Math.abs(p - x) < 34 * k)
+          l.tag.style.opacity = clash ? '0' : '1'
+          if (!clash) tagX.push(x)
+          l.tag.style.transform = `translate(${x}px, ${h - 22 * k}px) translate(-50%, -50%)`
+        }
+      }
+    }
+    raf = requestAnimationFrame(frame)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      io.disconnect()
+      disposeAll(root)
+      renderer.dispose()
+      three.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width, height, S])
+
+  // rebuild the scene whenever the molecule changes
+  useEffect(() => {
+    const t = three.current
+    if (!t || !overlay.current) return
+    t.labels = build(items, t.root, overlay.current, S)
+    t.dirty = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items])
 
   // fly to a new view
   useEffect(() => {
-    const from = camRef.current
+    const from = { ...cam.current }
     if (reduce) {
-      setCam({ yaw: view.yaw, pitch: view.pitch })
+      cam.current = { yaw: view.yaw, pitch: view.pitch }
+      if (three.current) three.current.dirty = true
       return
     }
-    // go the short way round
     let dy = (view.yaw - from.yaw) % (Math.PI * 2)
     if (dy > Math.PI) dy -= Math.PI * 2
     if (dy < -Math.PI) dy += Math.PI * 2
-    const dp = view.pitch - from.pitch
-    let raf = 0
-    const t0 = performance.now()
-    flying.current = true
-    const step = (now: number) => {
-      const t = Math.min(1, (now - t0) / 750)
-      const e = 1 - Math.pow(1 - t, 3)
-      setCam({ yaw: from.yaw + dy * e, pitch: from.pitch + dp * e })
-      if (t < 1) raf = requestAnimationFrame(step)
-      else flying.current = false
-    }
-    raf = requestAnimationFrame(step)
-    return () => {
-      cancelAnimationFrame(raf)
-      flying.current = false
-    }
+    fly.current = { from, dy, dp: view.pitch - from.pitch, t0: performance.now() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view.n])
 
-  // a slow idle turn, so it's obviously 3D, until someone takes hold of it
-  useEffect(() => {
-    if (!spin || reduce) return
-    let raf = 0
-    let last = performance.now()
-    const step = (now: number) => {
-      const dt = (now - last) / 1000
-      last = now
-      if (!grabbed.current && !flying.current) setCam((c) => ({ ...c, yaw: c.yaw + dt * 0.35 }))
-      raf = requestAnimationFrame(step)
-    }
-    raf = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(raf)
-  }, [spin, reduce])
-
-  const cx = width / 2
-  const cy = height / 2
-  const proj = (p: V3) => {
-    const [x, y, z] = rot(p, cam.yaw, cam.pitch)
-    const k = F / (F - z)
-    return { x: cx + x * S * k, y: cy - y * S * k, z, k }
-  }
-
-  type Drawn = { z: number; el: ReactNode }
-  const drawn: Drawn[] = items.map((it, i) => {
-    if (it.k === 'atom') {
-      const p = proj(it.p)
-      const r = (it.r ?? 15) * p.k
-      return {
-        z: p.z + 0.001,
-        el: (
-          <g key={i}>
-            <circle cx={p.x} cy={p.y} r={r} fill="var(--orb-paper)" stroke="var(--ink)" strokeWidth={1.6} />
-            <text x={p.x} y={p.y + r * 0.42} fontSize={r * 1.15} textAnchor="middle" className="orb-t">
-              {it.label}
-            </text>
-          </g>
-        ),
-      }
-    }
-    if (it.k === 'bond' || it.k === 'band') {
-      const a = proj(it.a)
-      const b = proj(it.b)
-      const band = it.k === 'band'
-      return {
-        // a π cloud sits behind the atoms and lobes it joins
-        z: band ? Math.min(a.z, b.z) - 0.6 : (a.z + b.z) / 2 - 0.02,
-        el: (
-          <line
-            key={i}
-            x1={a.x}
-            y1={a.y}
-            x2={b.x}
-            y2={b.y}
-            stroke={band ? PH[it.phase] : 'var(--ink)'}
-            strokeWidth={band ? it.w * ((a.k + b.k) / 2) : (it.w ?? 2.2)}
-            strokeLinecap="round"
-            strokeDasharray={band ? undefined : it.dash}
-            opacity={band ? it.opacity : (it.opacity ?? 1)}
-          />
-        ),
-      }
-    }
-    // a lobe
-    const o = proj(it.o)
-    const [dx, dy, dz] = rot(it.d, cam.yaw, cam.pitch)
-    const len = Math.hypot(dx, dy)
-    const L = Math.max(it.L * len, it.W * 0.95) * o.k
-    const W = it.W * o.k
-    const ang = (Math.atan2(dx, dy) * 180) / Math.PI
-    const c = PH[it.phase]
-    return {
-      z: o.z + dz * 0.5,
-      el: (
-        <path
-          key={i}
-          d={lobeD(L, W)}
-          transform={`translate(${o.x} ${o.y}) rotate(${ang})`}
-          fill={c}
-          fillOpacity={it.fill ?? 0.2}
-          stroke={c}
-          strokeWidth={1.7}
-          strokeDasharray={it.dashed ? '5 5' : undefined}
-          strokeLinejoin="round"
-          opacity={it.opacity ?? 1}
-        />
-      ),
-    }
-  })
-  drawn.sort((a, b) => a.z - b.z)
-
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      className="orb-svg orb-3d"
+    <div
+      ref={wrap}
+      className="orb-3d"
+      style={{ aspectRatio: `${width} / ${height}` }}
       role="img"
       aria-label={label}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId)
-        drag.current = { x: e.clientX, y: e.clientY, yaw: cam.yaw, pitch: cam.pitch }
+        drag.current = { x: e.clientX, y: e.clientY, ...cam.current }
         grabbed.current = true
+        fly.current = null
         onGrab?.()
       }}
       onPointerMove={(e) => {
         const d = drag.current
         if (!d) return
-        setCam({
+        cam.current = {
           yaw: d.yaw + (e.clientX - d.x) * 0.012,
           pitch: Math.max(-1.3, Math.min(1.3, d.pitch + (e.clientY - d.y) * 0.012)),
-        })
+        }
+        if (three.current) three.current.dirty = true
       }}
       onPointerUp={() => (drag.current = null)}
       onPointerCancel={() => (drag.current = null)}
     >
-      {drawn.map((d) => d.el)}
-      {/* tags (like sp²) run along the bottom, under their atoms, so nothing covers them */}
-      {(() => {
-        const placed: number[] = []
-        return items.map((it, i) => {
-          if (it.k !== 'atom' || !it.tag) return null
-          const x = proj(it.p).x
-          // when atoms line up one behind another, only the first tag is written
-          if (placed.some((p) => Math.abs(p - x) < 34)) return null
-          placed.push(x)
-          return (
-            <text key={`tag${i}`} x={x} y={height - 12} fontSize={18} style={{ fontSize: 'calc(18px * var(--orb-ts, 1))' }} textAnchor="middle" className={`orb-t orb-t--${it.tagInk ?? 'pencil'}`}>
-              {it.tag}
-            </text>
-          )
-        })
-      })()}
-      {children}
-    </svg>
+      <canvas ref={canvas} className="orb-3d-canvas" />
+      <div ref={overlay} className="orb-3d-overlay" aria-hidden />
+      {children && (
+        <svg viewBox={`0 0 ${width} ${height}`} className="orb-3d-svg" aria-hidden>
+          {children}
+        </svg>
+      )}
+    </div>
   )
 }

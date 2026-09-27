@@ -4,7 +4,8 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import Scene3D, { type Item, type V3 } from './Scene3D'
-import { Atom, Btn, Fig, LobeDots, Lobe, Meter, PH, Pulse, Seg, Slider, T, flip, useSpringValue, type Phase } from './kit'
+import { Atom, Btn, Fig, LobeDots, Lobe, Meter, PH, Pulse, Seg, Slider, Stick, T, flip, useSpringValue, type Phase } from './kit'
+import { sticks } from './sticks'
 
 /* ================================================================== 7. allene */
 
@@ -65,6 +66,7 @@ export function Allene() {
   return (
     <Fig
       n={7}
+      stick={<Stick spec={sticks.allene} />}
       title="allene, CH₂=C=CH₂"
       hint="drag to turn it, or pick a view"
       controls={
@@ -89,13 +91,13 @@ export function Allene() {
       }
       caption={
         view === 'axis'
-          ? 'looking straight down the chain: the two CH₂ ends make a +. they really are at 90° to each other.'
+          ? 'down the axis: the two CH₂ ends make a +.'
           : view === 'side'
-            ? 'from the side, one CH₂ is flat in the page and the other points straight at you (its H’s overlap).'
-            : 'the middle carbon has two p orbitals at right angles, so its two π bonds (and the two CH₂ ends) are at right angles too.'
+            ? 'side on: one CH₂ flat, the other end-on.'
+            : 'two p orbitals at 90° on the middle carbon → two π bonds at 90°.'
       }
     >
-      <Scene3D items={items} view={{ ...views[view], n }} spin={view === 'free'} height={300} label="Allene in 3D: the two terminal CH2 groups lie in perpendicular planes" onGrab={() => view !== 'free' && setView('free')} />
+      <Scene3D items={items} view={{ ...views[view], n }} spin={view === 'free'} height={300} scale={84} label="Allene in 3D: the two terminal CH2 groups lie in perpendicular planes" onGrab={() => view !== 'free' && setView('free')} />
     </Fig>
   )
 }
@@ -126,15 +128,16 @@ export function SCharacter() {
   return (
     <Fig
       n={8}
+      stick={<Stick spec={{ sp3: sticks.ethylAnion, sp2: sticks.vinylAnion, sp: sticks.acetylide }[h]} />}
       title="where the lone pair lives"
       hint="compare the three conjugate bases"
       controls={<Seg label="conjugate base" value={h} options={(['sp3', 'sp2', 'sp'] as Hy[]).map((k) => ({ k, label: <span className="orb-formula">{sc[k].base.slice(0, -1)}<sup>−</sup></span> }))} onChange={setH} />}
       caption={
         h === 'sp'
-          ? 'sp: 50% s. the lone pair is short and fat and hugs the nucleus. most stable anion, so the most acidic C–H.'
+          ? '50% s: hugs the nucleus. most stable anion, most acidic.'
           : h === 'sp2'
-            ? 'sp²: 33% s. the lone pair sits a bit closer in.'
-            : 'sp³: 25% s. the lone pair reaches far out from the nucleus. least stable anion, least acidic C–H.'
+            ? '33% s: a bit closer in.'
+            : '25% s: reaches far out. least stable anion, least acidic.'
       }
     >
       <svg viewBox="0 0 560 320" className="orb-svg" role="img" aria-label={`${d.base}: lone pair in an ${d.name} orbital, ${d.s} percent s character, pKa about ${d.pKa}`}>
@@ -227,6 +230,7 @@ export function BentBonds() {
   return (
     <Fig
       n={9}
+      stick={<Stick spec={sticks.cyclopropane} />}
       title="cyclopropane's banana bonds"
       hint="squeeze the angle between each carbon's orbitals"
       controls={
@@ -248,10 +252,10 @@ export function BentBonds() {
       }
       caption={
         theta > 107
-          ? 'normal sp³ orbitals sit ~109.5° apart, but the ring is only 60°. the orbitals miss the straight line by ~25°, so the overlap happens outside the ring: a bent bond.'
+          ? 'orbitals ~109.5° apart, ring 60°: they meet outside the line. bent bond.'
           : theta > 101
-            ? 'about here is real cyclopropane (~104°). squeezing the orbitals closer needs more p character, which bends them less.'
-            : 'getting close to pure p orbitals (90° apart). carbon can’t go all the way: the ring pays for it in strain either way.'
+            ? '~104°: real cyclopropane. squeezing = more p character.'
+            : 'nearly pure p (90°). strain either way.'
       }
     >
       <svg viewBox="0 0 560 320" className="orb-svg" role="img" aria-label={`Cyclopropane with bonding orbitals ${theta} degrees apart, bent outward`}>
@@ -333,15 +337,16 @@ export function MODiagram() {
     </g>
   )
   const msg = [
-    'no electrons, so no bond. the orbitals are there, just empty.',
-    'one electron in σ: half a bond (like H₂⁺).',
-    'two electrons in σ: a full bond. this is H₂.',
-    'the third electron has to go up into σ*. it cancels half the bond (like He₂⁺).',
-    'σ and σ* both full: they cancel. no bond at all. this is why He₂ doesn’t exist.',
+    'empty orbitals, no bond.',
+    'one electron: half a bond.',
+    'two electrons in σ: a full bond (H₂).',
+    '3rd electron goes into σ*: cancels half the bond.',
+    'σ and σ* both full: no bond. (why He₂ doesn’t exist.)',
   ][e]
   return (
     <Fig
       n={10}
+      stick={<Stick spec={sticks.h2} />}
       title="two orbitals in, two orbitals out"
       hint="flip atom B's phase, and add electrons"
       controls={
@@ -365,7 +370,7 @@ export function MODiagram() {
       }
       caption={
         <>
-          {match ? 'matching phases make the low one, σ (bonding). ' : 'mismatched phases make the high one, σ* (antibonding), with a node in the middle. '}
+          {match ? 'same phase → σ. ' : 'opposite phase → σ*. '}
           {msg}
         </>
       }

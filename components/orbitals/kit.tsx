@@ -218,20 +218,120 @@ export const mix = (a: number, b: number, t: number) => a + (b - a) * t
 
 /* ------------------------------------------------------------------ the paper around a figure */
 
-export function Fig({ n, title, hint, children, controls, caption, tape = -3 }: { n: number; title: ReactNode; hint?: ReactNode; children: ReactNode; controls?: ReactNode; caption?: ReactNode; tape?: number }) {
+export function Fig({ n, title, hint, children, controls, caption, stick, tape = -3 }: { n: number; title: ReactNode; hint?: ReactNode; children: ReactNode; controls?: ReactNode; caption?: ReactNode; stick?: ReactNode; tape?: number }) {
   return (
     <figure className="orb-fig">
       <span className="orb-tape" style={{ rotate: `${tape}deg` }} aria-hidden />
       <div className="orb-head">
-        <span className="orb-title hand">
-          <span className="orb-num">fig. {n}</span> {title}
-        </span>
-        {hint && <span className="orb-hint hand">{hint}</span>}
+        <div className="orb-head-text">
+          <span className="orb-title hand">
+            <span className="orb-num">fig. {n}</span> {title}
+          </span>
+          {hint && <span className="orb-hint hand">{hint}</span>}
+        </div>
+        {stick && (
+          <div className="orb-stick">
+            <span className="orb-stick-label hand">as you&apos;d draw it</span>
+            {stick}
+          </div>
+        )}
       </div>
       <div className="orb-stage">{children}</div>
       {controls && <div className="orb-controls">{controls}</div>}
       {caption && <figcaption className="orb-cap hand">{caption}</figcaption>}
     </figure>
+  )
+}
+
+/* ------------------------------------------------------------------ stick (skeletal) drawings */
+
+export type Pt = [number, number]
+export type StickSpec = {
+  pts: Pt[]
+  /** [from, to, order, which side the second line goes (1 or -1)] */
+  bonds: [number, number, (1 | 1.5 | 2 | 3)?, (1 | -1)?][]
+  /** atoms written out as letters; bonds stop short of them */
+  labels?: Record<number, string>
+  /** charges and dots beside an atom */
+  notes?: { i: number; t: string; dx?: number; dy?: number; ink?: 'red' | 'blue' | 'ink' }[]
+  /** wedge (toward you) or hash (away) instead of a plain line, by bond index */
+  wedge?: Record<number, 'wedge' | 'hash'>
+}
+
+/** a zigzag chain, the way a carbon chain is drawn: n points, 26 px apart */
+export const zig = (n: number, down = false): Pt[] => Array.from({ length: n }, (_, i) => [i * 26, (i % 2 === 0) !== down ? 15 : 0])
+
+export function Stick({ spec, label }: { spec: StickSpec; label?: string }) {
+  const { pts, bonds, labels = {}, notes = [], wedge = {} } = spec
+  const xs = pts.map((p) => p[0])
+  const ys = pts.map((p) => p[1])
+  const pad = 16
+  const x0 = Math.min(...xs) - pad
+  const y0 = Math.min(...ys) - pad
+  const w = Math.max(...xs) - Math.min(...xs) + pad * 2
+  const h = Math.max(...ys) - Math.min(...ys) + pad * 2
+  const cx = xs.reduce((a, b) => a + b, 0) / pts.length
+  const cy = ys.reduce((a, b) => a + b, 0) / pts.length
+  const segs: ReactNode[] = []
+  bonds.forEach(([a, b, order = 1, side], k) => {
+    let [x1, y1] = pts[a]
+    let [x2, y2] = pts[b]
+    const len = Math.hypot(x2 - x1, y2 - y1) || 1
+    const ux = (x2 - x1) / len
+    const uy = (y2 - y1) / len
+    // stop short of written-out atoms
+    const trim = (t?: string) => (t ? 5 + 4.2 * [...t].length : 0)
+    x1 += ux * trim(labels[a])
+    y1 += uy * trim(labels[a])
+    x2 -= ux * trim(labels[b])
+    y2 -= uy * trim(labels[b])
+    let nx = -uy
+    let ny = ux
+    const toward = (cx - (x1 + x2) / 2) * nx + (cy - (y1 + y2) / 2) * ny
+    const sgn = side ?? (Math.abs(toward) < 0.5 ? 1 : toward > 0 ? 1 : -1)
+    nx *= sgn
+    ny *= sgn
+    const line = (ox: number, oy: number, trim: number, key: string, dash?: string) => (
+      <line key={key} x1={x1 + ox + ux * trim} y1={y1 + oy + uy * trim} x2={x2 + ox - ux * trim} y2={y2 + oy - uy * trim} strokeDasharray={dash} />
+    )
+    if (wedge[k] === 'wedge') {
+      segs.push(<path key={k} d={`M ${x1} ${y1} L ${x2 - ny * 3.5} ${y2 + nx * 3.5} L ${x2 + ny * 3.5} ${y2 - nx * 3.5} Z`} fill="currentColor" stroke="none" />)
+      return
+    }
+    if (wedge[k] === 'hash') {
+      for (let j = 1; j <= 6; j++) {
+        const t = j / 7
+        const mx = x1 + (x2 - x1) * t
+        const my = y1 + (y2 - y1) * t
+        segs.push(<line key={`${k}h${j}`} x1={mx - nx * 3.5 * t} y1={my - ny * 3.5 * t} x2={mx + nx * 3.5 * t} y2={my + ny * 3.5 * t} strokeWidth={1.2} />)
+      }
+      return
+    }
+    segs.push(line(0, 0, 0, `${k}`))
+    const inner = labels[a] || labels[b] ? 0 : len * 0.14
+    if (order === 2) segs.push(line(nx * 5, ny * 5, inner, `${k}d`))
+    if (order === 1.5) segs.push(line(nx * 5, ny * 5, inner, `${k}d`, '3 3'))
+    if (order === 3) {
+      segs.push(line(nx * 4.5, ny * 4.5, 0, `${k}t1`))
+      segs.push(line(-nx * 4.5, -ny * 4.5, 0, `${k}t2`))
+    }
+  })
+  return (
+    <svg viewBox={`${x0} ${y0} ${w} ${h}`} height={h * 1.1} width={w * 1.1} className="orb-stick-svg" role="img" aria-label={label ?? 'line drawing of the molecule'}>
+      <g stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" fill="none">
+        {segs}
+      </g>
+      {Object.entries(labels).map(([i, t]) => (
+        <text key={i} x={pts[+i][0]} y={pts[+i][1] + 5} textAnchor="middle" fontSize={14} className="orb-stick-atom">
+          {t}
+        </text>
+      ))}
+      {notes.map((n, k) => (
+        <text key={k} x={pts[n.i][0] + (n.dx ?? 8)} y={pts[n.i][1] + (n.dy ?? -6)} fontSize={13} textAnchor="middle" className={`orb-stick-note orb-ink--${n.ink ?? 'red'}`}>
+          {n.t}
+        </text>
+      ))}
+    </svg>
   )
 }
 

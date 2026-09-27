@@ -3,7 +3,8 @@
 /* figures for the reaction half of the note: HOMO meets LUMO */
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import { Atom, Bond, Btn, CurlyArrow, Fig, LobeDots, Lobe, Meter, PH, POrb, Pulse, Seg, Slider, T, clamp, mix, svgPoint, useProgress } from './kit'
+import { Atom, Bond, Btn, CurlyArrow, Fig, LobeDots, Lobe, Meter, PH, POrb, Pulse, Seg, Slider, Stick, T, clamp, mix, svgPoint, useProgress } from './kit'
+import { sticks } from './sticks'
 
 const sub = (p: number, a: number, b: number) => clamp((p - a) / (b - a), 0, 1)
 
@@ -67,7 +68,8 @@ export function Carbocation() {
   }
   return (
     <Fig
-      n={11}
+      n={12}
+      stick={<Stick spec={sticks.carbocation} />}
       title="a carbocation's empty p orbital"
       hint="send a nucleophile in"
       controls={
@@ -81,12 +83,12 @@ export function Carbocation() {
       }
       caption={
         tried.size === 2
-          ? 'both lobes are equally open, so both sides work. that’s why these reactions often give a mix of both 3D products.'
+          ? 'both faces work → a mix of both 3D products.'
           : side === null
-            ? 'sp² carbon, three groups flat, one empty p orbital: a LUMO waiting for electrons.'
+            ? 'flat sp² carbon, empty p orbital = LUMO.'
             : q < 0.5
-              ? 'the nucleophile’s lone pair (its HOMO) lines up with the empty p lobe (the LUMO)…'
-              : 'electrons flow in, the new bond forms, and the carbon puckers into sp³.'
+              ? 'HOMO (lone pair) meets LUMO (empty p)…'
+              : 'new bond; carbon puckers to sp³.'
       }
     >
       <svg viewBox="0 0 560 330" className="orb-svg" role="img" aria-label="A planar carbocation with an empty p orbital, attacked by a nucleophile">
@@ -182,7 +184,8 @@ export function SN2() {
   ]
   return (
     <Fig
-      n={12}
+      n={13}
+      stick={<Stick spec={sticks.sn2} />}
       title={<>SN2: OH<sup>−</sup> meets CH₃Br</>}
       hint={<>drag the OH<sup>−</sup> toward the carbon. try the front too</>}
       controls={
@@ -195,13 +198,13 @@ export function SN2() {
       caption={
         done
           ? q < 1
-            ? 'the C–Br σ* fills, the C–Br bond breaks, and the three H’s flip over like an umbrella in the wind.'
-            : 'done: C–O made, bromide gone, carbon inverted. (hit reset to go again.)'
+            ? 'σ* fills, C–Br breaks, the H’s flip like an umbrella.'
+            : 'C–O made, Br⁻ gone, carbon inverted.'
           : front
-            ? 'bromine is in the way on this side, and the useful part of σ* isn’t here. no reaction.'
+            ? 'front side: bromine in the way, no σ* here. no reaction.'
             : ov > 0.3
-              ? 'good: from the back, the lone pair (HOMO) overlaps the big lobe of σ*C–Br (LUMO). watch the C–Br bond stretch.'
-              : 'the big lobe of the empty σ*C–Br sticks out the back of the carbon, opposite the bromine.'
+              ? 'backside: HOMO overlaps σ*. C–Br stretches.'
+              : 'σ*C–Br\u2019s big lobe points out the back.'
       }
     >
       <svg ref={svg} viewBox="0 0 560 330" className="orb-svg" role="img" aria-label="Hydroxide attacking methyl bromide from the back side">
@@ -311,7 +314,8 @@ export function Carbonyl() {
   ]
   return (
     <Fig
-      n={13}
+      n={14}
+      stick={<Stick spec={sticks.acetone} />}
       title="a nucleophile adds to C=O"
       hint="scrub the reaction, and switch what's drawn"
       controls={
@@ -332,12 +336,12 @@ export function Carbonyl() {
       }
       caption={
         show === 'pi'
-          ? 'the filled π orbital leans toward oxygen (it’s more electronegative). that’s where the π electrons mostly are.'
+          ? 'π (full): bigger on O.'
           : show === 'arrows'
-            ? 'the same event in arrows: lone pair to carbon, and the π bond onto oxygen. the two arrows are one orbital story.'
+            ? 'the same thing, in arrows.'
             : p < 0.5
-              ? 'the empty π* is the opposite: its big lobe is on carbon. that’s why nucleophiles hit the carbon. they come in at ~107°, not straight down.'
-              : 'electrons pour into π*, so the π bond breaks. its electrons end up on oxygen as a negative charge.'
+              ? 'π* (empty): bigger on C, so the nucleophile hits C, at ~107°.'
+              : 'π* fills → π bond breaks → O⁻.'
       }
     >
       <svg viewBox="0 0 560 330" className="orb-svg" role="img" aria-label="A nucleophile approaching a carbonyl carbon at about 107 degrees">
@@ -428,7 +432,8 @@ export function Amide() {
   const x1 = (conj ? N.x : C.x) + 30
   return (
     <Fig
-      n={14}
+      n={15}
+      stick={<Stick spec={sticks.amide} />}
       title="an amide's nitrogen lone pair"
       hint="put the lone pair in a p orbital, then try to twist"
       controls={
@@ -453,11 +458,11 @@ export function Amide() {
       caption={
         conj
           ? twist
-            ? 'twisting pulls nitrogen’s p orbital out of line with the others, so it snaps back. amides stay flat.'
-            : 'the lone pair joins the C=O π system: three p orbitals in a row, electrons spread over O, C and N. the C–N bond is now part double bond.'
+            ? 'twisting breaks the overlap, so it snaps back flat.'
+            : 'three p orbitals in a row: O, C, N share. C–N is part double.'
           : twist
-            ? 'with the lone pair stuck on nitrogen, nothing holds the bond flat. it spins like any single bond.'
-            : 'lone pair stuck in an sp³ orbital on nitrogen: it can’t line up with the C=O p orbitals, so it’s left out of the π system.'
+            ? 'nothing holds it flat: spins freely.'
+            : 'sp³ lone pair: can’t line up, left out.'
       }
     >
       <svg viewBox="0 0 560 320" className="orb-svg" role="img" aria-label={conj ? 'Amide with the nitrogen lone pair conjugated into the carbonyl' : 'Amide with the nitrogen lone pair isolated in an sp3 orbital'}>
@@ -545,7 +550,8 @@ export function Allyl() {
   const spread = view === 'real'
   return (
     <Fig
-      n={15}
+      n={16}
+      stick={<Stick spec={view === 'A' ? sticks.allylA : view === 'B' ? sticks.allylB : sticks.allylReal} />}
       title="the allyl anion: where's the charge?"
       hint="flip between the drawings, then see the real thing"
       controls={
@@ -571,39 +577,13 @@ export function Allyl() {
       }
       caption={
         flicking
-          ? 'this is NOT what the molecule does. it doesn’t switch back and forth…'
+          ? 'it does NOT flip back and forth…'
           : spread
-            ? '…it’s always this one blend: the charge is shared by both ends, half each. more room, lower energy. that’s resonance stabilisation.'
-            : `drawing ${view} puts the whole negative charge on carbon ${view === 'A' ? 1 : 3}. it’s a fine drawing, but it isn’t the real molecule.`
+            ? '…it’s always this: charge shared by both ends. more room, lower energy.'
+            : `drawing ${view}: all the charge on C${view === 'A' ? 1 : 3}.`
       }
     >
       <svg viewBox="0 0 560 320" className="orb-svg" role="img" aria-label={spread ? 'Allyl anion with charge shared across both ends' : `Allyl anion resonance drawing ${view}`}>
-        {/* the line drawing, in pen, top left */}
-        <g transform="translate(56 34) scale(1.5)">
-          <T x={30} y={-8} size={10}>
-            the drawing
-          </T>
-          <path d="M 0 30 L 30 10 L 60 30" stroke="var(--ink)" strokeWidth={2} fill="none" strokeLinecap="round" />
-          {view === 'A' && <path d="M 32 16 L 56 32" stroke="var(--ink)" strokeWidth={2} />}
-          {view === 'B' && <path d="M 4 32 L 28 16" stroke="var(--ink)" strokeWidth={2} />}
-          {spread && (
-            <>
-              <path d="M 4 34 L 28 18" stroke="var(--ink)" strokeWidth={1.6} strokeDasharray="3 4" />
-              <path d="M 32 18 L 56 34" stroke="var(--ink)" strokeWidth={1.6} strokeDasharray="3 4" />
-            </>
-          )}
-          {view !== 'B' && (
-            <T x={-6} y={24} size={spread ? 13 : 17} ink="red" anchor="end">
-              {spread ? '½−' : '−'}
-            </T>
-          )}
-          {view !== 'A' && (
-            <T x={66} y={24} size={spread ? 13 : 17} ink="red" anchor="start">
-              {spread ? '½−' : '−'}
-            </T>
-          )}
-        </g>
-
         {spread && (
           <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <path d={`M ${X[0] - 28} ${Y[0] - 40} C ${X[0] - 40} ${Y[0] - 120}, ${X[2] + 40} ${Y[2] - 120}, ${X[2] + 28} ${Y[2] - 40} C ${X[1] + 40} ${Y[1] - 50}, ${X[1] - 40} ${Y[1] - 50}, ${X[0] - 28} ${Y[0] - 40} Z`} fill={PH.in} fillOpacity={0.1} stroke={PH.in} strokeWidth={1.4} strokeDasharray="6 5" />
@@ -701,7 +681,7 @@ export function HomoLumoQuiz() {
   )
 
   return (
-    <Fig n={16} title="find the HOMO, find the LUMO" hint={finished ? undefined : `${i + 1} of ${quiz.length}`} tape={2}>
+    <Fig n={17} title="find the HOMO, find the LUMO" hint={finished ? undefined : `${i + 1} of ${quiz.length}`} tape={2}>
       <div className="orb-quiz">
         <AnimatePresence mode="wait">
           {finished ? (
