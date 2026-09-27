@@ -784,6 +784,18 @@
   padding-top: 14px;
 }
 
+.pg-about {
+  grid-column: 1 / -1;
+  contain: inline-size;
+  margin: 30px 0 0 4px;
+}
+.pg-about-text {
+  color: var(--mono-ink);
+  text-shadow: var(--mono-halo);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
 /* A record tucked into the notebook, with its details in the margin. */
 .pg-music {
   grid-column: 1 / -1;

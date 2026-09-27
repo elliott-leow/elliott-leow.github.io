@@ -18,6 +18,13 @@ export default function Home() {
         <Typed className="mono pg-line" text="almost done with undergrad." speed={20} />
       </div>
 
+      <section className="pg-about" aria-labelledby="about-h">
+        <Hand as="h2" className="pg-notes-h" trigger="load">
+          <span id="about-h">about me</span>
+        </Hand>
+        <p className="mono pg-about-text">i study biomedical engineering and computer science at johns hopkins. im interested in medical devices and ai in healthcare.</p>
+      </section>
+
       <section className="pg-music" aria-labelledby="music-h">
         <Hand as="h2" className="pg-notes-h" trigger="load">
           <span id="music-h">music</span>
