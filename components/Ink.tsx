@@ -49,10 +49,10 @@ const icons = {
 } as const
 export type InkIcon = keyof typeof icons
 
-export function InkLink({ href, children, i = 0, icon }: { href: string; children: React.ReactNode; i?: number; icon?: InkIcon }) {
+export function InkLink({ href, children, i = 0, icon, className = '' }: { href: string; children: React.ReactNode; i?: number; icon?: InkIcon; className?: string }) {
   const external = href.startsWith('http')
   return (
-    <a className="ink-link hand" href={href} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined}>
+    <a className={`ink-link hand ${className}`} href={href} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined}>
       {icon && (
         <svg className="ink-link-icon" viewBox="0 0 24 24" aria-hidden>
           {icons[icon].map((d, k) => (

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Photo from './Photo'
+import { InkLink } from './Ink'
+import { nextPlaybackDelay } from '@/lib/music-polling'
 
-type Track = { title: string; album: string; artist: string; image: string; url: string }
+type Track = { title: string; album: string; artist: string; image: string; url: string; playlist?: string | null }
 type Playback = { status: 'playing' | 'idle' | 'unavailable' | 'unconnected' | 'loading'; track: Track | null }
 const endpoint = process.env.NEXT_PUBLIC_SPOTIFY_ENDPOINT || 'https://notebook-music.leowelliottd23.workers.dev/now-playing'
 const blank = '/photos/music-empty.svg'
@@ -22,30 +24,49 @@ export default function Music() {
     let stopped = false
     let timer: ReturnType<typeof setTimeout>
     let controller: AbortController | undefined
+    let retryAt = 0
     async function refresh() {
       clearTimeout(timer)
       controller?.abort()
-      if (document.hidden) return
+      if (document.hidden || stopped) return
+      if (performance.now() < retryAt) {
+        timer = setTimeout(refresh, retryAt - performance.now())
+        return
+      }
       controller = new AbortController()
+      const current = controller
       let delay = 20000
       try {
-        const response = await fetch(endpoint!, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]) })
+        const response = await fetch(endpoint!, { cache: 'no-store', signal: AbortSignal.any([current.signal, AbortSignal.timeout(20000)]) })
+        if (current.signal.aborted || stopped) return
         if (!response.ok) {
-          delay = Math.max(30, Number(response.headers.get('Retry-After')) || 30) * 1000
+          const retry = Number(response.headers.get('Retry-After'))
+          delay = Math.min(2147483647, Math.max(30, Number.isFinite(retry) ? retry : 30) * 1000)
           throw new Error('Unavailable')
         }
         const data = await response.json()
-        if (!stopped) setPlayback(data.status === 'playing' && validTrack(data.track)
+        if (current.signal.aborted || stopped) return
+        const playing = data.status === 'playing' && validTrack(data.track)
+        if (playing) delay = nextPlaybackDelay(data.remainingMs)
+        retryAt = 0
+        setPlayback(playing
           ? { status: 'playing', track: data.track }
           : { status: data.status === 'idle' ? 'idle' : 'unavailable', track: null })
       } catch {
-        if (!stopped) setPlayback({ status: 'unavailable', track: null })
+        if (current.signal.aborted || stopped) return
+        delay = Math.max(30000, delay)
+        retryAt = performance.now() + delay
+        setPlayback({ status: 'unavailable', track: null })
       } finally {
-        if (!stopped) timer = setTimeout(refresh, delay)
+        if (!stopped && !current.signal.aborted && !document.hidden) timer = setTimeout(refresh, delay)
       }
     }
     void refresh()
-    const onVisibility = () => { if (!document.hidden) void refresh() }
+    const onVisibility = () => {
+      clearTimeout(timer)
+      controller?.abort()
+      if (!document.hidden) void refresh()
+    }
     document.addEventListener('visibilitychange', onVisibility)
     return () => { stopped = true; clearTimeout(timer); controller?.abort(); document.removeEventListener('visibilitychange', onVisibility) }
   }, [])
@@ -56,12 +77,11 @@ export default function Music() {
     : playback.status === 'loading' ? 'tuning in…' : 'nothing playing here yet.'
   return (
     <div className="music-entry">
-        <Photo photo={{ id: 'music', src: track?.image ?? blank, alt: track ? `Album cover for ${track.album}` : 'An empty space for an album cover', caption: '', rotation: -3, aspect: 1, variant: 'polaroid', tape: [{ x: 30, y: -11, w: 68, rot: 5, opacity: 0.65 }] }} width={144} className="music-photo" />
+        <Photo photo={{ id: 'music', src: track?.image ?? blank, alt: track ? `Album cover for ${track.album}` : 'An empty space for an album cover', caption: typeof track?.playlist === 'string' ? track.playlist : '', rotation: -3, aspect: 1, variant: 'polaroid', tape: [{ x: 30, y: -11, w: 68, rot: 5, opacity: 0.65 }] }} width={144} className="music-photo" />
         <div className="music-writing" aria-live="polite" aria-atomic="true">
           {track ? <>
-            <a className="music-title hand" href={track.url} target="_blank" rel="noreferrer">{track.title}</a>
+            <InkLink key={track.url} href={track.url} i={2} className="music-title">{track.title}</InkLink>
             <p className="music-artist hand">{track.artist}</p>
-            <a className="music-source hand" href={track.url} target="_blank" rel="noreferrer">on Spotify ↗</a>
           </> : <p className="music-empty hand">{message}</p>}
         </div>
       </div>
