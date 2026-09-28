@@ -1,0 +1,266 @@
+import { QuickselectLab, MedianOfMedians, WhyFive, MedianQuicksort, LowerBoundGame, GroupBound, CountingSortDemo, RadixDemo, RadixCost, StringSort, BstDegenerate, BTreeLab, RedBlackLab, ArrayGrowth, CounterDemo, LogDictionary, SplitBank, MoveToFront, BinaryHeapLab, BuildHeap, BinomialLab, UnionFindLab, UniversalHash, CollisionProb, PerfectHash, KaratsubaDemo, StrassenDemo, RecursionTree, RecurrenceCheck, BigOLab, InvariantDemo, ExamDrill } from '@/components/algos'
+
+JHU 601.433 Intro Algorithms, fall 2026. Every figure below is a working model of one idea from lecture. Play with it until you can predict what it does before it does it.
+
+<Pen>lectures 4 to 10 come first, in class order. lectures 1 to 3 are short, at the bottom. lectures 11 onward haven't been taught yet.</Pen>
+
+Two rules for the whole exam: <Hl>say what the invariant or potential is</Hl>, and <Hl tone="pink">check that it holds at the start and after every step</Hl>.
+
+---
+
+## lecture 4: linear-time selection
+
+Find the kth smallest without sorting. Sorting does it in n log n. We want n.
+
+<Margin>k = 1 or k = n is one scan.<br/>k = n/2 is the hard one.</Margin>
+
+**Quickselect:** pick a pivot p, split into L (smaller) and G (larger), keep only the side that holds rank k.
+
+<QuickselectLab />
+
+- pivot in the middle: T(n) = T(n/2) + cn = <O>Θ(n)</O>
+- pivot is always the min or max: T(n) = T(n−1) + cn = <O>Θ(n²)</O>
+- <X>"any simple rule is fine"</X> → any fixed rule has an input that beats it (press "make it quadratic")
+
+**Median of medians** finds a pivot that is not the median but is <U>never bad</U>:
+
+1. cut into groups of 5
+2. take each group's median
+3. recursively take the median p of those medians
+4. split around p, recurse on the side that has rank k
+
+<MedianOfMedians />
+
+Half the groups have median ≤ p, and each of those brings 3 elements ≤ p. So |L| ≥ 3n/10, |G| ≥ 3n/10, and both are <Hl>≤ 7n/10</Hl>.
+
+<WhyFive />
+
+T(n) ≤ T(7n/10) + T(n/5) + cn. Guess T(n) ≤ 10cn: 10c·(7n/10) + 10c·(n/5) + cn = 9cn + cn = 10cn ✓.
+
+<Sticky front="exam answer: why groups of 5?">The two recursive calls shrink to n/5 + 7n/10 = 9n/10 &lt; n, so the work per level shrinks geometrically: linear. With groups of 3 it is n/3 + 2n/3 = n, every level costs cn: n log n.</Sticky>
+
+A perfect pivot also fixes quicksort: median as pivot ⇒ T(n) = 2T(n/2) + cn = <O>Θ(n log n)</O> <U>worst case</U>.
+
+<MedianQuicksort />
+
+---
+
+## lecture 5: sorting
+
+Comparison sorts can't beat log(n!) = Θ(n log n). The proof works for <U>every</U> algorithm at once:
+
+1. every input has one answer, so the algorithm needs a leaf per possible answer
+2. each comparison has 2 outcomes (or 3), so the tree has ≤ 2<sup>d</sup> (3<sup>d</sup>) leaves at depth d
+3. depth ≥ log₂(answers)
+
+<LowerBoundGame />
+
+<Margin>the adversary is the<br/>proof. it answers so the<br/>most answers survive</Margin>
+
+<Pen>same recipe for every "prove Ω(…)" question: count the answers, count the outcomes, take the log.</Pen>
+
+<GroupBound />
+
+Outside the comparison model you can look inside the numbers.
+
+<CountingSortDemo />
+
+<RadixDemo />
+
+Radix sort needs a <Hl>stable</Hl> inner sort. Proof: after pass i, sorted by the last i digits; a tie in digit i+1 is broken by the earlier order, which stability keeps.
+
+<RadixCost />
+
+<StringSort />
+
+---
+
+## lecture 6: balanced search trees
+
+A plain BST is only as good as its insert order:
+
+<BstDegenerate />
+
+A B-tree keeps <U>every leaf at the same depth</U> and gets slack from node size: t−1 to 2t−1 keys (root: 1 to 2t−1). Insert splits any full node it meets <Hl>on the way down</Hl>, so a parent is never full when its child splits.
+
+<BTreeLab />
+
+- lookup: log_t n levels × log t per binary search = O(log n)
+- insert: split costs O(t), at most once per level: O(t log n)
+- big t fits disks (one node = one disk read). t = 2 is the 2-3-4 tree
+
+**Red-black trees** are a 2-3-4 tree drawn as a binary tree. One black node plus its red children = one 2-3-4 node. Red = "stuck to my parent".
+
+<RedBlackLab />
+
+<Margin>4-node: black with two red kids.<br/>3-node: black with one red kid,<br/>on either side.</Margin>
+
+- no red node has a red child
+- every path from a node down has the same number of black nodes
+- so the longest path ≤ 2 × the shortest: height ≤ 2 log(n+1)
+- uncle red → recolor (a 4-node splits). uncle black → 1 or 2 rotations
+
+---
+
+## lecture 7: amortized analysis
+
+Worst case per operation can be terrible while the total is fine. <U>Amortized cost = total cost / number of operations</U>, for the worst sequence. No probability.
+
+<ArrayGrowth />
+
+Method: give every operation a charge. Cheap ones deposit into a bank, expensive ones withdraw. If the bank never goes negative, total cost ≤ total charge. As a potential: amortized cost = actual cost + Φ<sub>after</sub> − Φ<sub>before</sub>, with Φ ≥ 0 and Φ<sub>0</sub> = 0.
+
+<CounterDemo />
+
+<LogDictionary />
+
+<Pen>same potential idea, different Φ: number of 1s (counter), number of trees (binomial heap), sum of depths (binary heap), number of inversions (move-to-front).</Pen>
+
+With several kinds of operation you must use <Hl tone="pink">one</Hl> Φ for all of them.
+
+### homework 3 is two potential arguments
+
+The bank on each node of a 2-3-4 tree can depend only on how many keys it holds. Which values make every insert cost O(1) splits?
+
+<SplitBank />
+
+Move-to-front against a fixed list:
+
+<MoveToFront />
+
+---
+
+## lecture 8: heaps
+
+Priority queue: insert, extract-min, decrease-key, meld.
+
+<BinaryHeapLab />
+
+<Margin>meld two binary heaps:<br/>append, then sink everything<br/>bottom-up. O(n)</Margin>
+
+<BuildHeap />
+
+Binomial heaps make insert O(1) and meld O(log n) amortized:
+
+<BinomialLab />
+
+- B<sub>k</sub> has 2<sup>k</sup> nodes, height k, root degree k, C(k,i) nodes at depth i
+- a heap holds at most one B<sub>k</sub> for each k, so the trees are the 1 bits of n
+- meld = binary addition (link = carry). insert = meld with one node
+- Φ = number of trees: insert links k times, Φ drops by k−1, amortized 2
+
+```
+                 insert   extract-min   decrease-key   meld
+binary heap      log n    O(1)*         log n          n
+binomial heap    O(1)*    log n         log n          log n
+fibonacci heap   O(1)     log n*        O(1)*          O(1)
+                                             * amortized
+```
+
+---
+
+## lecture 9: union-find
+
+Maintain disjoint sets: find(x) = name of x's set, union(x, y) merges.
+
+<UnionFindLab />
+
+- union by rank: shorter tree under taller. rank r ⇒ ≥ 2<sup>r</sup> nodes ⇒ height ≤ log n
+- path compression: point everything you walked over at the root
+- both: m operations cost O(m α(n)), α(n) ≤ 4 forever
+
+---
+
+## lecture 10: universal and perfect hashing
+
+A fixed hash function loses to an adversary who knows it. So <U>pick the function at random</U> from a family where any two keys collide rarely.
+
+<UniversalHash />
+
+**Universal:** for every x ≠ y, Pr<sub>h</sub>[h(x) = h(y)] ≤ 1/m. Then for n keys, the expected number of collisions is ≤ C(n,2)/m.
+
+<CollisionProb />
+
+**Perfect hashing:** two levels. First hash into n buckets. A bucket with c keys gets a table of size c² and its own hash, redrawn until it has no collisions.
+
+<PerfectHash />
+
+<Sticky front="why c² and why it is still O(n) space">c keys have C(c,2) pairs, each colliding with probability ≤ 1/c², so expected collisions &lt; ½ and a draw works with probability ≥ ½ (2 tries on average). Σc² is 2n in expectation, so redraw level one until Σc² ≤ 4n.</Sticky>
+
+---
+
+## lectures 1 to 3, the short version
+
+**Karatsuba:** 4 half-size products → 3 by computing (A+B)(C+D). T(n) = 3T(n/2) + cn = Θ(n<sup>log₂3</sup>).
+
+<KaratsubaDemo />
+
+**Strassen:** 8 block products → 7. T(n) = 7T(n/2) + cn² = Θ(n<sup>log₂7</sup>).
+
+<StrassenDemo />
+
+**Recurrences.** Draw the tree, sum each level, see which end wins.
+
+<RecursionTree />
+
+Not every recurrence has the master-theorem shape. Guess, then check the ratio:
+
+<RecurrenceCheck />
+
+- T(n) = 5T(n−3): unroll, 5<sup>n/3</sup>
+- T(n) = n<sup>¼</sup>T(n<sup>¾</sup>) + n: divide by n, S(n) = S(n<sup>¾</sup>) + 1, so log log n
+- in an induction, a constant that <X>changes</X> was never a constant (3T(n/3)+n: cn fails, n log₃(3n) works)
+
+**Asymptotics.** f = O(g): ∃ c, n₀ with f(n) ≤ c·g(n) for all n > n₀.
+
+<BigOLab />
+
+<Margin>Θ(g) = O(g) and Ω(g).<br/>o and ω: the ratio<br/>goes to 0 or ∞.</Margin>
+
+**Proof techniques (lecture 3):** strong induction (recursive algorithms), contradiction (smallest counterexample), loop invariant (initialize, maintain, terminate), contrapositive, direct.
+
+<InvariantDemo />
+
+---
+
+## homework map
+
+Where each problem lives. The figures show the idea; the proof is yours to write.
+
+- **HW1.1** asymptotics → the big-O lab (watch f/g)
+- **HW1.2** recurrences → recursion tree, guess-and-check. two of the three are not master-theorem shaped
+- **HW1.3** k-group sorting in O(n log k) → median quicksort, stopped after log k levels
+- **HW2.1** dumbbells Ω(n log n) → the game, "dumbbells", 3 outcomes
+- **HW2.2** k-group Ω(n log k) → group-answer counting
+- **HW2.3** strings in O(n) → the strings figure
+- **HW3.1** 2-3-4 splits → B-tree lab, then the bank figure
+- **HW3.2** move-to-front → the potential table, once with each reference list
+- **HW3.3** kth smallest of every growing prefix in O(n log k) → what heap size stays useful?
+
+---
+
+## the short version
+
+```
+quickselect      pivot in the middle → n,   min/max pivot → n²
+median of medians  groups of 5, 7n/10 + n/5 = 9n/10 < n → Θ(n)
+lower bounds     answers ≤ outcomes^depth → depth ≥ log(answers)
+  sort n! · k-group n!/((n/k)!)^k · dumbbell n! (3 outcomes)
+counting sort    O(n+k), stable   radix: passes × (n+b), stable inner sort
+B-tree           t−1..2t−1 keys, split full nodes on the way down, O(log n)
+red-black        black + red kids = one 2-3-4 node, height ≤ 2 log(n+1)
+amortized        cost + ΔΦ, Φ ≥ 0, Φ₀ = 0, one Φ for all operations
+  doubling array 3n · counter 2n (Φ = #1s) · 2-3-4 splits ≤ n
+heaps            binary: extract-min O(1) am. (Φ = Σ depth)
+                 binomial: insert O(1) am. (Φ = #trees), n in binary = trees
+union-find       by rank + compression: O(m α(n))
+hashing          universal: Pr[collide] ≤ 1/m · perfect: c² slots, O(n) total
+```
+
+<O>What is the answer set, and how fast can each step shrink it?</O>
+
+## drill
+
+<ExamDrill />
+
+<Sticky front="what is not here yet" tone="blue">Lectures 11 to 25 (dynamic programming, graphs, flows, LP, NP) haven't been taught, and lectures 9 and 10 have no posted notes yet, so those two follow CLRS 19 and 11.</Sticky>

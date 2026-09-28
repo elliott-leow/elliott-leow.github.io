@@ -6,6 +6,7 @@ import '@/styles/notebook.css'
 import '@/styles/objects.css'
 import '@/styles/page.css'
 import '@/styles/orbitals.css'
+import '@/styles/algos.css'
 
 // a marker hand with an informality axis, set halfway between a clean sans and handwriting
 const hand = Shantell_Sans({ subsets: ['latin'], axes: ['INFM'], variable: '--font-hand' })

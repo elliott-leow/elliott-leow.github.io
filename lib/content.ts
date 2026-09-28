@@ -92,6 +92,13 @@ export type NoteMeta = {
 /** newest first. each one needs a matching content/notes/<slug>.mdx */
 const allNotes: NoteMeta[] = [
   {
+    slug: 'algorithms-exam-notes',
+    date: '09.28.26',
+    title: 'intro algorithms: everything to play with',
+    preview: 'selection to hashing, every idea as a demo',
+    style: 'typed',
+  },
+  {
     slug: 'intro-orgo-orbitals',
     date: '09.26.26',
     title: 'intro organic chemistry molecular orbital theory',

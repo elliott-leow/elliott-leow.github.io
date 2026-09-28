@@ -1,0 +1,9 @@
+/* the interactive figures for content/notes/algorithms-exam-notes.mdx, in the order they appear there */
+export { QuickselectLab, MedianOfMedians, WhyFive, MedianQuicksort } from './Select'
+export { LowerBoundGame, GroupBound, CountingSortDemo, RadixDemo, RadixCost, StringSort } from './Sorting'
+export { BstDegenerate, BTreeLab, SplitBank, RedBlackLab } from './Trees'
+export { ArrayGrowth, CounterDemo, LogDictionary, MoveToFront } from './Amort'
+export { BinaryHeapLab, BuildHeap, BinomialLab } from './Heaps'
+export { UnionFindLab, UniversalHash, CollisionProb, PerfectHash } from './Structures'
+export { KaratsubaDemo, StrassenDemo, RecursionTree, RecurrenceCheck, BigOLab, InvariantDemo } from './Foundations'
+export { ExamDrill } from './Quiz'

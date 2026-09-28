@@ -1,0 +1,64 @@
+/* the algorithm figures reuse .orb-fig; this is only what they add */
+.algo-num {
+  width: 5.5em;
+  font-family: var(--mono);
+  font-size: 15px;
+  padding: 3px 6px;
+  color: var(--ink);
+  background: #fff;
+  border: 1.4px solid var(--ink);
+  border-radius: 3px 7px 4px 6px;
+}
+.algo-num:focus-visible {
+  outline: 2px solid var(--blue-pen);
+  outline-offset: 2px;
+}
+.algo-say {
+  font-family: var(--hand);
+  color: var(--blue-pen);
+}
+.algo-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+.algo-table th,
+.algo-table td {
+  padding: 3px 8px;
+  text-align: right;
+  border-bottom: 1px dashed rgba(102, 98, 92, 0.35);
+  white-space: nowrap;
+}
+.algo-table th:first-child,
+.algo-table td:first-child {
+  text-align: left;
+}
+.algo-table th {
+  font-family: var(--hand);
+  font-weight: 400;
+  color: var(--pencil);
+}
+.algo-table tr.is-bad td {
+  color: var(--red-pen);
+}
+.algo-table tr.is-good td {
+  color: var(--orb-hyb);
+}
+.algo-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.algo-big {
+  font-family: var(--hand);
+  font-size: 22px;
+  color: var(--red-pen);
+  margin: 4px 0;
+}
+.algo-ok {
+  color: var(--orb-hyb);
+}
+.algo-no {
+  color: var(--red-pen);
+}
