@@ -87,12 +87,15 @@ export type NoteMeta = {
   style: 'typed' | 'serif'
   /** kept out of the list and the build. still opens under `next dev` */
   private?: boolean
+  /** accessible by direct link, but omitted from indexes and note navigation */
+  unlisted?: boolean
 }
 
 /** newest first. each one needs a matching content/notes/<slug>.mdx */
 const allNotes: NoteMeta[] = [
   {
     slug: 'algorithms-exam-notes',
+    unlisted: true,
     date: '09.28.26',
     title: 'intro algorithms: everything to play with',
     preview: 'selection to hashing, every idea as a demo',
@@ -100,6 +103,7 @@ const allNotes: NoteMeta[] = [
   },
   {
     slug: 'intro-orgo-orbitals',
+    unlisted: true,
     date: '09.26.26',
     title: 'intro organic chemistry molecular orbital theory',
     preview: 'orbitals, simplified just enough to pass orgo',
@@ -124,5 +128,6 @@ const allNotes: NoteMeta[] = [
 
 const showPrivate = process.env.NODE_ENV === 'development'
 export const notes = allNotes.filter((n) => showPrivate || !n.private)
+export const listedNotes = notes.filter((n) => !n.unlisted)
 
 export const noteBySlug = (slug: string) => notes.find((n) => n.slug === slug)

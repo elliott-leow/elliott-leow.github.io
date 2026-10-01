@@ -12,7 +12,11 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const n = noteBySlug((await params).slug)
-  return n ? { title: n.title, description: n.preview } : {}
+  return n ? {
+    title: n.title,
+    description: n.preview,
+    ...(n.unlisted ? { robots: { index: false, follow: false } } : {}),
+  } : {}
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
@@ -21,7 +25,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   if (!meta) notFound()
   const { default: Body } = await import(`@/content/notes/${slug}.mdx`)
   const i = notes.findIndex((n) => n.slug === slug)
-  const older = notes[i + 1]
+  const older = notes.slice(i + 1).find((n) => !n.unlisted)
   return (
     <article className="note-page">
       <Link href="/notes/" className="back-link hand">

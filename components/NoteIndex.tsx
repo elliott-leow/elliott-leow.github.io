@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
-import { notes } from '@/lib/content'
+import { listedNotes } from '@/lib/content'
 import { penEase } from '@/lib/motion'
 
 /** notes, listed the way you'd keep a table of contents in the front of a notebook */
 export default function NoteIndex({ limit, compact }: { limit?: number; compact?: boolean }) {
-  const list = limit ? notes.slice(0, limit) : notes
+  const list = limit ? listedNotes.slice(0, limit) : listedNotes
   const [hover, setHover] = useState<string | null>(null)
   const reduce = useReducedMotion()
   return (
