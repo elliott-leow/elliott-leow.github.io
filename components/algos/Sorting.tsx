@@ -113,7 +113,7 @@ export function LowerBoundGame() {
   const th = tree ? 34 + tree.depth * 46 : 0
   return (
     <Fig
-      n={5}
+      n={11}
       title="you are the algorithm. an adversary answers."
       hint={`goal: pin down ${g.what}. each answer keeps as many possibilities alive as it can`}
       controls={
@@ -219,7 +219,7 @@ export function GroupBound() {
   const curve = Array.from({ length: lgN + 1 }, (_, i) => i).filter((i) => i >= 1)
   return (
     <Fig
-      n={6}
+      n={12}
       title="how many answers does k-group-sorting have?"
       hint="fewer than sorting. log of that count is the lower bound"
       controls={
@@ -278,7 +278,7 @@ export function CountingSortDemo() {
   })()
   return (
     <Fig
-      n={7}
+      n={13}
       title="counting sort"
       hint="count, prefix-sum, then drop each item into its slot"
       controls={
@@ -359,7 +359,7 @@ export function RadixDemo() {
   const cw = 46
   return (
     <Fig
-      n={8}
+      n={14}
       title="radix sort, one digit at a time"
       hint="least significant first. then try it with a sort that is not stable"
       controls={
@@ -458,7 +458,7 @@ export function RadixCost() {
   const bin = radixCost(n, U, 2)
   return (
     <Fig
-      n={9}
+      n={15}
       title="how big a base?"
       hint="numbers up to n^c, radix sort with base b: passes × (n + b)"
       controls={
@@ -492,7 +492,7 @@ export function StringSort() {
   const ok = JSON.stringify(res.out) === JSON.stringify([...strs].sort())
   return (
     <Fig
-      n={10}
+      n={16}
       title="strings of different lengths, sorted in O(total length)"
       hint="the last position first; only strings that reach it join in"
       controls={

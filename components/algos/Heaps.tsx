@@ -92,7 +92,7 @@ export function BinaryHeapLab() {
   const phi = potential(cur.length)
   return (
     <Fig
-      n={19}
+      n={25}
       title="binary heap"
       hint="click a node to pick it. drag the slider to replay the swaps"
       controls={
@@ -162,7 +162,7 @@ export function BuildHeap() {
   const desc = (m: number) => Array.from({ length: m }, (_, i) => m - i)
   return (
     <Fig
-      n={20}
+      n={26}
       title="building a heap: sink from the bottom vs insert one by one"
       hint="bottom-up: sink every node, last parent first"
       controls={
@@ -308,7 +308,7 @@ export function BinomialLab() {
   }
   return (
     <Fig
-      n={21}
+      n={27}
       title="binomial heap: a binary counter made of trees"
       hint="B_k = two B_(k−1)s, one hung under the other's root. the heap has a B_k exactly when bit k of n is 1"
       controls={

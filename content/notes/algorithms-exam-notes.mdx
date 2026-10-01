@@ -1,153 +1,1520 @@
-import { QuickselectLab, MedianOfMedians, WhyFive, MedianQuicksort, LowerBoundGame, GroupBound, CountingSortDemo, RadixDemo, RadixCost, StringSort, BstDegenerate, BTreeLab, RedBlackLab, ArrayGrowth, CounterDemo, LogDictionary, SplitBank, MoveToFront, BinaryHeapLab, BuildHeap, BinomialLab, UnionFindLab, UniversalHash, CollisionProb, PerfectHash, KaratsubaDemo, StrassenDemo, RecursionTree, RecurrenceCheck, BigOLab, InvariantDemo, ExamDrill } from '@/components/algos'
+import { QuickselectLab, MedianOfMedians, WhyFive, MedianQuicksort, LowerBoundGame, GroupBound, CountingSortDemo, RadixDemo, RadixCost, StringSort, BstDegenerate, BTreeLab, RedBlackLab, ArrayGrowth, CounterDemo, LogDictionary, SplitBank, MoveToFront, BinaryHeapLab, BuildHeap, BinomialLab, UnionFindLab, UniversalHash, CollisionProb, PerfectHash, KaratsubaDemo, StrassenDemo, RecursionTree, RecurrenceCheck, BigOLab, InvariantDemo, ExamDrill, Spec, Recall, Lecture, LectureNav, Check, Steps, Step, Fold, Guide, MatrixHash } from '@/components/algos'
 
-JHU 601.433 Intro Algorithms, fall 2026. Every figure below is a working model of one idea from lecture. Play with it until you can predict what it does before it does it.
+JHU 601.433 Intro Algorithms, fall 2026, lectures 1 to 10. Built from the [course site](https://introalgorithmsfall26.cs.jhu.edu/schedule/): the posted lecture notes for lectures 1, 2 and 4 to 10, the slides for lecture 3 (it has no notes), recitations 1 and 2, and homeworks 1 to 3.
 
-<Pen>lectures 4 to 10 come first, in class order. lectures 1 to 3 are short, at the bottom. lectures 11 onward haven't been taught yet.</Pen>
+<Pen>midterm 1 is thursday oct 8 on the schedule page. the site does not say what it covers, so this page assumes lectures 1 to 10.</Pen>
 
-Two rules for the whole exam: <Hl>say what the invariant or potential is</Hl>, and <Hl tone="pink">check that it holds at the start and after every step</Hl>.
+<LectureNav />
 
----
+## how this page works
 
-## lecture 4: linear-time selection
+Do not read it top to bottom. Open one lecture, finish it, close it. Every lecture is a few minutes of reading cut up by things to press.
 
-Find the kth smallest without sorting. Sorting does it in n log n. We want n.
+- **Lectures are folded.** Tap a lecture title, or a number in the strip above, to open it. The strip stays at the top of the screen.
+- **Yellow box:** the problem, as an input and an output.
+- **Green box, "before you touch it":** it comes in front of every figure. It says what the figure is, what the colours mean, and what to press, in order. Tap a step to tick it off.
+- **Figures** are the taped-in sheets. Buttons, sliders and most cells in them respond to a tap. The caption under a figure changes as you play and says what just happened.
+- **Red bar, "step through it":** a proof or derivation, one step per tap. Guess the next step before you tap.
+- **Blue dashed box, "quick check":** tap an answer. A wrong answer lets you try again. A lecture turns ✓ done when all of its checks are right.
+- **Blue bar, "recall":** say the answer out loud first, then tap to open it and grade yourself.
+
+Progress is saved in this browser only.
+
+<Hl>Two rules for the whole exam:</Hl> say what the invariant or potential is, and check that it holds at the start and after every step.
+
+<Fold title="words that show up in every lecture">
+
+- **n** is the size of the input. **k** is a rank you are asking for. **log** is base 2 unless a base is written.
+- **rank**: the position of an element in sorted order. The smallest element has rank 1, the largest has rank n. "The kth smallest" and "the element of rank k" mean the same thing.
+- **comparison**: asking "is a &lt; b?" and getting yes or no. Most algorithms in lectures 4 to 8 are counted by how many comparisons they make.
+- **worst case**: T(n) is the most work over <U>all</U> inputs of size n. It is a function of n, not of one input.
+- **recurrence**: an equation for T(n) in terms of T of smaller inputs, like T(n) = 2T(n/2) + cn. Read it as: "two recursive calls on half the input, plus cn work of my own".
+- **O, Ω, Θ**: upper bound, lower bound, both (lecture 2, at the bottom).
+- **invariant**: a statement that is true at the start of every step of an algorithm. You prove it by induction over the steps.
+- **potential Φ**: a number computed from the current state of a data structure, used to pay for expensive steps (lecture 7).
+
+</Fold>
+
+<Fold title="how the ten lectures connect">
+
+- <Hl>lectures 1 to 3</Hl> are the toolbox: recurrences come from recursive algorithms (1), the recursion tree solves them (2), and induction proves the algorithms right (3). Every later lecture uses all three.
+- <Hl>lecture 4</Hl> makes a pivot that is never bad. That gives quicksort a worst case of n log n, which is exactly the number that lecture 5 proves nobody can beat with comparisons.
+- <Hl>lecture 5</Hl> escapes that bound by looking inside the numbers (counting sort, radix sort).
+- <Hl>lecture 6</Hl> asks a different question: not sorting once, but keeping data ready for many lookups and inserts. The B-tree gets balance by allowing nodes to be different sizes, the same slack idea as the pivot in lecture 4.
+- <Hl>lecture 7</Hl> gives the tool for analyzing such structures over a whole sequence of operations. Its binary counter comes back in lecture 8 as the binomial heap, and in homework 3 as the 2-3-4 split argument.
+- <Hl>lecture 8</Hl> uses that tool on heaps. Lecture 9 uses it again: charging each element in the smaller list is a piggy bank on every element.
+- <Hl>lecture 10</Hl> uses randomness instead of amortization to beat an adversary.
+
+</Fold>
+
+<Lecture n={1} title="Karatsuba and Strassen" tldr="The obvious algorithm is often not the best. Multiply n-bit numbers with 3 half-size products instead of 4, and matrices with 7 instead of 8.">
+
+<Spec
+  name="integer multiplication"
+  input="two n-bit numbers X and Y (each between 0 and 2ⁿ − 1)"
+  output="the product X · Y"
+  note="cost is counted in bit operations. Adding two n-bit numbers, or shifting one, costs O(n)."
+/>
+
+**What the course is.** There is no programming. You design an algorithm and then prove two things about it: it is **correct** (its output is what you claim), and it is **fast** (at most f(n) steps on every input of size n).
+
+<Fold title="why prove a running time instead of timing it? (3 reasons from lecture)">
+
+- Test inputs may not look like real inputs, and a low-level routine meets every kind of input.
+- We care how the time **scales** with n. That is hard to read off experiments.
+- A proof makes you understand **why**. An experiment only tells you that it happened.
+
+</Fold>
+
+### three ways to multiply
+
+- **From the definition:** add X to itself Y times. Y can be as large as 2ⁿ, so that is Θ(2ⁿ) additions.
+- **Grade school:** for each 1 bit of Y, write down a shifted copy of X, then add the copies up. There are at most n copies and each addition costs O(n): <O>O(n²)</O>.
+- **Karatsuba (1962):** O(n<sup>1.585</sup>). The obvious algorithm was not the best one.
+
+<Check q="Y is a 64-bit number. Multiplying by adding X to itself Y times can take about how many additions?" options={["2⁶⁴", "64", "64² = 4096", "64 · log 64"]} why="Y can be as large as 2⁶⁴ − 1. Running time is measured in n, the number of bits, and the value of an n-bit number is exponential in n." />
+
+### Karatsuba
+
+<Steps title="Karatsuba, from 4 products to 3">
+
+<Step>
+
+Split each number in half: X = 2<sup>n/2</sup>·A + B and Y = 2<sup>n/2</sup>·C + D. A and C are the top n/2 bits, B and D are the bottom n/2 bits.
+
+</Step>
+
+<Step>
+
+Multiply out: XY = 2<sup>n</sup>·AC + 2<sup>n/2</sup>·(AD + BC) + BD. That needs four half-size products (AC, AD, BC, BD). The shifts and additions cost O(n).
+
+</Step>
+
+<Step>
+
+So T(n) = 4T(n/2) + cn, which solves to O(n²). No progress yet.
+
+</Step>
+
+<Step>
+
+The trick: (A + B)(C + D) = AC + AD + BC + BD. So the middle term is <Hl>AD + BC = (A + B)(C + D) − AC − BD</Hl>. We need AC and BD anyway, so one more product gives the middle term.
+
+</Step>
+
+<Step>
+
+Three products: AC, BD and (A + B)(C + D). T(n) = 3T(n/2) + cn = <O>O(n<sup>log₂ 3</sup>)</O> ≈ O(n<sup>1.585</sup>). The c is larger than before, but it is still a constant.
+
+</Step>
+
+</Steps>
+
+Lecture writes the same identity in one line: XY = 2<sup>n/2</sup>(A + B)(C + D) + (2<sup>n</sup> − 2<sup>n/2</sup>)AC + (1 − 2<sup>n/2</sup>)BD.
+
+**By hand.** 54 × 41 as 6-bit numbers: X = 110110 and Y = 101001, so n/2 = 3.
+
+- A = 110 = 6, B = 110 = 6, C = 101 = 5, D = 001 = 1
+- AC = 30, BD = 6, (A + B)(C + D) = 12 · 6 = 72
+- middle = 72 − 30 − 6 = 36 (check: AD + BC = 6 + 30 = 36 ✓)
+- XY = 2⁶·30 + 2³·36 + 6 = 1920 + 288 + 6 = 2214 ✓
+
+<Guide fig="Karatsuba" shows="Karatsuba run on two numbers you choose. The table lists the four halves A, B, C, D, then the 4 obvious products, then the 3 products the trick uses. The caption counts the small multiplications.">
+1. Press **54 × 41**. It is the worked example just above: the table shows A = 6, B = 6, C = 5, D = 1, then the 4 obvious products, then the 3 products the trick uses.
+2. Read the last row of the table: AD + BC on the left, (A + B)(C + D) − AC − BD on the right. Both are 36.
+3. Check the caption: the result matches ordinary multiplication (✓), and it counts how many small multiplications the recursion used compared with grade school.
+4. Edit X and Y, or press **bigger**. Work out A, B, C and D yourself before you look at the table.
+</Guide>
+
+<KaratsubaDemo />
+
+<Check q="Karatsuba makes how many recursive multiplications of half-size numbers?" options={["3", "4", "2", "n/2"]} why="AC, BD and (A + B)(C + D). The middle term then comes from two subtractions, which cost only O(n)." />
+
+<Check q="The 4-product version has T(n) = 4T(n/2) + cn. What does that solve to?" options={["Θ(n²), no better than grade school", "Θ(n log n)", "Θ(n^1.585)", "Θ(n³)"]} why="a = 4, b = 2, k = 1, and 4 is more than 2¹, so the bottom level of the tree wins: n^(log₂ 4) = n²." />
+
+Karatsuba is not the end either. With the Fast Fourier Transform, Schönhage and Strassen got O(n log n log log n), and Harvey and van der Hoeven got O(n log n) in 2019.
+
+### Strassen
+
+<Spec
+  name="matrix multiplication"
+  input="two n × n matrices X and Y"
+  output="the n × n matrix XY"
+  note="here one add or multiply of two entries counts as one step. The obvious algorithm computes each of the n² entries as a row-times-column sum of n terms: O(n³)."
+/>
+
+<Steps title="Strassen, from 8 products to 7">
+
+<Step>
+
+Cut each matrix into four n/2 × n/2 blocks: X = [A B; C D] and Y = [E F; G H].
+
+</Step>
+
+<Step>
+
+Then XY = [AE + BG, AF + BH; CE + DG, CF + DH]. That is 8 block products and 4 block additions. One block addition costs O(n²).
+
+</Step>
+
+<Step>
+
+So T(n) = 8T(n/2) + cn², which solves to O(n³). No progress.
+
+</Step>
+
+<Step>
+
+Strassen (1969) found 7 products of sums of blocks, M1 to M7, from which all four blocks of XY come out using only additions and subtractions.
+
+</Step>
+
+<Step>
+
+T(n) = 7T(n/2) + cn² = <O>O(n<sup>log₂ 7</sup>)</O> ≈ O(n<sup>2.807</sup>).
+
+</Step>
+
+</Steps>
+
+<Fold title="the seven products (know that there are 7, not the formulas)">
+
+```
+M1 = (A + D)(E + H)     M5 = (A + B)H
+M2 = (C + D)E           M6 = (C − A)(E + F)
+M3 = A(F − H)           M7 = (B − D)(G + H)
+M4 = D(G − E)
+
+XY = [ M1 + M4 − M5 + M7      M3 + M5           ]
+     [ M2 + M4                M1 − M2 + M3 + M6 ]
+```
+
+</Fold>
+
+<Guide fig="Strassen" shows="Two 2 × 2 matrices multiplied with Strassen's seven products. The table lists the seven products and the four entries of the answer built from them.">
+1. Edit the 8 entries (or press **random**). The table lists the seven products and the four result blocks built from them. They match the ordinary product.
+</Guide>
+
+<StrassenDemo />
+
+<Check q="Strassen has T(n) = 7T(n/2) + cn². Which level of the recursion tree does the most work?" options={["the bottom: 7 is more than 2² = 4", "the top", "all levels are equal", "it depends on c"]} why="Level i costs (7/4)^i · cn², which grows geometrically, so the leaves dominate and T(n) = n^(log₂ 7)." />
+
+<Check q="Is n^2.807 the best known exponent for matrix multiplication?" options={["no: about 2.371 is known, and nobody knows whether 2 is possible", "yes, Strassen is optimal", "no: n² is known", "no: n log n is known"]} why="The lecture lists improvements down to about O(n^2.3712). An O(n²) algorithm has not been found and has not been ruled out." />
+
+<Pen>the pattern in both: split in half, then use algebra to save one recursive product.</Pen>
+
+<Recall q="Karatsuba: why 3 products and what is the recurrence?">
+
+AD + BC = (A + B)(C + D) − AC − BD, so only AC, BD and (A + B)(C + D) are multiplications. T(n) = 3T(n/2) + cn, which is Θ(n<sup>log₂3</sup>) by the master theorem (a = 3 &gt; b<sup>k</sup> = 2).
+
+</Recall>
+
+<Recall q="Write the recurrence for block matrix multiplication with 8 products and with 7, and solve both.">
+
+8 products: T(n) = 8T(n/2) + cn² = Θ(n³), since 8 &gt; 2² and log₂ 8 = 3. 7 products: T(n) = 7T(n/2) + cn² = Θ(n<sup>log₂ 7</sup>) ≈ Θ(n<sup>2.807</sup>).
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={2} title="asymptotics and recurrences" tldr="O, Ω and Θ hide constants. A recurrence is solved by drawing its tree and asking which level does the most work.">
+
+### O, Ω, Θ, o, ω
+
+All five compare two functions as n grows. In lecture's letters, g is the function you have and f is the yardstick.
+
+- **g = O(f)**, an upper bound: there are constants c, n₀ &gt; 0 with g(n) ≤ c·f(n) for all n &gt; n₀.
+- **g = Ω(f)**, a lower bound: the same with g(n) ≥ c·f(n).
+- **g = Θ(f)**, tight: both of the above. The two proofs may use different constants.
+- **g = o(f)**, strictly smaller: for <U>every</U> c &gt; 0 there is an n₀ with g(n) &lt; c·f(n) for all n &gt; n₀. The ratio g/f goes to 0.
+- **g = ω(f)**, strictly bigger: for every c, g(n) &gt; c·f(n) from some n₀ on. The ratio goes to ∞.
+
+<Margin>O(f) is really a set, so "g ∈ O(f)". everyone writes g = O(f).</Margin>
+
+This is notation for functions, not only for running times. It also bounds space, or anything else that grows.
+
+<Fold title="the lecture's examples, with their constants">
+
+- 2n² + 27 = O(n²): n₀ = 6, c = 3
+- 2n² + 27 = O(n³): n₀ = 4, c = 1 (an upper bound does not have to be tight)
+- n³ + 2000n² + 2000n = O(n³): n₀ = 10000, c = 2
+- 2n² + 27 = Ω(n²) and Ω(n): n₀ = 1, c = 1
+- n³/100 − 1000n² = Ω(n³): n₀ = 1000000, c = 1/1000
+- 2n² + 27 = o(n² log n) and ω(n)
+
+</Fold>
+
+<Steps title="proof that 2n² + 27 = O(n²)">
+
+<Step>
+
+We have to name a c and an n₀. Try c = 3.
+
+</Step>
+
+<Step>
+
+When does the bound fail? 2n² + 27 &gt; 3n² means n² &lt; 27, so n &lt; 6.
+
+</Step>
+
+<Step>
+
+So 2n² + 27 ≤ 3n² for every n ≥ 6.
+
+</Step>
+
+<Step>
+
+Take n₀ = 6. For all n &gt; n₀ we have 2n² + 27 ≤ c·n². That is the definition, so we are done.
+
+</Step>
+
+</Steps>
+
+<Guide fig="big-O" shows="A chart of the ratio f(n) / g(n) for a pair of functions. A flat ratio means Θ, a falling one means o, a rising one means ω. The sliders are the two constants c and n₀ from the definition of O.">
+1. Pick a statement. The chart shows f/g: flat means Θ, falling means o, rising means ω.
+2. Move **c** and **n₀** to find witnesses for the O definition: the line f ≤ c·g must hold from n₀ on.
+3. Recitation 1's question: is 2<sup>5 log n</sup> = O(n²)? The lab shows why not: 2<sup>5 log n</sup> = n<sup>5</sup> and the ratio rises.
+</Guide>
+
+<BigOLab />
+
+<Check q="True or false: 2n² + 27 = O(n³)." options={["true: O is only an upper bound", "false: it is Θ(n²)", "false: the constants are different", "true only for n above 27"]} why="n₀ = 4 and c = 1 work. O does not have to be tight. Saying Θ(n³) would be false." />
+
+<Check q="g = o(f) means that the ratio g(n) / f(n)…" options={["goes to 0", "stays below some constant", "goes to infinity", "is eventually 1"]} why="For every c, g is eventually below c·f. Staying below one particular constant is only O." />
+
+<Check q="Is 2^(5 log n) = O(n²)? (log is base 2)" options={["no: it equals n⁵", "yes", "yes, with a large enough c", "only for even n"]} why="2^(5 log n) = (2^(log n))⁵ = n⁵, and n⁵/n² grows without bound. This one is from recitation 1." />
+
+### recurrences
+
+A **recurrence** writes T(n) as the cost of the recursive calls plus the work the call does itself.
+
+- selection sort: T(n) = T(n − 1) + cn (find the smallest in cn, then recurse on the rest)
+- mergesort: T(n) = 2T(n/2) + cn (two halves, then a merge that costs cn)
+- the base case is T(n) ≤ c for n below some constant. It is almost always obvious and usually left out.
+
+There are three ways to solve one.
+
+**1. Unrolling** (good when there is one recursive call). T(n) = T(n − 1) + cn = cn + c(n − 1) + … + c. There are n terms, each at most cn, so O(n²). At least n/2 of the terms are at least cn/2, so Ω(n²). Together <O>Θ(n²)</O>.
+
+**2. Guess and check** (induction).
+
+<Steps title="guess and check on T(n) = 3T(n/3) + n, T(1) = 1">
+
+<Step>
+
+Guess T(n) ≤ cn, and assume it for all smaller inputs.
+
+</Step>
+
+<Step>
+
+Then T(n) = 3T(n/3) + n ≤ 3·c(n/3) + n = (c + 1)n.
+
+</Step>
+
+<Step>
+
+That is <X>not</X> a proof of O(n). We needed ≤ cn and got (c + 1)n. The constant grew, so <Hl tone="pink">it was never a constant</Hl>.
+
+</Step>
+
+<Step>
+
+A better guess: the "constant" went up by 1 each time n tripled. The function that does that is log₃ n. Guess T(n) ≤ n log₃(3n). The 3 inside makes the base case work: T(1) = 1 ≤ 1·log₃ 3.
+
+</Step>
+
+<Step>
+
+Check: T(n) ≤ 3·(n/3)·log₃(n) + n = n log₃ n + n = n(log₃ n + log₃ 3) = n log₃(3n) ✓. Exactly the bound we assumed, so T(n) = O(n log n).
+
+</Step>
+
+</Steps>
+
+<Check q="An induction assumes T(m) ≤ 5m for smaller m and derives T(n) ≤ 6n. Is T(n) = O(n) proven?" options={["no: the constant changed, so the induction did not close", "yes, 6n is O(n)", "yes, if n is large enough", "only the base case is missing"]} why="You must derive exactly the bound you assumed, with the same constant. Otherwise the constant grows at every level of the recursion." />
+
+**3. The recursion tree** (the one lecture always uses). Draw one box per call, holding only the work that call does itself. Add up each level, then ask which level is biggest.
+
+- mergesort: level i has 2<sup>i−1</sup> boxes of c·n/2<sup>i−1</sup> each. Every level adds up to cn, and there are log n + 1 levels: <O>Θ(n log n)</O>.
+- Strassen: level i has 7<sup>i−1</sup> boxes of c(n/2<sup>i−1</sup>)² each, a total of (7/4)<sup>i−1</sup>·cn². It grows every level, so the last level dominates: O(n²·(7/4)<sup>log n</sup>) = O(n<sup>log₂ 7</sup>).
+
+<Guide fig="the recursion tree" shows="The recursion tree of T(n) = a·T(n/b) + n^k, drawn as one bar per level. The length of a bar is the total work done on that level.">
+1. Click presets (mergesort, Karatsuba, Strassen, binary search…) and look at the bar for each level.
+2. Then drag **a**, **b**, **k** yourself and predict the three cases before reading the caption.
+</Guide>
+
+<RecursionTree />
+
+### the master theorem
+
+**Theorem 2.3.1.** For T(n) = aT(n/b) + cn<sup>k</sup> with T(1) = c, where a ≥ 1, b &gt; 1, c &gt; 0 and k ≥ 0 are constants:
+
+- a &lt; b<sup>k</sup>: T(n) = Θ(n<sup>k</sup>). The top level dominates.
+- a = b<sup>k</sup>: T(n) = Θ(n<sup>k</sup> log n). Every level is equal.
+- a &gt; b<sup>k</sup>: T(n) = Θ(n<sup>log_b a</sup>). The bottom level dominates.
+
+<Steps title="why: the recursion tree again">
+
+<Step>
+
+Level i has a<sup>i−1</sup> boxes of c(n/b<sup>i−1</sup>)<sup>k</sup> each. Its total is cn<sup>k</sup>·(a/b<sup>k</sup>)<sup>i−1</sup>.
+
+</Step>
+
+<Step>
+
+There are log<sub>b</sub> n + 1 levels. Write α = a/b<sup>k</sup>. Then T(n) = cn<sup>k</sup>·(1 + α + α² + … + α<sup>log_b n</sup>).
+
+</Step>
+
+<Step>
+
+**α = 1:** every term is 1 and there are log<sub>b</sub> n + 1 of them. T(n) = Θ(n<sup>k</sup> log n).
+
+</Step>
+
+<Step>
+
+**α &lt; 1:** the sum is at least 1 and below 1/(1 − α), which is a constant. T(n) = Θ(n<sup>k</sup>).
+
+</Step>
+
+<Step>
+
+**α &gt; 1:** pull out the last term. The sum is at most α<sup>log_b n</sup>·1/(1 − 1/α). So T(n) = Θ(n<sup>k</sup>·α<sup>log_b n</sup>) = Θ(a<sup>log_b n</sup>) = Θ(n<sup>log_b a</sup>).
+
+</Step>
+
+</Steps>
+
+<Check q="T(n) = 2T(n/2) + n². What is T(n)?" options={["Θ(n²)", "Θ(n² log n)", "Θ(n log n)", "Θ(n)"]} why="a = 2 and b^k = 2² = 4. a is smaller, so the top level dominates: Θ(n^k) = Θ(n²)." />
+
+<Check q="T(n) = 9T(n/3) + n. What is T(n)?" options={["Θ(n²)", "Θ(n log n)", "Θ(n)", "Θ(n³)"]} why="a = 9 and b^k = 3. a is bigger, so the leaves dominate: n^(log₃ 9) = n²." />
+
+<Check q="T(n) = T(n/2) + 1, which is binary search. What is T(n)?" options={["Θ(log n)", "Θ(1)", "Θ(n)", "Θ(n log n)"]} why="a = 1 and b^k = 2⁰ = 1. They are equal, so Θ(n⁰ · log n) = Θ(log n)." />
+
+### when it does not fit the theorem
+
+Guess, then look at T(n) divided by the guess.
+
+<Guide fig="guessing a Θ" shows="A chart of T(n) divided by your guess for it. If the guess is the right Θ, the line goes flat.">
+1. Pick a recurrence, and keep the recommended guess. The ratio T(n)/guess is flat when the guess is right.
+2. Switch to **my own** and move p and q. Too small a guess and the ratio climbs, too big and it falls.
+</Guide>
+
+<RecurrenceCheck />
+
+- T(n) = 5T(n−3): unroll, 5<sup>n/3</sup>
+- T(n) = n<sup>¼</sup>T(n<sup>¾</sup>) + n: divide by n, S(n) = T(n)/n satisfies S(n) = S(n<sup>¾</sup>) + 1, so S = Θ(log log n) and T(n) = Θ(n log log n)
+- in an induction, a constant that <X>changes</X> was never a constant (3T(n/3)+n: cn fails, n log₃(3n) works)
+- recitation 1: T(n) = 4T(n/4) + n log₄ n is Θ(n log² n) (the master theorem does not apply because n log n is not a power of n). Sum the levels: level i costs n·(log₄ n − i).
+
+<Recall q="State the definition of g = O(f), and say what changes for Ω and for o.">
+
+There exist constants c, n₀ &gt; 0 such that g(n) ≤ c·f(n) for all n &gt; n₀. For Ω, the inequality is g(n) ≥ c·f(n). For o, the inequality g(n) &lt; c·f(n) must hold for every c &gt; 0 (each c gets its own n₀), not just for one.
+
+</Recall>
+
+<Recall q="Master theorem: solve T(n) = 2T(n/2) + n, T(n) = 4T(n/2) + n and T(n) = T(n/2) + n.">
+
+First: a = b<sup>k</sup> (2 = 2), so Θ(n log n). Second: a = 4 &gt; 2, so Θ(n²). Third: a = 1 &lt; 2, so Θ(n). The last one is quickselect with a perfect pivot (lecture 4).
+
+</Recall>
+
+<Recall q="In guess-and-check, why is deriving T(n) ≤ (c + 1)n from T(n/3) ≤ c·n/3 not a proof of O(n)?">
+
+The induction must give back the same bound it assumed. A constant that grows by 1 at every level of the recursion has grown by log₃ n at the top, so the real bound is n log n.
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={3} title="proofs for algorithms" tldr="Five proof shapes: induction, contradiction, direct, loop invariant, contrapositive. Each one shown on quicksort or insertion sort.">
+
+<Pen>lecture 3 has slides but no posted notes. this follows the slides.</Pen>
+
+Five proof shapes. The first three are shown on quicksort, the last two on insertion sort.
+
+**Quicksort**, the running example. Input: an array A of n distinct elements.
+
+1. If n ≤ 1, return A.
+2. Pick some element p of A as the pivot.
+3. Let L be the elements less than p, and G the elements greater than p.
+4. Return Quicksort(L), then p, then Quicksort(G).
+
+### 1. induction, weak and strong
+
+- **weak:** prove a base case. Assume the claim for n = k, prove it for n = k + 1.
+- **strong:** prove a base case. Assume the claim for <U>all</U> n ≤ k, prove it for n = k + 1.
+
+<Steps title="quicksort is correct (strong induction on n)">
+
+<Step>
+
+**Claim:** Quicksort(A) returns the elements of A in sorted order.
+
+</Step>
+
+<Step>
+
+**Base case**, n ≤ 1: it returns A, which is already sorted ✓.
+
+</Step>
+
+<Step>
+
+**Hypothesis:** Quicksort is correct on every array of length ≤ n. Take any A of length n + 1.
+
+</Step>
+
+<Step>
+
+It picks p and builds L and G. p is in neither, so both have length ≤ n.
+
+</Step>
+
+<Step>
+
+By the hypothesis, Quicksort(L) and Quicksort(G) come back sorted. Call them L′ and G′.
+
+</Step>
+
+<Step>
+
+Everything in L′ is below p and everything in G′ is above p, so L′, p, G′ in a row is sorted ✓.
+
+</Step>
+
+</Steps>
+
+<Check q="Why does this proof need strong induction rather than weak?" options={["L and G can have any size from 0 to n, not exactly n", "weak induction has no base case", "quicksort is randomized", "the elements are distinct"]} why="Weak induction only tells you about arrays of length exactly n. The recursive calls are on arrays whose sizes you do not know in advance." />
+
+### 2. contradiction: the smallest counterexample
+
+<Steps title="quicksort is correct (by contradiction)">
+
+<Step>
+
+Suppose some array is sorted incorrectly. Among all such arrays let A be a <Hl>smallest</Hl> one, of size n.
+
+</Step>
+
+<Step>
+
+n ≥ 2, because arrays of size ≤ 1 are returned unchanged and are sorted.
+
+</Step>
+
+<Step>
+
+Quicksort(A) picks p and recurses on L and G, which are both smaller than A.
+
+</Step>
+
+<Step>
+
+A was the smallest failure, so L′ and G′ are sorted.
+
+</Step>
+
+<Step>
+
+Then L′, p, G′ is sorted, so Quicksort(A) is correct after all. Contradiction.
+
+</Step>
+
+</Steps>
+
+It is the strong induction proof turned inside out.
+
+### 3. direct proof
+
+Assume the hypothesis and derive the conclusion. Example: quicksort takes O(n²) time in the worst case.
+
+- Before recursing it compares every element to the pivot: Θ(n).
+- T(n) = T(|L|) + T(|G|) + Θ(n) = T(|L|) + T(n − 1 − |L|) + Θ(n).
+- The worst case is a pivot that is the smallest or largest element: T(n) ≤ T(n − 1) + T(0) + Θ(n).
+- Unroll T(n) = T(n − 1) + Θ(n) to get <O>Θ(n²)</O>.
+
+<Check q="Which pivot gives quicksort its worst case?" options={["always the smallest or largest element", "always the median", "a random element", "the middle position of a random array"]} why="Then one side is empty and the other has n − 1 elements: T(n) = T(n − 1) + Θ(n) = Θ(n²)." />
+
+### 4. loop invariant
+
+**Insertion sort.**
+
+```
+for i = 2 to n:
+    j = i
+    while j > 1 and A[j] < A[j−1]:
+        swap A[j] and A[j−1]
+        j = j − 1
+```
+
+A **loop invariant** is a statement that is true at the start of every iteration. Proving one has three parts, and it is just induction on time:
+
+- **initialization:** it is true before the first iteration
+- **maintenance:** if it is true at the start of an iteration, it is true at the start of the next
+- **termination:** when the loop ends, the invariant gives the correctness claim
+
+<Steps title="insertion sort is correct (loop invariant)">
+
+<Step>
+
+**Invariant:** at the start of iteration i, A[1..i−1] holds the original first i − 1 elements, in sorted order.
+
+</Step>
+
+<Step>
+
+**Initialization:** i = 2. A[1..1] is a single element, which is sorted ✓.
+
+</Step>
+
+<Step>
+
+**Maintenance:** iteration i moves A[i] left until it is no longer smaller than its left neighbour. Now A[1..i] is sorted and holds the original first i elements. That is the invariant for i + 1 ✓.
+
+</Step>
+
+<Step>
+
+**Termination:** the loop ends with i = n + 1. The invariant says A[1..n] is sorted and holds exactly the original elements ✓.
+
+</Step>
+
+</Steps>
+
+<Guide fig="a loop invariant" shows="Insertion sort, one iteration of the outer loop per press. It marks the left part A[1..i−1], which the invariant says is sorted, and tells you whether the invariant holds.">
+1. Press **next iteration** through insertion sort. At the start of each iteration the left part A[1..i−1] is sorted and holds the original first i−1 elements. That is the invariant.
+2. Switch **code** to the bug ("stops before A[1]"). The invariant fails at a specific iteration, and the output is wrong.
+</Guide>
+
+<InvariantDemo />
+
+<Check q="The loop has ended. Which part of the invariant proof tells you the output is right?" options={["termination", "initialization", "maintenance", "the base case"]} why="Initialization and maintenance show the invariant always holds. Termination plugs in the final value of i to get the claim about the whole array." />
+
+### 5. contrapositive
+
+"If P then Q" says the same thing as "if not Q then not P". Sometimes the second one is easier to prove.
+
+Example, the maintenance step above. P: "x = A[i] is moved left until it is larger than the element to its left". Q: "at the end of the iteration, A[1..i] is sorted".
+
+<Steps title="prove: not Q implies not P">
+
+<Step>
+
+Suppose A[1..i] is <U>not</U> sorted at the end of iteration i, and x ended up at position j.
+
+</Step>
+
+<Step>
+
+Everything x moved past is larger than x: x &lt; A[k] for every k from j + 1 to i. So nothing is wrong to the right of x.
+
+</Step>
+
+<Step>
+
+A[1..i−1] was sorted before the iteration, so the only way to be unsorted is some A[k] with k &lt; j and A[k] &gt; x.
+
+</Step>
+
+<Step>
+
+The part left of x is still sorted, so A[j−1] ≥ A[k] &gt; x.
+
+</Step>
+
+<Step>
+
+So x is still smaller than the element on its left. That is "not P" ✓.
+
+</Step>
+
+</Steps>
+
+<Check q="What is the contrapositive of: if the universe has at least (N − 1)M + 1 keys, then some slot receives N of them?" options={["if every slot receives fewer than N keys, the universe has at most (N − 1)M keys", "if some slot receives N keys, the universe has at least (N − 1)M + 1 keys", "if the universe has fewer keys, no slot receives N of them", "if no slot receives N keys, the table is too big"]} why="Negate both sides and swap them. This exact proof comes back in lecture 10 as Theorem 10.2.1." />
+
+The slides end with the master theorem and its proof. That is in lecture 2 above.
+
+<Recall q="What are the three parts of a loop invariant proof?">
+
+Initialization (true before the first iteration), maintenance (if true at the start of an iteration, true at the start of the next), and termination (when the loop ends, the invariant gives the property we want).
+
+</Recall>
+
+<Recall q="What is the difference between the weak and the strong induction hypothesis, and which does a divide-and-conquer algorithm need?">
+
+Weak assumes the claim for n = k only. Strong assumes it for every n ≤ k. A recursive algorithm calls itself on inputs whose sizes are not known in advance (like L and G in quicksort), so it needs strong induction.
+
+</Recall>
+
+<Recall q="Prove quicksort correct by taking a smallest counterexample.">
+
+Let A be a smallest array that Quicksort sorts incorrectly. It has n ≥ 2 elements. Quicksort partitions around p into L and G, both smaller than A, so both are sorted correctly. Then L′, p, G′ is sorted, contradicting the choice of A.
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={4} title="linear-time selection" tldr="Find the kth smallest of n numbers in O(n) time, by choosing a pivot that is never far from the middle.">
+
+<Spec
+  name="selection"
+  input="an unsorted array A of n numbers (the notes assume all different), and an integer k with 1 ≤ k ≤ n"
+  output="one number: the kth smallest element of A. Not its position, and not a sorted array"
+  note="the median problem is selection with k = n/2. Selection is 'only slightly more general' than median-finding."
+/>
+
+**Baseline:** sort A, then read position k. That is O(n log n). The question is whether O(n) is possible. It is, and that is the whole lecture.
+
+**Warm-up cases** (lecture 4.1): k = 1 or k = n is one scan, keeping the smallest (or largest) so far. Any constant k, or n − constant, works the same way by keeping the k best. It fails for k = n/2: keeping the k smallest costs Θ(log k) = Θ(log n) per element, so n log n total. That is why the middle is the hard case.
 
 <Margin>k = 1 or k = n is one scan.<br/>k = n/2 is the hard one.</Margin>
 
-**Quickselect:** pick a pivot p, split into L (smaller) and G (larger), keep only the side that holds rank k.
+<Fold title="words for this lecture">
+
+- **pivot** p: one element of A that we compare everything else against.
+- **L** and **G**: L is the set of elements smaller than p, G is the set of elements larger than p. |L| + |G| = n − 1, because p is in neither.
+- **the key fact:** p has rank |L| + 1 in A. So comparing |L| to k − 1 tells you whether p is the answer, too big, or too small.
+- **partition**: the one pass that compares every element to p and builds L and G. It costs n − 1 comparisons.
+- **quickselect**: quicksort that only recurses on the one side that holds rank k.
+- **median of medians**: a way to choose the pivot that is not the median but is never far from it.
+- **BFPRT**: the name of the linear-time algorithm, from Blum, Floyd, Pratt, Rivest, Tarjan.
+
+</Fold>
+
+### quickselect, step by step
+
+Call it Quickselect(A, k). Input and output are the same as selection.
+
+1. If n = 1, return the element.
+2. Pick a pivot p somehow.
+3. Compare every element of A to p, building L and G.
+4. Look at |L|:
+   - if |L| = k − 1, then p has rank k: <O>return p</O>
+   - if |L| &gt; k − 1, the answer is smaller than p: return Quickselect(L, k)
+   - if |L| &lt; k − 1, the answer is larger than p: return Quickselect(G, <Hl>k − |L| − 1</Hl>)
+
+The new rank in the last case is k − |L| − 1 because we just threw away |L| elements that are smaller than the answer, plus p itself, and every one of them was ahead of the answer in sorted order.
+
+<Check q="k = 5, and after partitioning |L| = 6. Where is the answer?" options={["in L, still at rank 5", "in G, at rank 5", "it is the pivot", "in G, at a smaller rank"]} why="|L| = 6 is more than k − 1 = 4, so the pivot is too big. The 5th smallest is one of the 6 smaller elements, and its rank among them is still 5." />
+
+**Why it is correct (invariant):** on every call Quickselect(X, a), the element we want from the original A is the a-th smallest of X. It is true at the start (X = A, a = k), and each of the three cases keeps it true.
+
+**A trace by hand.** A = [9, 2, 7, 4, 8, 1, 6], k = 3, pivot = first element.
+
+- p = 9. L = [2, 7, 4, 8, 1, 6], G = []. |L| = 6 &gt; 2, so recurse on L with k = 3.
+- p = 2. L = [1], G = [7, 4, 8, 6]. |L| = 1 &lt; 2, so recurse on G with k = 3 − 1 − 1 = 1.
+- p = 7. L = [4, 6], G = [8]. |L| = 2 &gt; 0, so recurse on L with k = 1.
+- p = 4. L = [], G = [6]. |L| = 0 = k − 1, so return 4.
+
+Check: sorted A is 1, 2, 4, 6, 7, 8, 9 and the 3rd smallest is 4 ✓.
+
+<Guide fig="quickselect" shows="Quickselect running on one array. Each row is one recursive call. The yellow cell is the pivot, blue cells are smaller than it (they form L), red cells are larger (they form G). The top line shows the input (the array and k) and the output. The table counts comparisons.">
+1. Leave the input on random and the pivot on "first". Press **next round** once at a time. Before each press, guess from the row whether it will keep L or G. Each row is one recursive call: yellow is the pivot, blue cells are smaller, red are larger.
+2. Read the top line of the figure. It shows the **input** (the array and k) and the **output** (the answer, hidden until the last round).
+3. Drag **k** to 1 and then to n. Which pivot rules stay cheap at the extremes?
+4. Press **make it quadratic**: sorted input, first element as pivot, k = n. The table shows n(n−1)/2 comparisons.
+5. Switch the pivot to **middle**. Same input, now linear. Then **median of medians**: still linear, with a larger constant.
+6. Press **reshuffle** a few times on the "first" pivot: random input is usually fine, sorted is not.
+</Guide>
 
 <QuickselectLab />
 
-- pivot in the middle: T(n) = T(n/2) + cn = <O>Θ(n)</O>
-- pivot is always the min or max: T(n) = T(n−1) + cn = <O>Θ(n²)</O>
-- <X>"any simple rule is fine"</X> → any fixed rule has an input that beats it (press "make it quadratic")
+**Cost.** Everything depends on how central the pivot is.
 
-**Median of medians** finds a pivot that is not the median but is <U>never bad</U>:
+- pivot always in the middle: T(n) = T(n/2) + cn = <O>Θ(n)</O>. This is not n log n, even though there are log n rounds, because the work shrinks each round: n + n/2 + n/4 + … ≤ 2n.
+- pivot always the minimum or maximum: T(n) = T(n−1) + cn = <O>Θ(n²)</O>. Each round removes only one element.
+- <X>"any simple rule is fine"</X> is false: for any fixed rule (first, last, middle, median of three), there is an input that makes it pick the extreme every time. That is what "make it quadratic" shows.
 
-1. cut into groups of 5
-2. take each group's median
-3. recursively take the median p of those medians
-4. split around p, recurse on the side that has rank k
+<Check q="The pivot always lands exactly in the middle. How much work does quickselect do in total?" options={["Θ(n)", "Θ(n log n)", "Θ(n²)", "Θ(log n)"]} why="It recurses on one half only: n + n/2 + n/4 + … is at most 2n. There are log n rounds, but the work halves each round." />
+
+<Recall q="What are the input and output of selection, and of Quickselect(A, k)?">
+
+Input: an unsorted array A of n numbers and an integer k with 1 ≤ k ≤ n. Output: the kth smallest element of A, as a value. Quickselect has the same input and output, and its recursive calls have the same shape on smaller arrays.
+
+</Recall>
+
+<Recall q="After partitioning, |L| = 3 and the current k is 8. What happens next?">
+
+|L| = 3 &lt; k − 1 = 7, so p is too small to be the answer and the answer is in G. Recurse on G with k = 8 − 3 − 1 = 4.
+
+</Recall>
+
+<Recall q="Why is 'pick the pivot by a fixed simple rule' beatable?">
+
+For a fixed rule, an adversary can build an input where that rule always returns the largest or smallest element of the current array. Then every round removes one element: T(n) = T(n−1) + cn = Θ(n²).
+
+</Recall>
+
+### median of medians (BFPRT)
+
+We want a pivot that is guaranteed to split the array reasonably, without knowing the true median (finding the median is the thing we are trying to do).
+
+BFPRT(A, k) has the same input and output as selection.
+
+1. If n ≤ 5, sort A and return its kth smallest.
+2. Cut A into groups of 5 consecutive elements. Take the median of each group (sorting 5 elements is constant work). Put those n/5 medians into a new array A′.
+3. Recursively find the median of A′: <Hl>p = BFPRT(A′, n/10)</Hl>. That is "the rank in the middle of n/5 elements".
+4. Partition A around p into L and G.
+5. Same three cases as quickselect: |L| = k − 1 return p, |L| &gt; k − 1 recurse on L with k, |L| &lt; k − 1 recurse on G with k − |L| − 1.
+
+**A trace by hand.** n = 15 and A = 12, 3, 17, 8, 5 | 20, 1, 14, 9, 11 | 6, 19, 2, 15, 10 (the bars mark the three groups).
+
+- sort each group: 3 5 **8** 12 17, then 1 9 **11** 14 20, then 2 6 **10** 15 19. The medians are 8, 11, 10.
+- the median of [8, 11, 10] is 10, so p = 10.
+- L = 3, 8, 5, 1, 9, 6, 2 has 7 elements. G = 12, 17, 20, 14, 11, 19, 15 has 7 elements.
+- p happens to be the true median here. It does not have to be: the guarantee is only that neither side is bigger than 7n/10 = 10.5.
+
+<Guide fig="median of medians" shows="The array cut into groups, one group per column, each column sorted with the biggest on top. A red ring marks each group's median. The yellow cell is the pivot p, the median of those medians. Blue cells are certainly at most p, red cells are certainly at least p, white cells could go either way.">
+1. Each **column is one group**, sorted, biggest on top. The **red ring** is that group's median. Columns are lined up left to right by their median, so the yellow cell (p) sits in the middle column.
+2. **Blue cells** are guaranteed to be ≤ p: everything below the ring in a column to the left, plus the ring itself. **Red cells** are guaranteed to be ≥ p. **White cells** could go either way. This picture is the proof of the lemma below.
+3. Set the input to **sorted**, then **reversed**, then reshuffle. p changes and the true rank of p changes, but "worst side" never goes over the promised limit.
+4. Switch to **groups of 3**. The guarantee weakens to 2n/3, and the next figure shows why that ruins the linear bound.
+</Guide>
 
 <MedianOfMedians />
 
-Half the groups have median ≤ p, and each of those brings 3 elements ≤ p. So |L| ≥ 3n/10, |G| ≥ 3n/10, and both are <Hl>≤ 7n/10</Hl>.
+**Lemma (why the pivot is never bad):** |L| ≤ 7n/10 and |G| ≤ 7n/10.
+
+<Steps title="proof of the lemma">
+
+<Step>
+
+There are n/5 groups, and p is the median of their medians.
+
+</Step>
+
+<Step>
+
+So half of the groups, n/10 of them, have a median that is ≤ p.
+
+</Step>
+
+<Step>
+
+Each of those groups gives 3 elements that are ≤ p: its median and the two smaller elements of the group.
+
+</Step>
+
+<Step>
+
+That is at least 3·n/10 = 3n/10 elements ≤ p. By the same argument from above, at least 3n/10 elements are ≥ p.
+
+</Step>
+
+<Step>
+
+Every element other than p is in L or in G. So each of L and G has at most n − 3n/10 = <Hl>7n/10</Hl> elements.
+
+</Step>
+
+</Steps>
+
+<Check q="n = 100 with groups of 5. At most how many elements can end up in L?" options={["70", "50", "30", "90"]} why="At least 3n/10 = 30 elements are at least p, and none of those can be in L. So L has at most 7n/10 = 70." />
+
+**Running time.** Three pieces of work, and one of them is easy to mislabel:
+
+- steps 1, 2 and 4 (sort the small groups, take medians, partition): cn
+- step 3, the recursive call that finds p, is on the n/5 medians: T(n/5)
+- step 5, the recursive call on the surviving side: at most T(7n/10) by the lemma
+
+So T(n) ≤ T(7n/10) + T(n/5) + cn. Guess T(n) ≤ 10cn and check: 10c·(7n/10) + 10c·(n/5) + cn = 7cn + 2cn + cn = 10cn ✓. Notice that the constant stayed 10c, which is what lets the induction close (lecture 2's rule: a constant that changes was never a constant).
+
+<Guide fig="why 5" shows="The recursion tree of BFPRT for a group size you choose. Each bar is the total work on one level, as a multiple of cn. The chart underneath is T(n)/n.">
+1. Start at g = 5. The two calls shrink to n/5 + 7n/10 = 9n/10. The bars show the work at each level of the recursion tree as a multiple of cn: 1, 0.9, 0.81, … a geometric series, so the top level dominates and the total is O(n).
+2. Click g = 3. Now n/3 + 2n/3 = n. Every level costs cn and there are log n levels, so this analysis only gives n log n.
+3. Click g = 7 and g = 9. Both are linear; bigger groups only make the constant worse.
+4. Look at the chart: T(n)/n flattens for g = 5 and keeps climbing for g = 3.
+</Guide>
 
 <WhyFive />
 
-T(n) ≤ T(7n/10) + T(n/5) + cn. Guess T(n) ≤ 10cn: 10c·(7n/10) + 10c·(n/5) + cn = 9cn + cn = 10cn ✓.
+<Check q="With groups of 7 the two calls are on n/7 and at most 5n/7 elements. Is the algorithm still linear?" options={["yes: n/7 + 5n/7 = 6n/7, which is less than n", "no: the sizes add up to n", "no: it is n log n", "only on random input"]} why="The work per level shrinks by a factor of 6/7 each level, a geometric series. Any odd group size from 5 up works. Bigger groups only cost a bigger constant." />
 
 <Sticky front="exam answer: why groups of 5?">The two recursive calls shrink to n/5 + 7n/10 = 9n/10 &lt; n, so the work per level shrinks geometrically: linear. With groups of 3 it is n/3 + 2n/3 = n, every level costs cn: n log n.</Sticky>
 
-A perfect pivot also fixes quicksort: median as pivot ⇒ T(n) = 2T(n/2) + cn = <O>Θ(n log n)</O> <U>worst case</U>.
+<Recall q="In BFPRT, which recursive call is on n/5 elements, and which rank does it ask for?">
+
+Step 3, BFPRT(A′, n/10), where A′ holds the n/5 group medians. Rank n/10 out of n/5 elements is the median of A′, which is the median of medians p.
+
+</Recall>
+
+<Recall q="Prove that |L| ≥ 3n/10 for the median-of-medians pivot.">
+
+Half the groups (n/10) have their median at or below p. Each such group contributes its median and the two elements below it: 3 elements ≤ p. So at least 3·n/10 = 3n/10 elements are ≤ p. The same argument from above gives |G| ≥ 3n/10.
+
+</Recall>
+
+<Recall q="Why does groups of 3 fail to give a linear bound?">
+
+Each group gives only 2 guaranteed elements, so the worst side is 2n/3. The two calls are then n/3 and 2n/3, which add up to n. Every level of the recursion tree still costs cn and there are log n levels: T(n) = Θ(n log n) by this argument.
+
+</Recall>
+
+### quicksort with a perfect pivot
+
+<Spec
+  name="sorting"
+  input="an unsorted array of n numbers"
+  output="the same numbers in increasing order"
+  note="here the goal is a guaranteed n log n. Ordinary quicksort with a bad pivot is Θ(n²)."
+/>
+
+Quicksort picks a pivot, partitions into L and G, and sorts both sides recursively. If the pivot is chosen by BFPRT as the median, both sides have size at most n/2, so T(n) = 2T(n/2) + cn = <O>Θ(n log n)</O> in the <U>worst</U> case. The cn is BFPRT plus the partition.
+
+<Guide fig="median quicksort" shows="Quicksort where the pivot is always the true median. Each row is one level of the recursion and each coloured block is one subarray. Every element of a block is smaller than every element of the block to its right.">
+1. Each row is one level of the recursion. The colored blocks are the pieces after splitting every block at its median. Every element of a block is smaller than every element of the block to its right.
+2. Set **levels d** to 1, 2, 3. After d levels there are 2<sup>d</sup> blocks. The caption confirms they are "sorted between blocks" but not inside blocks.
+3. Set d = log n (the maximum): every block has one element, which is a full sort.
+4. Stopping early gives blocks that are sorted relative to each other. That is the idea behind homework 1.3; the full solution is in the homework section below.
+</Guide>
 
 <MedianQuicksort />
 
----
+<Recall q="Why is quicksort with a median pivot Θ(n log n) in the worst case, while plain quicksort is not?">
 
-## lecture 5: sorting
+The median pivot always halves the input, so T(n) = 2T(n/2) + cn. Plain quicksort has no guarantee on the pivot, so an adversary forces T(n) = T(n−1) + cn = Θ(n²).
 
-Comparison sorts can't beat log(n!) = Θ(n log n). The proof works for <U>every</U> algorithm at once:
+</Recall>
 
-1. every input has one answer, so the algorithm needs a leaf per possible answer
-2. each comparison has 2 outcomes (or 3), so the tree has ≤ 2<sup>d</sup> (3<sup>d</sup>) leaves at depth d
-3. depth ≥ log₂(answers)
+</Lecture>
+
+<Lecture n={5} title="sorting" tldr="Sorting by comparisons needs n log n of them. Counting sort and radix sort beat that by looking inside the keys.">
+
+Two halves: a proof that comparison sorting cannot beat n log n, and algorithms that beat it by leaving the comparison model.
+
+<Spec
+  name="sorting in the comparison model"
+  input="n items, and one operation: compare(a, b), which says whether a &lt; b. Nothing else about the items can be looked at"
+  output="the same items in sorted order"
+  note="the theorem is about the number of comparisons. Moving, copying and rearranging items are free."
+/>
+
+<Fold title="words for this lecture">
+
+- **comparison model**: the only way an algorithm may learn about the items is by comparing two of them. Mergesort and quicksort are in it. It works for any ordered set.
+- **outside the model**: with integers or strings you can also ask "is a = 5?" or "what is the third digit of a?". Counting sort and radix sort use this.
+- **permutation** π of the input: the answer to "where does each element belong". For A = [23, 14, 2, 5, 76], π = (3, 2, 0, 1, 4) means A[0] is the 3rd smallest (counting from 0), A[1] the 2nd, and so on. Each input corresponds to exactly one permutation.
+- **adaptive**: the next comparison can depend on the earlier answers.
+- **decision tree**: a picture of one algorithm on inputs of size n. Each internal node is a comparison with two children (&lt; or &gt;). Each leaf is a finished answer.
+- **depth** of the tree = the most comparisons the algorithm ever makes = its worst case.
+
+</Fold>
+
+### the lower bound
+
+**Theorem (5.2.1).** Any comparison sort makes at least log(n!) = Θ(n log n) comparisons in the worst case.
+
+<Steps title="proof of the lower bound">
+
+<Step>
+
+Sorting is exactly as hard as finding the hidden permutation π. (Tag each item with its starting position and then sorting gives π for free. Knowing π gives the sorted array for free.) So count answers instead of thinking about a particular algorithm.
+
+</Step>
+
+<Step>
+
+There are n! possible permutations, and the algorithm may not stop while two of them are still consistent with what it has seen. So the decision tree needs at least n! leaves.
+
+</Step>
+
+<Step>
+
+A binary tree of depth d has at most 2<sup>d</sup> leaves, so 2<sup>d</sup> ≥ n!, i.e. d ≥ log₂(n!).
+
+</Step>
+
+<Step>
+
+log(n!) = Θ(n log n): n! ≤ n<sup>n</sup> gives at most n log n, and n! ≥ (n/2)<sup>n/2</sup> gives at least (n/2) log(n/2).
+
+</Step>
+
+</Steps>
+
+<Check q="At least how many comparisons does it take to sort 4 items in the worst case?" options={["5", "4", "3", "6"]} why="4! = 24 orderings need 24 leaves. 4 comparisons reach at most 2⁴ = 16 leaves, 5 reach 32. So ⌈log₂ 24⌉ = 5." />
+
+**A trace by hand.** n = 3 has 3! = 6 orderings. The first comparison A[0] : A[1] splits them 3 and 3. Each next comparison splits again, and after 3 comparisons we can reach 2<sup>3</sup> = 8 ≥ 6 leaves. With only 2 comparisons we reach 4 &lt; 6 leaves, so 2 comparisons cannot sort 3 items. The bound ⌈log₂ 6⌉ = 3 is tight here.
+
+<Guide fig="the adversary game" shows="A game. You are the sorting algorithm and the figure is an adversary. The buttons are the comparisons you may ask. The table shows how many possible answers are still consistent after each reply. The tree at the bottom is a best-possible decision tree, with your path in red.">
+1. Pick **sort 3**. You are the algorithm: click a question (a comparison). An adversary answers so that as many possible answers as possible stay alive. The table shows how many are left after each answer.
+2. You are done when exactly one answer is left. Count your questions: even with the best choices you cannot finish in fewer than ⌈log₂ 6⌉ = 3, and the adversary makes sure of it.
+3. Press **let a smart algorithm finish** to see the best play. The tree at the bottom is an optimal decision tree with your path in red (it is drawn only for the smaller problems).
+4. Switch to **2-group-sort 4**: the answer is only which half each item belongs to, not the full order, so there are fewer answers and fewer questions are needed.
+5. Switch to **dumbbells 3**: here each question has 3 possible answers (&lt;, =, &gt;), and the caption changes from log₂ to log₃.
+</Guide>
 
 <LowerBoundGame />
 
 <Margin>the adversary is the<br/>proof. it answers so the<br/>most answers survive</Margin>
 
-<Pen>same recipe for every "prove Ω(…)" question: count the answers, count the outcomes, take the log.</Pen>
+<Pen>same recipe for every "prove Ω(…)" question: count the answers, count the outcomes per step, take the log.</Pen>
+
+<Guide fig="k-group sort" shows="A chart of how many comparisons k-group-sorting must make. The red curve is log₂ of the number of possible answers. The dashed blue curve is n log₂ k.">
+1. **k-group-sorting** means: split the sorted order into k consecutive groups of n/k, and output which group each item is in, without ordering inside a group. (The idea behind homework 2.2.)
+2. Set k = 1: nothing to decide, zero comparisons needed. Set k = n: full sorting, n log n.
+3. In between, the red curve (log₂ of the number of answers) tracks the dashed blue curve n log₂ k. So the bound is Ω(n log k). The caption reports what percentage of n log₂ k the count reaches.
+</Guide>
 
 <GroupBound />
 
-Outside the comparison model you can look inside the numbers.
+<Recall q="State the sorting lower bound and its proof in three lines.">
+
+Any comparison sort needs at least log₂(n!) = Θ(n log n) comparisons. Each of the n! orderings must reach a different leaf of the decision tree. A binary tree of depth d has at most 2<sup>d</sup> leaves, so d ≥ log₂(n!).
+
+</Recall>
+
+<Recall q="Suppose each question has 3 possible answers (&lt;, =, &gt;) instead of 2. How does the counting argument change?">
+
+A decision tree of depth d now has at most 3<sup>d</sup> leaves instead of 2<sup>d</sup>. If there are A possible answers to tell apart, then 3<sup>d</sup> ≥ A, so d ≥ log₃ A. The recipe is the same: count the answers, count the outcomes per question, take the log.
+
+</Recall>
+
+<Recall q="Why is the bound about comparisons and not about time?">
+
+The theorem lets the algorithm rearrange, move and copy items for free and counts only comparisons. Time is at least the number of comparisons, so the bound also holds for time, but the reverse is not claimed.
+
+</Recall>
+
+<Check q="Why does the n log n lower bound not apply to counting sort?" options={["it never compares two items: it reads their values directly", "it is randomized", "it only works for small n", "it uses more memory"]} why="The proof counts yes/no comparisons. Counting sort uses a key as an array index, which is not a comparison, so it is outside the model." />
+
+### outside the comparison model
+
+<Spec
+  name="counting sort"
+  input="n integers, each one of k possible values (say 1 to k)"
+  output="the n integers in sorted order, and equal values in their original order (stable)"
+  note="time O(n + k). The k matters: with k much bigger than n you cannot just store the counts that are nonzero, because reading them back in order needs a priority queue, which costs Ω(log n) per operation."
+/>
+
+**Stable** means: if two items are equal and a comes before b in the input, then a comes before b in the output. This matters only when the items carry more than the key, and it is what radix sort needs.
+
+Counting sort:
+
+1. make an array count[1..k] of zeros, and add one for each input item's value (time O(n + k))
+2. a prefix sum turns counts into ends: prefix[v] = where the block of v's ends in the output
+3. scan the input <U>right to left</U>: put each item at slot prefix[v] − 1 and decrease prefix[v]. Scanning right to left keeps equal items in order (the lecture keeps a linked list per value and appends, which is the same idea).
+
+<Guide fig="counting sort" shows="Counting sort placing one item per press. Each item is its key plus a letter (1a, 1b) that says which copy it is. Under each key are its count and its prefix: where that key’s block ends in the output.">
+1. Each item is written as its key followed by a letter (like 1a, 1b) that says which copy it is, in input order. Press **place next item** and watch the ringed input cell land in the output.
+2. Read the "count" and "prefix" labels under each key: prefix is where that key's block ends.
+3. Press **finish**, then switch **scan** to left to right. The output is still sorted by key, but items with equal keys (same number, different letters) come out reversed. That is what **not stable** looks like.
+</Guide>
 
 <CountingSortDemo />
 
+<Check q="Counting sort on n = 1000 items whose keys range over 1 to 10⁹. What is the running time O(n + k) dominated by?" options={["k: about 10⁹ steps", "n: about 1000 steps", "n log n", "n²"]} why="Setting up and scanning the count array costs k. Counting sort is only good when k is not much larger than n. Radix sort is the fix." />
+
+<Spec
+  name="radix sort"
+  input="n integers, each written with d digits in some base (for example base 10, padded with zeros)"
+  output="the integers in sorted order"
+/>
+
+**Least-significant digit first (LSD):** sort the whole array by the last digit, then by the next-to-last digit, and so on to the first digit. Each pass uses a <Hl>stable</Hl> sort (counting sort).
+
+Example from lecture: 353 457 657 839 436 720 355. After the last digit: 720 353 355 436 457 657 839. After the middle digit: 720 436 839 353 355 457 657. After the first digit: 353 355 436 457 657 720 839.
+
+**Why it works (Theorem 5.3.1):** by induction, after pass i the array is sorted by its last i digits. Pass i+1 puts items with different (i+1)th digits in the right order. Items with the same (i+1)th digit stay in their earlier order because the sort is stable, and that earlier order is already correct by the hypothesis.
+
+<Guide fig="radix sort" shows="Radix sort, one row per pass. Red digits are the digit that pass just sorted by. The blue digit is the one the next pass will use.">
+1. Press **next pass** three times on the default numbers. Each row is the array after one pass. Red digits are the ones that pass just sorted by, and the blue digit is the next one to be used.
+2. Switch **inner sort** to "scrambles ties". Then press **break it: 123 112**. The final answer is wrong: ties in the last digit were sorted by the wrong order.
+3. Switch **direction** to "most digit first": this is the bucket version from lecture. It works but needs to remember all buckets. LSD does not.
+</Guide>
+
 <RadixDemo />
 
-Radix sort needs a <Hl>stable</Hl> inner sort. Proof: after pass i, sorted by the last i digits; a tie in digit i+1 is broken by the earlier order, which stability keeps.
+**Time.**
+
+<Steps title="radix sort in linear time">
+
+<Step>
+
+With d digits in base b, one pass is counting sort with b possible values: n + b. Total <Hl>d(n + b)</Hl>.
+
+</Step>
+
+<Step>
+
+In base 10 that is d(n + 10). But n distinct numbers need d ≥ log₁₀ n digits, so this is still n log n.
+
+</Step>
+
+<Step>
+
+Fix: take a chunk of digits per pass. If one "digit" is b base-10 digits, a pass has 10<sup>b</sup> buckets and there are d/b passes. Total (d/b)(n + 10<sup>b</sup>).
+
+</Step>
+
+<Step>
+
+Choose the chunk so that 10<sup>b</sup> ≈ n. That is the same as writing the numbers in base n.
+
+</Step>
+
+<Step>
+
+Example: numbers between 0 and n<sup>9</sup> have 9 digits in base n. 9 passes of (n + n) each: 18n = <O>O(n)</O>.
+
+</Step>
+
+</Steps>
+
+<Guide fig="how big a base" shows="A chart of radix sort’s total work, passes × (n + b), as the base b changes. The horizontal axis is log₂ b. The dashed red line marks base = n.">
+1. Numbers are below n<sup>c</sup>. The chart's horizontal axis is log₂ of the base b and the vertical axis is the total work, passes × (n + b). The red dashed line marks base = n.
+2. Read the caption: base 2 needs many passes, while base n needs only c passes of about 2n each.
+3. Slide **c** from 1 to 6: the cost at base n grows only in proportion to c. That is why radix sort on numbers up to n<sup>c</sup> is O(cn), linear for constant c. Slide **n** and see that the curve's shape does not change.
+</Guide>
 
 <RadixCost />
 
+**The catch (from the lecture):** this "cheats". It assumes comparing a b-digit chunk costs one operation, and that reading a digit costs one. On a real computer you use bits and base 2, and radix sort is linear only under that word-size assumption.
+
+<Guide fig="strings of different lengths" shows="Strings of different lengths being sorted one character position at a time, from the last position to the first. The table shows how many strings take part in each pass.">
+1. The problem: sort strings of different lengths in time proportional to their total length (the idea behind homework 2.3). Padding every string to the longest length costs far more.
+2. Press **next position**. Each pass looks at one position, from the last position to the first, and the table shows how many strings are "in play": only strings long enough to have that position take part.
+3. Press **one long, many short** and then **finish**. Compare the caption's work with the cost of padding every string to the same length.
+</Guide>
+
 <StringSort />
 
----
+<Check q="LSD radix sort where the sort used inside each pass is not stable. The result is…" options={["possibly wrong", "still correct, just slower", "correct whenever the numbers are distinct", "correct in base 2 only"]} why="A later pass must keep items that tie in its digit in the order the earlier passes gave them. An unstable sort can scramble that order. Distinct numbers still tie in single digits." />
 
-## lecture 6: balanced search trees
+<Recall q="What are the input and output of counting sort, and what does it cost?">
 
-A plain BST is only as good as its insert order:
+Input: n integers, each in a range of k values. Output: the integers sorted, with ties in their original order. Cost O(n + k): O(k) to set up counts, O(n) to count, O(n + k) to write out.
+
+</Recall>
+
+<Recall q="Why must radix sort's inner sort be stable?">
+
+After pass i the array is sorted by the last i digits. On pass i+1, items tied in that digit must keep the order they already had, because that order is the correct order of their last i digits. A stable sort keeps ties in order. An unstable one can scramble them and the final answer is wrong (123 and 112 in the figure).
+
+</Recall>
+
+<Recall q="Radix sort on n numbers below n^9 in base n: how many passes, what total time?">
+
+A number below n<sup>9</sup> has 9 digits in base n, so 9 passes. Each pass is counting sort with n buckets: O(n + n) = O(n). Total 9 · O(n) = O(n), about 18n operations.
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={6} title="balanced search trees" tldr="Keep a dictionary in a tree whose height is always O(log n): B-trees, and red-black trees as 2-3-4 trees in disguise.">
+
+<Spec
+  name="dictionary"
+  input="a stream of operations on (key, object) pairs: insert(key, object), lookup(key), and sometimes delete(key)"
+  output="lookup returns the object stored under the key (or says it is absent)"
+  note="the goal is every operation in O(log n). A sorted array has lookup O(log n) by binary search but insert Ω(n) (shifting). An unsorted list has insert O(1) but lookup Ω(n)."
+/>
+
+<Fold title="words for this lecture">
+
+- **dictionary data structure**: a structure supporting insert, lookup and (often) delete. The notes ignore the object and only track the keys.
+- **binary search tree (BST)**: a binary tree where each node stores a key, everything in its left subtree is smaller and everything in its right subtree is larger. Lookup walks down from the root, going left or right.
+- **depth** of a node: its distance from the root. **height** of the tree: the deepest depth. A BST operation costs Ω(height).
+- **balanced**: the height is O(log n).
+- **B-tree with parameter t ≥ 2**: a search tree where each node holds several sorted keys (see the three rules below).
+- **degree** of a node: its number of children.
+- **split**: cut a full node in the middle, push the median key up into the parent.
+- **2-3-4 tree**: a B-tree with t = 2. Nodes have 2, 3 or 4 children (1 to 3 keys).
+- **rotation**: a local change to a binary search tree that keeps the search order but changes which node is higher.
+- **red-black tree**: a binary tree with red and black links that encodes a 2-3-4 tree.
+
+</Fold>
+
+### the plain BST
+
+Insert x: walk down like a lookup, compare with the root, go left if smaller and right otherwise, and put x in a new leaf at the end. Easy, but the shape depends on the insertion order. Insert sorted keys and the tree is a path of height n − 1, so every operation costs Ω(n). It is the same thing that happens to quicksort on sorted input.
+
+<Guide fig="BST insert order" shows="A plain binary search tree built by inserting keys in an order you pick. Smaller keys go left, larger go right. Nothing rebalances it.">
+1. Press **H O P K I N S** (the lecture's example) and read off the tree.
+2. Press **sorted**: a path. Height n − 1.
+3. Press **balanced order** (the middle first, then the middle of each half): a perfect tree.
+4. Press **random** a few times: usually decent, but with no guarantee.
+</Guide>
 
 <BstDegenerate />
 
-A B-tree keeps <U>every leaf at the same depth</U> and gets slack from node size: t−1 to 2t−1 keys (root: 1 to 2t−1). Insert splits any full node it meets <Hl>on the way down</Hl>, so a parent is never full when its child splits.
+<Check q="Insert the keys 1, 2, 3, …, n in that order into a plain BST. What is its height?" options={["n − 1", "log n", "√n", "2 log n"]} why="Every new key is larger than all the others, so it goes to the right of the last one. The tree is a path." />
+
+**The idea:** perfect balance is too expensive to maintain, so allow slack. The pivot in lecture 4 was allowed to be "near" the middle. The B-tree keeps all leaves at one depth and gets its slack from nodes of different sizes.
+
+### B-trees
+
+A **B-tree** for a chosen t ≥ 2 has three properties:
+
+1. Every node has between t − 1 and 2t − 1 keys, except the root, which has between 1 and 2t − 1. The keys in a node are a sorted array.
+2. A non-leaf with j keys has j + 1 children. The subtree under child i holds keys between the (i−1)th and ith key of the parent.
+3. <Hl>All leaves are at the same depth.</Hl>
+
+- **lookup:** binary search in the node. Either the key is there, or you learn which child to descend into.
+- **insert:** walk down as if for lookup. If you meet a **full** node (2t − 1 keys), split it before going on. At the leaf, put the key into the node.
+- **split:** the median key goes up into the parent, and the other 2t − 2 keys become two nodes of t − 1 keys each, hung on the left and right of the median. If the root splits, a new root is created holding only the median. That is the only way the tree gets taller: <U>it grows at the top, so all leaves stay at the same depth</U>.
+
+<Check q="In a B-tree with t = 3, how many keys can a node other than the root hold?" options={["between 2 and 5", "between 3 and 6", "between 1 and 3", "between 3 and 5"]} why="t − 1 = 2 at least and 2t − 1 = 5 at most. A node with 5 keys is full and is split before an insert passes through it." />
+
+**Trace, t = 3** (max 5 keys per node). Start with root H M R and leaves [A B C D], [K L], [N O], [T Y Z].
+- insert E: it goes to the leftmost leaf, making it [A B C D E], which is now full.
+- insert F: on the way down we meet that full leaf and split it. C moves up to the root, which becomes C H M R, and the leaf becomes [A B] and [D E F].
+- a later insert that meets a full root splits the root first: the median becomes a new one-key root and the tree is one level taller.
+
+<Guide fig="B-tree" shows="A B-tree. Each node holds several sorted keys and has one more child than it has keys. Yellow marks the key that just moved up in a split. The line under the tree checks the three B-tree properties.">
+1. Leave **t = 2** and press **insert next** repeatedly. The keys E, F, G, … are inserted in order. Yellow marks the key that just moved up. Predict which nodes will split before each press.
+2. Notice the nodes you pass on the way down: only <Hl>full</Hl> ones split, and only <U>while descending</U>. The parent can never be full, because a full parent would have been split already.
+3. Type your own key and press Enter, or switch to **t = 3** (up to 5 keys) and compare how often it splits.
+4. The line under the tree reports **properties all hold ✓**. Try to break it.
+5. Try inserting keys in sorted order: the tree still has all leaves at one depth.
+</Guide>
 
 <BTreeLab />
 
-- lookup: log_t n levels × log t per binary search = O(log n)
-- insert: split costs O(t), at most once per level: O(t log n)
-- big t fits disks (one node = one disk read). t = 2 is the 2-3-4 tree
+**Why insert keeps the three properties (Theorem 6.3.1):**
+- <U>Leaf depth</U>: the tree only gets taller by splitting the root, which lifts every leaf by one at once.
+- <U>Key counts</U>: a split leaves two nodes of exactly t − 1 keys. The parent gains one key, but it was not full, or we would have split it first. The leaf we finally insert into was not full either.
+- <U>Order</U>: a split keeps the "between two keys" property, and the new key goes in a leaf.
 
-**Red-black trees** are a 2-3-4 tree drawn as a binary tree. One black node plus its red children = one 2-3-4 node. Red = "stuck to my parent".
+**Cost.**
+- depth is O(log<sub>t</sub> n) since every internal node has at least t children (except possibly the root)
+- lookup: log<sub>t</sub> n levels × O(log t) per binary search = (log n / log t) · log t = <O>O(log n)</O>. The t cancels.
+- insert: lookup plus up to one split per level, each O(t), plus O(t) to insert into the leaf: <O>O(t log n)</O>
+- large t is for disks: one node is one disk read. With 10<sup>9</sup> keys and t = 1000, the top two levels fit in memory and only the bottom needs a read. Small t (t = 2, the 2-3-4 tree) is for memory, and it is the one that becomes red-black trees.
+
+<Check q="What is the only thing that makes a B-tree one level taller?" options={["splitting the root", "any split", "inserting into a full leaf", "every 2t − 1 inserts"]} why="A root split creates a new root above everything, which pushes every leaf down by one at the same time. That is why all leaves stay at the same depth." />
+
+<Recall q="State the three B-tree properties.">
+
+(1) Every non-root node has t − 1 to 2t − 1 keys, and the root has 1 to 2t − 1. (2) A non-leaf with j keys has j + 1 children, and child i holds keys between key i − 1 and key i. (3) All leaves are at the same depth.
+
+</Recall>
+
+<Recall q="Why can a split never make the parent over-full?">
+
+We split full nodes on the way down, so when we split a child, its parent was already checked and is not full. The parent gains one key and is at most full, never over-full.
+
+</Recall>
+
+<Recall q="Why is B-tree lookup O(log n) and not O(t log n)?">
+
+Depth is log<sub>t</sub> n = log n / log t, and each level costs log t for binary search. The product is log n. The t cancels.
+
+</Recall>
+
+### red-black trees
+
+A binary tree is easier to code and usually faster for in-memory work, and the red-black tree is the standard balanced one (Linux kernel, Java HashMap). The lecture's view: a red-black tree is a 2-3-4 tree drawn as a binary tree. Missing children are NULL, and keys are only at internal nodes.
+
+- a 2-3-4 node with **1 key** is one black node
+- a node with **2 keys**: a black node with one red child, on the left or the right (it is not one-to-one; a 3-node can lean either way)
+- a node with **3 keys**: a black node with two red children (a red left child and a red right child)
+- a **red link** is "stuck to my parent": it is inside one 2-3-4 node. A **black link** is an edge of the original 2-3-4 tree.
+
+Two properties follow from the 2-3-4 tree rules:
+
+1. no two red links in a row (a red link is always followed by a black one)
+2. for every node, all paths down to NULL have the <U>same number of black links</U> (the black-depth)
+
+Together: the longest root-to-leaf path has at most twice as many links as the shortest, so height ≤ 2 log(n + 1) (CLRS Lemma 13.1). Lookups are O(log n).
+
+**Insert.** Insert like a normal BST with a new **red** link, as if adding a key to a bottom 2-3-4 node. Then fix what that broke:
+- a 4-node that must split (a black node with two red children): <O>swap colors</O> (the children become black, the parent red and it pushes up into its own parent's node). This is the "uncle is red" case in the book.
+- other cases break a property, so use a **rotation**: a local change that lets a child take its parent's place while keeping the left-to-right order (subtrees A, B, C keep their order). One rotation or two (a double rotation) puts the node back in the right shape. This is the "uncle is black" case.
+
+The lecture splits full nodes on the way down (like a B-tree); the book, and the figure, insert first and repair on the way back up. Both keep the same correspondence with the 2-3-4 tree.
+
+<Guide fig="red-black tree" shows="A red-black tree. A red link ties a node to its parent inside one 2-3-4 node. A black link is a real edge of the 2-3-4 tree. The view switch redraws the same keys as that 2-3-4 tree.">
+1. Press **insert next** and then move the **fix-up step** slider (it appears when an insert needs repairs). Each step is one recolor or rotation, and the caption tells you which. Between steps the line under the tree tells you whether all properties hold.
+2. Flip **view** to "2-3-4 tree" after each insert. Every black node with its red children is one 2-3-4 node. The tree beneath should look like the B-tree lab with t = 2.
+3. Press **start over, sorted input**, then insert 1, 2, 3, …. A plain BST would be a path. Here the height stays small.
+4. Click a node, then press **rotate left / right**. The order is kept but colors are not moved, so properties usually break: that is why rotations are always paired with recoloring.
+</Guide>
 
 <RedBlackLab />
 
-<Margin>4-node: black with two red kids.<br/>3-node: black with one red kid,<br/>on either side.</Margin>
-
-- no red node has a red child
-- every path from a node down has the same number of black nodes
-- so the longest path ≤ 2 × the shortest: height ≤ 2 log(n+1)
 - uncle red → recolor (a 4-node splits). uncle black → 1 or 2 rotations
+- root black, no red node has a red child, every path from a node has the same number of black nodes
 
----
+<Check q="A black node with two red children stands for a 2-3-4 node with how many keys?" options={["3", "2", "1", "4"]} why="The black node and its two red children are glued together by red links into one node with 3 keys, a full 2-3-4 node." />
 
-## lecture 7: amortized analysis
+<Recall q="What are the two red-black properties from the lecture, and what do they imply?">
 
-Worst case per operation can be terrible while the total is fine. <U>Amortized cost = total cost / number of operations</U>, for the worst sequence. No probability.
+(1) Two red links are never in a row. (2) All paths from a node to its descendant leaves have the same number of black links. Together the longest path is at most twice the shortest, so the height is O(log n) (at most 2 log(n+1)).
+
+</Recall>
+
+<Recall q="How does a red-black tree encode a 2-3-4 node with 1, 2 and 3 keys?">
+
+1 key: one black node. 2 keys: a black node plus one red child (left or right). 3 keys: a black node with two red children. A red link sits inside a 2-3-4 node, a black link is between 2-3-4 nodes.
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={7} title="amortized analysis" tldr="One operation can be expensive while the average over any sequence stays small. Prove it with a bank or a potential Φ.">
+
+<Spec
+  name="amortized cost of a sequence"
+  input="a data structure and a sequence of n operations on it (the worst possible sequence)"
+  output="total cost of the n operations divided by n"
+  note="there is no probability involved. 'Average' here means average over the operations of one worst-case sequence."
+/>
+
+<Fold title="words for this lecture">
+
+- **amortized cost** (Definition 7.1.1): the total cost of a sequence of n operations divided by n.
+- **amortized complexity** (7.1.2): if <U>every</U> sequence of n operations costs at most f(n) in total, the amortized cost per operation is at most f(n)/n.
+- **worst case vs amortized:** one operation can be very expensive and the amortized cost still small. With 100 operations of cost 1 and one of cost 100, the worst case is 100 but the average is 200/101 ≈ 2.
+- **bank L** (piggy bank): cheap operations deposit extra tokens, expensive ones withdraw. Start with L₀ = 0.
+- **amortized cost of operation i**: c′ᵢ = cᵢ + Lᵢ − Lᵢ₋₁ (its true cost plus the change in the bank).
+- **potential Φ**: the same thing as a bank, but computed as a function of the current state instead of tracked by deposits. c′ᵢ = cᵢ + Φᵢ − Φᵢ₋₁.
+- **link to the total:** Σ cᵢ = Σ c′ᵢ + L₀ − Lₙ. If L₀ = 0 and Lₙ ≥ 0, then <Hl>total true cost ≤ total amortized cost</Hl>. That is why the bank must never go negative.
+
+</Fold>
+
+<Check q="Amortized cost is an average over what?" options={["the operations of one worst-case sequence", "random inputs", "coin flips of the algorithm", "all inputs of size n"]} why="There is no probability. Take the worst sequence of n operations, add up the true costs, divide by n." />
+
+<Check q="The bank starts at 0 and ends at 5. The amortized costs add up to 40. What is the total true cost?" options={["35", "45", "40", "unknown, only at most 40"]} why="Σ true = Σ amortized + L₀ − Lₙ = 40 + 0 − 5 = 35. What is left in the bank was charged but never spent." />
+
+### example 1: a stack in an array
+
+<Spec
+  name="stack in an array"
+  input="a sequence of push(x) and pop() operations"
+  output="the stack contents after each operation. When the array is full, a bigger array is made and everything is copied."
+  note="cost: 1 per push or pop that does not resize, and n to copy when resizing from size n."
+/>
+
+- grow by **+1** each time: the ith push copies i items, so the total is 1 + 2 + … + n = Θ(n²), and the amortized cost per push is Θ(n).
+- <O>double</O> when full: a resize costs n but happens at sizes 1, 2, 4, 8, …, so the total resize cost is at most 2n, and everything else costs O(n). Total O(n), amortized O(1) per push.
+
+<Guide fig="growing an array" shows="Two charts for a run of pushes onto a stack kept in an array. The top one is the real cost of each push (the spikes are copies). The bottom one is the bank balance when every push is charged a flat amount.">
+1. Start with **×2** and a **charge per push** of 3. The lower chart is the bank: it goes up by the charge on every push and down by the copy cost when the array grows. It stays at or above 0, and the caption says so.
+2. Lower the charge to 2, then 1. The bank goes negative, so that charge is too small (with 128 pushes and ×2, 3 is the smallest that works).
+3. Switch to **+1**. No flat charge from 1 to 8 works, because the total cost is quadratic.
+4. Try **×1.5** (needs a charge of 4) and **×3**. Any constant factor gives O(1) amortized, only the constant changes.
+</Guide>
 
 <ArrayGrowth />
 
-Method: give every operation a charge. Cheap ones deposit into a bank, expensive ones withdraw. If the bank never goes negative, total cost ≤ total charge. As a potential: amortized cost = actual cost + Φ<sub>after</sub> − Φ<sub>before</sub>, with Φ ≥ 0 and Φ<sub>0</sub> = 0.
+<Check q="The array grows by 100 slots each time it is full, instead of doubling. What is the amortized cost of a push?" options={["Θ(n)", "O(1)", "Θ(log n)", "Θ(√n)"]} why="It copies at sizes 100, 200, 300, …, which adds up to about n²/200 over n pushes. Adding a constant is the same as +1, only a constant factor better." />
+
+### example 2: binary counter
+
+<Spec
+  name="binary counter"
+  input="a sequence of n increments, starting from all zeros"
+  output="the counter value (as a bit array) after each increment. Cost is 1 per bit flipped."
+/>
+
+One increment can flip log n bits (1111 → 10000), so the worst case is Θ(log n). Amortized it is 2. Four ways to see it, all equivalent:
+
+1. **per-bit bank:** every time a bit flips 0 → 1, put a token on it. A flip 1 → 0 is paid for by that token. An increment flips exactly one bit to 1, so it is charged 1 for the flip plus 1 for the token: 2.
+2. **one global bank:** same, summed over the bits.
+3. **potential:** Φ = the number of 1s in the counter. Φ₀ = 0, Φ ≥ 0, and c′ = c + ΔΦ = 2.
+4. **directly:** bit i flips every 2<sup>i</sup> steps, so n increments flip it n/2<sup>i</sup> times, in total Σ n/2<sup>i</sup> ≤ 2n.
+
+<Guide fig="the counter" shows="A binary counter. The cells are its bits. The tokens under the bits are the potential: one token per 1 bit. The chart shows the cost of each increment and the running average.">
+1. Press **+1** several times. Each press shows how many bits flipped and how the potential (the number of 1s) changed.
+2. Press **reset**, then **+7**, then **+1**: the counter goes 0000 0111 → 0000 1000. Three bits flip 1 → 0 and one flips 0 → 1, so the true cost is 4, but the number of 1s (the tokens shown below the bits) dropped by 2, so the amortized cost is 4 − 2 = 2.
+3. Press **+64** and read the chart: the cost of each increment spikes sometimes, but the running average stays below the line at 2.
+</Guide>
 
 <CounterDemo />
+
+<Check q="The counter goes 0111 → 1000. With Φ = the number of 1s, what are the true cost and the change in Φ?" options={["cost 4, Φ changes by −2", "cost 4, Φ changes by +1", "cost 1, Φ changes by +1", "cost 3, Φ changes by −3"]} why="Four bits flip. Φ goes from 3 to 1. Amortized cost = 4 + (−2) = 2, the same as every other increment." />
+
+### example 3: a simple dictionary
+
+<Spec
+  name="dictionary from sorted arrays"
+  input="a sequence of insert(x) and lookup(x) operations"
+  output="lookup says whether x is present. Insert keeps the invariant: A[i] is either empty or a sorted array of exactly 2<sup>i</sup> items."
+  note="lookup: binary search in every non-empty array, Θ(log² n). Insert: amortized O(log n), but a single insert can cost Θ(n)."
+/>
+
+<Steps title="insert(x) and what it costs">
+
+<Step>
+
+Make a size-1 array B = [x].
+
+</Step>
+
+<Step>
+
+While A[i] is not empty: merge A[i] into B (the cost is twice the size), empty A[i], and move on to A[i + 1].
+
+</Step>
+
+<Step>
+
+Put B into the first empty slot.
+
+</Step>
+
+<Step>
+
+This is adding 1 in binary, where a carry is a merge. The arrays that exist are the 1 bits of the count.
+
+</Step>
+
+<Step>
+
+Flipping bit i costs 2<sup>i+1</sup> instead of 1, and it happens n/2<sup>i+1</sup> times in n inserts. That is n per level, over log n levels: O(n log n) in total, so <O>amortized O(log n)</O> per insert.
+
+</Step>
+
+</Steps>
+
+<Guide fig="the log dictionary" shows="A dictionary made of sorted arrays of sizes 1, 2, 4, 8, … Each row is one array, which is either empty or completely full. The cost row shows what each insert cost.">
+1. Press **insert 1** repeatedly and watch the arrays. It behaves exactly like a binary counter: the arrays that exist are the 1 bits of the count.
+2. Press **insert 7** and **insert 32**. Look at the cost row: cheap most of the time, sometimes a big merge.
+3. Press **look up something**: the caption reports how many probes it took, one binary search in each non-empty array (about log² n in all).
+</Guide>
 
 <LogDictionary />
 
 <Pen>same potential idea, different Φ: number of 1s (counter), number of trees (binomial heap), sum of depths (binary heap), number of inversions (move-to-front).</Pen>
 
-With several kinds of operation you must use <Hl tone="pink">one</Hl> Φ for all of them.
+### several kinds of operation
+
+With k kinds of operation: "type i has amortized cost αᵢ" means any sequence with mᵢ operations of type i costs at most Σ mᵢαᵢ in total. You must use <Hl tone="pink">one</Hl> bank or Φ for <U>all</U> operations, not a new one for each. Amortized bounds are not unique: different schemes can give different (valid) bounds for the same algorithm.
 
 ### homework 3 is two potential arguments
 
-The bank on each node of a 2-3-4 tree can depend only on how many keys it holds. Which values make every insert cost O(1) splits?
+The bank on each node of a 2-3-4 tree can depend only on how many keys it holds. Which values make every insert cost O(1) splits amortized?
+
+<Guide fig="the split bank (HW3.1)" shows="A 2-3-4 tree taking inserts, with a bank on every node. The three sliders set how many tokens a node with 1, 2 or 3 keys holds. Blue is the real number of splits per insert. Red is the amortized cost: splits plus the change in the bank.">
+1. A split costs 1 and can cascade. Pick a **sequence** (worst: 1 split, 2, 3…).
+2. Set the three sliders: how many tokens a node with 1, 2 or 3 keys holds. The chart shows each insert's real splits (blue) and its amortized cost, splits plus the change in the bank (red). The caption tells you whether the worst amortized cost is at most 1.
+3. Try the natural guess (press **"1 if full, else 0"**) and then the sequence **bad for "1 if full"**. See what goes wrong, and use that to fix the numbers. Try to find values that work for every sequence, then open the HW3.1 solution below to check them and see the proof.
+</Guide>
 
 <SplitBank />
 
 Move-to-front against a fixed list:
 
+<Guide fig="move-to-front (HW3.2)" shows="A list where every lookup moves the item to the front, compared with a list that never changes. The table tracks, for each lookup, the real cost, the change in Φ (the number of inversions) and the amortized cost.">
+1. Move-to-front: on each lookup you move the item to the front of the list. The potential Φ is the number of <U>inversions</U>: pairs of items that are in a different order than in a chosen fixed list.
+2. Press **next lookup** and read the table: real cost, change in Φ, amortized cost.
+3. Switch **compare with** between "the starting list" and "best fixed list". You need the potential once for each fixed list.
+</Guide>
+
 <MoveToFront />
 
----
+<Recall q="Define amortized cost. Is it an average over random inputs?">
 
-## lecture 8: heaps
+The total cost of a sequence of n operations divided by n, for the worst sequence. No probability is involved.
 
-Priority queue: insert, extract-min, decrease-key, meld.
+</Recall>
+
+<Recall q="What conditions on the bank or potential make Σ true cost ≤ Σ amortized cost?">
+
+Start at L₀ = 0 (or Φ₀ = 0) and never let it go negative (Lₙ ≥ 0). Then Σ cᵢ = Σ c′ᵢ + L₀ − Lₙ ≤ Σ c′ᵢ.
+
+</Recall>
+
+<Recall q="Give the potential for the binary counter and show the amortized cost is 2.">
+
+Φ = the number of 1s. An increment flipping t bits to 0 and one bit to 1 has true cost t + 1 and changes Φ by 1 − t, so c′ = (t + 1) + (1 − t) = 2.
+
+</Recall>
+
+<Recall q="Why is doubling O(1) amortized, and growing by +1 not?">
+
+Doubling copies at sizes 1, 2, 4, …, total at most 2n, so the total cost is O(n). Growing by +1 copies i items on the ith push, for a total of 1 + 2 + … + n = Θ(n²).
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={8} title="heaps" tldr="Priority queues: the binary heap in an array, and the binomial heap, which works like a binary counter.">
+
+<Spec
+  name="priority queue"
+  input="a set of elements with keys (integers), and a sequence of operations"
+  output="Extract-Min returns an element with the smallest key. The others change the set."
+  note="Insert(H, x): add x. Extract-Min(H): remove and return the smallest. Decrease-Key(H, x, k): lower x's key to k. Meld(H₁, H₂): replace two heaps with their union. Also Find-Min and Delete(H, x). x is a pointer to the element, since a heap has no lookup."
+/>
+
+<Fold title="words for this lecture">
+
+- **priority queue**: the abstraction (the operations above). A **heap** is a data structure that implements it. The two words are used interchangeably.
+- **binary heap**: a complete binary tree (every level full except possibly the last, filled left to right) that is in **heap order**: every node's key is ≤ its children's keys. So the minimum is at the root. The height is at most log n.
+- **swim up**: swap a node with its parent while it is smaller than its parent.
+- **sink down**: swap a node with its <U>smaller</U> child while it is larger than that child.
+- **binomial tree B<sub>k</sub>**: B₀ is one node, and B<sub>k</sub> is one B<sub>k−1</sub> linked below the root of another B<sub>k−1</sub>.
+- **binomial heap**: a collection of heap-ordered binomial trees with at most one tree of each order k.
+- **link**: join two trees of the same order k into one of order k + 1, by hanging the tree with the larger root under the one with the smaller root. It costs O(1).
+
+</Fold>
+
+### binary heap operations
+
+- **Insert:** put x in the next open spot at the bottom, then swim up. O(log n).
+- **Extract-Min:** swap the root with the last node, remove it, then sink the new root. O(log n) worst case.
+- **Decrease-Key:** lower the key, then swim up. O(log n).
+- **Delete:** swap with the last node, remove, then swim up or sink down as needed.
+- **Meld** two heaps of size n: put all of H₂ at the end of H₁'s array (O(n), heap order is now wrecked), then sink every node starting from the last parent and going back to the root. This is **build-heap**, and it costs O(n), not n log n.
+
+<Guide fig="the binary heap" shows="One min-heap drawn twice: as a tree, and underneath as the array it is really stored in. The smallest key is at the root, which is position 0 of the array.">
+1. Type a value and press **insert**. The new node appears at the bottom and swims up. Use the **replay** slider to step through the swaps.
+2. Press **extract-min**: the root is replaced by the last node and sinks.
+3. Click a node to pick it, then press **decrease picked by 10** (it swims) or **delete picked**.
+4. The array under the tree shows the same heap stored in an array: the children of index i are 2i + 1 and 2i + 2.
+5. Read the caption after an extract-min: the amortized cost.
+</Guide>
 
 <BinaryHeapLab />
 
-<Margin>meld two binary heaps:<br/>append, then sink everything<br/>bottom-up. O(n)</Margin>
+<Check q="A min-heap is stored as the array [2, 5, 3, 9, 6]. Insert 1. What is the array afterwards?" options={["[1, 5, 2, 9, 6, 3]", "[1, 2, 5, 3, 9, 6]", "[2, 5, 1, 9, 6, 3]", "[1, 2, 3, 5, 6, 9]"]} why="1 goes in at the end (index 5). Its parent is index 2, holding 3: swap. Its new parent is index 0, holding 2: swap. Only the path to the root changes." />
+
+<Check q="When a node sinks, which child does it swap with?" options={["the smaller one", "the larger one", "the left one", "either one"]} why="The child that moves up becomes the parent of the other child, so it must be the smaller of the two." />
+
+**Why build-heap is O(n).** A node at height h (the bottom level is height 0) sinks at most h levels. There are at most ⌈n/2<sup>h+1</sup>⌉ nodes at height h. So the cost is at most Σ h · n/2<sup>h</sup> = O(n): most nodes are near the bottom, where sinking is cheap.
+
+<Guide fig="building a heap" shows="Build-heap turning an arbitrary array into a heap by sinking one node per press, from the last parent back to the root. The chart compares its total swaps with inserting the items one at a time.">
+1. Press **sink next node**, once per press. It goes from the last parent back to the root, and the caption says which position just sank. Only nodes near the top can sink far.
+2. Set the input to **descending (worst)**, then compare with random.
+3. Look at the chart: "sink from bottom" (green) grows linearly in n, while "n inserts" (red) grows like n log n. The caption gives the exact swap counts for both.
+</Guide>
 
 <BuildHeap />
 
-Binomial heaps make insert O(1) and meld O(log n) amortized:
+<Check q="Build-heap sinks about n/2 nodes, and a sink can take log n steps. What is the total cost?" options={["O(n)", "O(n log n)", "O(log n)", "O(n²)"]} why="Most nodes are near the bottom and can only sink a step or two. The sum of h · n/2^h over the heights h is O(n)." />
+
+**Amortized Extract-Min.** Let the weight of a node be its depth (root 0, its children 1, …) and Φ = Σ of all weights.
+- Insert at depth d: cost ≤ d (swim up), and one node at depth d is added, so Φ rises by d. Amortized ≤ 2d = O(log n).
+- Extract-Min: the sink after the swap costs ≤ d, and one node at depth d disappeared, so Φ drops by d, which pays for the whole sink. Amortized O(1), just the swap.
+- But <U>Meld gets worse</U> under this Φ: the true cost is O(n), while the potential jumps by Θ(n log n).
+
+### binomial heaps
+
+<Guide fig="the binomial heap" shows="A binomial heap: a row of trees, at most one of each size 1, 2, 4, 8, … The table shows the binary addition that an insert or a meld performs, where each carry is one link.">
+1. Start from 11 keys: 11 = 1011 in binary, so the heap has trees B₃, B₁ and B₀ (8 + 2 + 1 nodes). Check it against the drawing.
+2. Press **insert random** once. That is like adding 1: 1011 + 1 = 1100. The table of carries shows each link (the carry). The potential Φ (the number of trees) drops by the number of links minus one.
+3. Keep inserting until an insert links many trees at once, then note the amortized cost stays 2.
+4. Press **extract-min**: the minimum root is removed, its children (B<sub>k−1</sub> … B₀) are a heap, and that heap is melded back.
+5. Press **meld with a 7-heap**: binary addition of the two sizes.
+6. Click a node and press **decrease picked to 0**: it swims up.
+</Guide>
 
 <BinomialLab />
 
-- B<sub>k</sub> has 2<sup>k</sup> nodes, height k, root degree k, C(k,i) nodes at depth i
-- a heap holds at most one B<sub>k</sub> for each k, so the trees are the 1 bits of n
-- meld = binary addition (link = carry). insert = meld with one node
-- Φ = number of trees: insert links k times, Φ drops by k−1, amortized 2
+- B<sub>k</sub> has 2<sup>k</sup> nodes, height k, root degree k, C(k, i) nodes at depth i. Deleting the root leaves B<sub>k−1</sub>, …, B₀.
+- a heap holds at most one B<sub>k</sub> for each k, so the trees are the 1 bits of n (at most 1 + ⌊log n⌋ trees). The minimum is one of the roots.
+- **Meld** = binary addition (a link is a carry). At each order k there are 0, 1, 2 or 3 trees of order k (counting a carry): 0 gives none, 1 is kept, 2 are linked into a carry, 3 keep one and link the other two. O(1) work per order, O(log n) total. Φ does not go up, so amortized O(log n).
+- **Insert** = meld with a one-node heap. If it does k links, the true cost is k + 1 and Φ changes by 1 − k (one new tree, k links each lose one). Amortized (k + 1) + (1 − k) = 2 = <O>O(1)</O>.
+- **Extract-Min**: find the minimum root O(log n), delete it, meld its children back in O(log n). Amortized O(log n).
+- **Decrease-Key**: swim up, O(log n). **Delete**: decrease to −∞ then Extract-Min.
 
 ```
                  insert   extract-min   decrease-key   meld
@@ -157,91 +1524,678 @@ fibonacci heap   O(1)     log n*        O(1)*          O(1)
                                              * amortized
 ```
 
----
+<Check q="A binomial heap holds 6 elements. Which trees does it contain?" options={["B₂ and B₁", "B₂, B₁ and B₀", "one B₃", "three copies of B₁"]} why="6 = 110 in binary: one tree of 4 nodes and one of 2. There is at most one tree of each order." />
 
-## lecture 9: union-find
+<Recall q="What is Φ for a binary heap, what is it for a binomial heap, and what does each one buy?">
 
-Maintain disjoint sets: find(x) = name of x's set, union(x, y) merges.
+Binary heap: Φ = sum of the depths of all nodes. Extract-Min becomes O(1) amortized. Binomial heap: Φ = the number of trees. Insert becomes O(1) amortized.
+
+</Recall>
+
+<Recall q="Why is build-heap O(n) when it does n sinks of up to log n steps each?">
+
+A node at height h sinks at most h steps, and there are at most n/2<sup>h+1</sup> nodes of height h. The sum Σ h·n/2<sup>h+1</sup> is O(n) since Σ h/2<sup>h</sup> converges.
+
+</Recall>
+
+<Recall q="A binomial heap has 13 elements. Which trees does it have?">
+
+13 = 1101 in binary, so B₃ (8 nodes), B₂ (4 nodes) and B₀ (1 node): 8 + 4 + 1 = 13.
+
+</Recall>
+
+<Recall q="Show that binomial Insert is O(1) amortized.">
+
+Insert melds in a one-node heap. If it performs k links, the true cost is k + 1. Φ (the number of trees) rises by 1 for the new tree and falls by k for the links, so ΔΦ = 1 − k. Amortized = (k + 1) + (1 − k) = 2.
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={9} title="union-find" tldr="Keep track of disjoint sets under Union and Find. Lists give O(m + n log n), trees with rank and path compression give O(m log* n).">
+
+<Spec
+  name="union-find (disjoint sets)"
+  input="a sequence of m operations: Make-Set(x) (a new set {x}), Union(x, y) (merge the sets containing x and y), Find(x)"
+  output="Find(x) returns the representative of x's set: an element of the set that acts as its name"
+  note="if Find(x) and Find(y) return the same element, x and y are in the same set. n is the number of Make-Set operations (the number of elements), m the total number of operations. The algorithm is assumed to already hold the elements it is asked about."
+/>
+
+<Fold title="words for this lecture">
+
+- **representative**: one element of each set that names the set. It must be in the set, and every element of the set must get the same one.
+- **parent pointer**: each element points to its parent in a tree. A root points to itself, and the root is the representative.
+- **rank** (of a root): a number that grows as trees get bigger. Ranks do not change once a node stops being a root.
+- **link**: join two roots. **path compression**: after a Find, point every node on the path at the root.
+- **log\* n**: how many times you take log₂ before you get to 1 or below. log\*(2<sup>65536</sup>) = 5, so it is never above 5.
+
+</Fold>
+
+### version 1: lists (with sizes)
+
+Each set is a linked list. Every element points to the head (the representative), and the head stores the size. Find is O(1). Union(x, y): splice the **shorter** list into the longer one and update the head pointers of every element of the shorter list. That is O(min(|S|, |T|)) for a Union.
+
+**Theorem 9.2.1:** the total time is O(m + n log n). Proof: charge each Union's cost to the elements of the smaller set, one each. Whenever an element e is charged, it was in the smaller set, so the set containing it at least <Hl>doubles</Hl>. It can double at most log n times, so each element is charged at most log n times, and the total is at most n log n. It is tight: n/2 unions of pairs, then n/4 of 4s, and so on cost Ω(n log n).
+
+<Check q="List version: Union of a set with 3 elements and a set with 50. How many head pointers are rewritten?" options={["3", "50", "53", "1"]} why="The shorter list is spliced into the longer one, so only its 3 elements get a new head." />
+
+<Check q="Over all the unions, how many times can one element have its head pointer rewritten? (n elements)" options={["at most log n times", "up to n times", "once", "at most log* n times"]} why="It is rewritten only when it is in the smaller set, and then its set at least doubles. A set can double only log n times before it holds everything." />
+
+### version 2: trees with rank and compression
+
+- **Make-Set(x):** parent = x, rank = 0.
+- **Find(x):** follow parent pointers to the root, then point x and everything on the path at the root (path compression). Its cost is the original distance to the root.
+- **Link(r₁, r₂)** (roots only): the larger rank becomes the root. If ranks are equal, r₁ becomes the root and its rank goes up by one.
+- **Union(x, y):** Link(Find(x), Find(y)).
+
+<Guide fig="union-find" shows="Union-find drawn as a forest. Each element has an arrow to its parent. A root is the representative of its set and shows its rank (r0, r1, …). The table runs the same unions under four settings.">
+1. Click two elements (they get a blue ring) and press **union**. An arrow means "my parent is…". A root has its rank next to it (r0, r1, …).
+2. Click one element and press **find**: the path is highlighted, and with compression on, its nodes then point at the root.
+3. Press **chain: (0,1) (1,2) (2,3)…** with **union by rank** and **path compression** both off. This makes a long path, so Find is slow.
+4. Turn on **union by rank**: the same chain now stays shallow. Turn on **path compression** too.
+5. The table shows the same 63 unions four ways (naive, rank only, compression only, both) with steps and height.
+</Guide>
 
 <UnionFindLab />
 
-- union by rank: shorter tree under taller. rank r ⇒ ≥ 2<sup>r</sup> nodes ⇒ height ≤ log n
-- path compression: point everything you walked over at the root
-- both: m operations cost O(m α(n)), α(n) ≤ 4 forever
+<Check q="Link two roots that both have rank 2. What happens?" options={["one becomes the root, and its rank becomes 3", "one becomes the root and keeps rank 2", "the new root gets rank 4", "neither rank changes and both stay roots"]} why="Equal ranks is the only case where a rank goes up, and it goes up by exactly one. With different ranks the larger one wins and nothing changes." />
 
----
+**Properties of rank** (easy inductions):
+1. a non-root has rank strictly less than its parent's
+2. when path compression changes x's parent, the new parent has strictly larger rank than the old one
+3. only roots change rank, and a non-root never becomes a root again
+4. when a node first reaches rank r, its tree has at least 2<sup>r</sup> nodes (two rank-(r−1) trees merged)
 
-## lecture 10: universal and perfect hashing
+**Lemma 9.3.1:** at most n/2<sup>r</sup> nodes have rank ≥ r. Each such node had ≥ 2<sup>r</sup> nodes in its tree when it got that rank, and those sets are disjoint for different nodes, so there are at most n/2<sup>r</sup> of them. In particular the height is at most log n.
 
-A fixed hash function loses to an adversary who knows it. So <U>pick the function at random</U> from a family where any two keys collide rarely.
+**Theorem 9.3.2:** with union by rank and path compression, the total time is <O>O(m log\* n)</O>.
+
+<Steps title="idea of the proof">
+
+<Step>
+
+Count the parent pointers that all the Finds follow.
+
+</Step>
+
+<Step>
+
+Following a pointer that goes straight to a root costs O(1) per Find. Set those aside.
+
+</Step>
+
+<Step>
+
+Put the nodes into buckets by rank: bucket i holds the ranks from a tower of i − 1 twos up to a tower of i twos minus 1. There are only O(log\* n) buckets.
+
+</Step>
+
+<Step>
+
+A Find path can cross from one bucket into a higher one at most log\* n times. Charge those steps to the Find: O(log\* n) each.
+
+</Step>
+
+<Step>
+
+The other steps stay inside one bucket. Charge each to the node being left. Each time, path compression gives that node a parent of strictly larger rank, so a node in bucket i can be charged at most (a tower of i twos) times before its parent is in a higher bucket.
+
+</Step>
+
+<Step>
+
+Bucket i has at most n divided by (a tower of i twos) nodes, by Lemma 9.3.1. So each bucket is charged at most n in total, and all buckets together O(n log\* n).
+
+</Step>
+
+</Steps>
+
+<Check q="What is log* 65536?" options={["4", "16", "5", "2"]} why="65536 → 16 → 4 → 2 → 1 takes four logs. log* grows so slowly that it is at most 5 for any number you could write down." />
+
+<Pen>the textbook proves the even smaller O(m α(m, n)), where α is the inverse Ackermann function. lecture proves the O(m log* n) version. both are "almost constant".</Pen>
+
+<Recall q="What are the input and output of Find, and what is Find's job in the whole structure?">
+
+Input: an element x. Output: the representative of x's set. Two elements are in the same set exactly when Find gives them the same answer.
+
+</Recall>
+
+<Recall q="Why does the list version cost O(n log n) for all unions, not O(n²)?">
+
+A Union costs the size of the smaller list, charged to its elements. An element in the smaller set ends up in a set at least twice as large, so it is charged at most log n times. n elements × log n charges = O(n log n).
+
+</Recall>
+
+<Recall q="Why does a node of rank r imply at least 2^r nodes in its tree, and what does that give?">
+
+A node reaches rank r only when two roots of rank r − 1 are linked, and by induction each tree has at least 2<sup>r−1</sup> nodes. So the tree has at least 2<sup>r</sup>. That bounds the number of nodes of rank ≥ r by n/2<sup>r</sup> (the trees are disjoint), and the height by log n.
+
+</Recall>
+
+<Recall q="What bound does lecture 9 prove for union by rank plus path compression?">
+
+O(m log\* n) for m operations on n elements. The book has the tighter O(m α(m, n)) with the inverse Ackermann function.
+
+</Recall>
+
+</Lecture>
+
+<Lecture n={10} title="universal and perfect hashing" tldr="Every fixed hash function has a bad set of keys. Draw the function at random from a universal family and a lookup is O(1) in expectation. For a fixed set of keys, two levels give O(1) in the worst case.">
+
+<Spec
+  name="dictionary by hashing"
+  input="a huge universe U of possible keys, a small set S ⊆ U of N keys that are actually stored, and a table A with M slots"
+  output="Lookup(x) says whether x is stored. Insert(x) and Delete(x) change S"
+  note="a hash function h sends every key of U to a slot, and key x lives in A[h(x)]. We want three things: few collisions, M = O(N), and an h that is fast to compute. Lecture 6 did this in O(log n) with trees. The goal here is O(1)."
+/>
+
+<Fold title="words for this lecture">
+
+- **universe U**: every key that could ever show up, for example all strings of at most 40 characters. Assuming keys come from a known U is stronger than the comparison model, and weaker than radix sort's assumptions.
+- **S** and **N**: the set of keys actually stored, and its size N = |S|.
+- **hash table** A of size **M**, and a **hash function** h: U → [M], where [M] means the slots 1 to M.
+- **collision**: two different keys x ≠ y with h(x) = h(y).
+- **separate chaining**: A[i] is a linked list of every stored key that hashes to i.
+- **universal**: a probability distribution over hash functions in which every pair x ≠ y collides with probability at most 1/M.
+- **universal hash family**: a set of functions whose uniform distribution is universal. "H" is used for both the set and the distribution.
+- **perfect** for S: every lookup takes O(1) time in the worst case.
+- **indicator variable** C<sub>xy</sub>: 1 if x and y collide, 0 if not. Its expectation is the probability of a collision.
+- **linearity of expectation**: the expectation of a sum is the sum of the expectations, even when the terms depend on each other.
+- **Markov's inequality**: for X ≥ 0, Pr[X ≥ a] ≤ E[X]/a.
+
+</Fold>
+
+### the operations, with chaining
+
+- **Lookup(x):** walk the list at A[h(x)] until you find x or reach the end.
+- **Insert(x):** put x at the front of the list at A[h(x)]. Always O(1).
+- **Delete(x):** walk the list at A[h(x)], remove x.
+
+Lookup and delete cost O(length of the list at A[h(x)]). So the whole question is how many keys collide.
+
+### bad news: every fixed h has a bad set
+
+**Theorem 10.2.1.** For any hash function h, if |U| ≥ (N − 1)M + 1, then there is a set S of N keys that all hash to the same slot.
+
+<Steps title="proof (pigeonhole, by contrapositive)">
+
+<Step>
+
+Contrapositive: if every slot receives fewer than N keys of U, then |U| ≤ (N − 1)M.
+
+</Step>
+
+<Step>
+
+Each of the M slots receives at most N − 1 keys of U.
+
+</Step>
+
+<Step>
+
+Every key of U goes to some slot, so |U| ≤ (N − 1)·M ✓.
+
+</Step>
+
+<Step>
+
+So when U is that big, some slot receives at least N keys. An adversary who knows h picks those N keys as S, and every lookup walks a list of length N.
+
+</Step>
+
+</Steps>
+
+<Check q="M = 10 slots and a universe of 1000 keys. Whatever h is, some slot receives at least how many keys of U?" options={["100", "10", "1000", "1"]} why="If every slot got at most 99, U would have at most 990 keys. So an adversary can always find 100 keys that all collide." />
+
+### the fix: choose h at random
+
+This is randomized quicksort again. For any fixed pivot rule there is a bad array, but for every array a random pivot is good in expectation. Here: for any fixed h there is a bad S, but <Hl>for every S, a randomly chosen h is good in expectation</Hl>. Once chosen, h stays the same, or lookups would not find anything.
+
+- **First idea, a fully random function:** for each x in U pick h(x) uniformly at random. It has the right property, but it has no structure, so the only way to remember it is a table with one entry for every key of U. That is the dictionary problem we started with.
+- **What we want:** the useful property of a random function, in a function that is small to store and fast to compute.
+
+<Guide fig="an adversary against a fixed hash" shows="Two bar charts of the same keys in the same table. Each bar is how many keys landed in one slot. The top row (red) uses the fixed function x mod m. The bottom row (blue) uses a function drawn at random.">
+1. Keep **multiples of m (the adversary)**. The top row, x mod m, stacks every key into slot 0: one very tall bar. The bottom row uses a random (a, b) and spreads them out.
+2. Press **draw a new (a, b)** several times: the bottom row changes each time but stays flat, and the adversary cannot predict which function you will get.
+3. Read the caption: colliding pairs for x mod m, for this draw, and the average over all 10,100 draws, which is at most C(n, 2)/m.
+4. Switch to **random keys** and change **table size m**.
+</Guide>
 
 <UniversalHash />
 
-**Universal:** for every x ≠ y, Pr<sub>h</sub>[h(x) = h(y)] ≤ 1/m. Then for n keys, the expected number of collisions is ≤ C(n,2)/m.
+The figure draws its random function from the textbook's family, h(x) = ((a·x + b) mod p) mod m. Lecture builds a different family, the matrix method below. Both are universal.
+
+### universal hashing
+
+**Definition 10.3.1.** A probability distribution H over hash functions U → [M] is **universal** if for all x ≠ y in U, Pr[h(x) = h(y)] ≤ 1/M when h is drawn from H.
+
+A fully random function has this property. The point is that much smaller families have it too.
+
+**Theorem 10.3.2.** If H is universal, then for every set S of N keys and every x in U, the expected number of collisions between x and the keys of S is at most <O>N/M</O>.
+
+<Steps title="proof (indicators and linearity of expectation)">
+
+<Step>
+
+For each y in S with y ≠ x, let C<sub>xy</sub> = 1 if h(x) = h(y), and 0 otherwise.
+
+</Step>
+
+<Step>
+
+E[C<sub>xy</sub>] = Pr[h(x) = h(y)] ≤ 1/M. That is the definition of universal.
+
+</Step>
+
+<Step>
+
+The number of collisions with x is the sum of C<sub>xy</sub> over those y.
+
+</Step>
+
+<Step>
+
+By linearity of expectation, E[sum] = sum of E[C<sub>xy</sub>] ≤ (at most N terms) · 1/M = N/M ✓.
+
+</Step>
+
+</Steps>
+
+So with M ≈ N a lookup walks a list of expected length O(1).
+
+**Corollary 10.3.3.** Any sequence of L inserts, lookups and deletes with at most O(M) keys stored at any time costs O(L) in expectation. Each operation is O(1) in expectation, and linearity adds them up. (It assumes h takes constant time to compute.)
+
+<Check q="N = 300 stored keys, M = 100 slots, h drawn from a universal family. A lookup of x collides with at most how many stored keys, in expectation?" options={["3", "300", "1/100", "30000"]} why="N/M = 300/100 = 3. The bound holds for every set S, including one an adversary picked before h was drawn." />
+
+<Check q="For the guarantee to hold, who has to move first?" options={["the keys are fixed first, then h is drawn at random", "h is drawn, then the adversary sees it and picks the keys", "the order does not matter", "both must be random"]} why="If the adversary sees h first, Theorem 10.2.1 applies and it can make everything collide. The random choice has to be hidden from whoever picks the keys." />
+
+### building one: the matrix method
+
+- Keys are u bits long. The table size is M = 2<sup>b</sup>, so a slot number is b bits long.
+- h is a random b × u matrix of 0s and 1s ("short and fat"). Define h(x) = h·x, with all arithmetic mod 2.
+- In plain words: <Hl>h(x) is the XOR of the columns of h in the positions where x has a 1.</Hl>
+- Storing h takes b·u bits, which is tiny next to a table over all of U.
+
+The lecture's example: the columns of h are (1,0,1), (0,1,1), (0,1,1), (0,1,0) and x = 1010. x picks columns 1 and 3, and (1,0,1) + (0,1,1) = (1,1,0) mod 2.
+
+**Theorem 10.3.5.** For all x ≠ y, Pr[h(x) = h(y)] = 1/M exactly. So this family is universal.
+
+<Steps title="proof (leave one column for last)">
+
+<Step>
+
+x ≠ y, so they differ in some bit i. Say x has a 0 there and y has a 1.
+
+</Step>
+
+<Step>
+
+Draw every column of h except column i.
+
+</Step>
+
+<Step>
+
+h(x) is already decided. x has a 0 in position i, so column i is never added into it.
+
+</Step>
+
+<Step>
+
+h(y) is not decided, because it includes column i. Each of the 2<sup>b</sup> possible columns gives a different value of h(y).
+
+</Step>
+
+<Step>
+
+Exactly one of those 2<sup>b</sup> values equals h(x). So Pr[h(y) = h(x)] = 1/2<sup>b</sup> = 1/M ✓.
+
+</Step>
+
+</Steps>
+
+<Guide fig="the matrix method" shows="A 3 × 4 matrix of bits that hashes 4-bit keys into 8 slots. The top row is key x (blue) and the row under the matrix is key y (red). A key’s hash is the XOR of the matrix columns that sit under its 1 bits, shown on the right as h(x) and h(y). The strip at the bottom tries all 8 settings of one column.">
+1. It starts on the lecture's example. Key x = 1010 has 1s above columns 1 and 3 (shaded blue). Add those two columns bit by bit, mod 2, and check that you get the h(x) on the right.
+2. Tap bits of x. Each tap adds one column to the sum or takes one out. Watch h(x) change. Tap bits of y the same way.
+3. Now the strip at the bottom. It takes the first column where x and y differ (ringed in red) and shows, for each of its 8 possible settings, which slot the affected key would land in. Exactly one box is green: the one setting that makes the two keys collide.
+4. Tap the green box. The caption reports a collision. Tap any other box: no collision. That is the 1/8 in the theorem.
+5. Press **draw a random matrix** several times. The caption counts collisions over 400 random matrices, and it stays near 50.
+6. Make y differ from x only in the last bit. The strip moves to column 4 and still has exactly one green box.
+</Guide>
+
+<MatrixHash />
+
+<Check q="b = 3 and u = 40: 40-bit keys hashed into 8 slots. How many bits does it take to store h?" options={["120", "8", "2⁴⁰", "43"]} why="A b × u matrix has b·u = 120 entries. A fully random function would need a slot number for each of the 2⁴⁰ keys." />
+
+The next figure checks universality by brute force, for the textbook's family and for two broken ones.
+
+<Guide fig="is a family really universal?" shows="A grid with one cell for every pair of keys. The number in a cell is the percentage of functions in the family that make that pair collide. Green means at most 1/m. Red means more.">
+1. This is the exact collision probability of every pair of keys over <U>all</U> functions in a family (p = 11). Green means ≤ 1/m, red means worse.
+2. With the family **h(a, b)** everything is green: that is universal.
+3. Switch to **drop the b** or **one fixed x mod m**: red cells appear, so those families are not universal. The caption says "not universal".
+4. Click any cell to pick a pair. The caption gives how many functions of the family collide on it, out of the total, next to 1/m.
+</Guide>
 
 <CollisionProb />
 
-**Perfect hashing:** two levels. First hash into n buckets. A bucket with c keys gets a table of size c² and its own hash, redrawn until it has no collisions.
+### perfect hashing
+
+Now S is fixed and known in advance, and there are only lookups, like a printed dictionary. Build time does not matter much. A sorted array or a balanced tree gives O(log N) per lookup. The goal is <Hl>O(1) in the worst case</Hl>, not only in expectation. A hash function is **perfect** for S if every lookup takes O(1) time.
+
+**Method 1: space N².** Use a table of size M = N². Draw h from a universal family, hash all of S and check for collisions. If there are any, draw again.
+
+**Theorem 10.4.1.** If H is universal with M = N², then Pr[no collisions in S] ≥ 1/2.
+
+<Steps title="proof (count the pairs)">
+
+<Step>
+
+S has C(N, 2) = N(N − 1)/2 pairs of different keys.
+
+</Step>
+
+<Step>
+
+Each pair collides with probability at most 1/M = 1/N².
+
+</Step>
+
+<Step>
+
+Pr[some pair collides] ≤ the sum over all pairs = N(N − 1)/(2N²) ≤ 1/2.
+
+</Step>
+
+<Step>
+
+So each draw is perfect with probability at least 1/2, and you expect at most 2 draws.
+
+</Step>
+
+</Steps>
+
+**Method 2: space O(N), with two levels.**
+
+1. Draw a first-level h from a universal family into a table of size N. There will be collisions.
+2. Let n<sub>i</sub> be the number of keys of S that land in bin i.
+3. For each bin i, use method 1 on just its n<sub>i</sub> keys: a second-level table A<sub>i</sub> of size n<sub>i</sub>², with its own function h<sub>i</sub> that is perfect for those keys.
+4. **Lookup(x):** compute i = h(x), then look in A<sub>i</sub>[h<sub>i</sub>(x)]. That is O(1) in the worst case (Theorem 10.4.2).
+
+The space is N for the first table plus Σ n<sub>i</sub>² for the second-level tables. So we need Σ n<sub>i</sub>² = O(N).
+
+**Theorem 10.4.3.** If H is universal onto a table of size N, then Pr[Σ n<sub>i</sub>² &gt; 4N] &lt; 1/2.
+
+<Steps title="proof (count ordered pairs)">
+
+<Step>
+
+The trick: n<sub>i</sub>² is the number of <U>ordered</U> pairs (x, y) of keys in bin i, counting (x, x) too. A bin holding a, b, c has 9 such pairs.
+
+</Step>
+
+<Step>
+
+So Σ n<sub>i</sub>² = the sum of C<sub>xy</sub> over all x and y in S, where now x is allowed to equal y.
+
+</Step>
+
+<Step>
+
+The N pairs (x, x) always collide. They contribute exactly N.
+
+</Step>
+
+<Step>
+
+The N(N − 1) ordered pairs with x ≠ y each have E[C<sub>xy</sub>] ≤ 1/M = 1/N. They contribute at most N − 1.
+
+</Step>
+
+<Step>
+
+So E[Σ n<sub>i</sub>²] ≤ N + (N − 1) &lt; 2N.
+
+</Step>
+
+<Step>
+
+Markov's inequality: Pr[Σ n<sub>i</sub>² &gt; 4N] &lt; 2N/4N = 1/2. So redraw the first-level h until Σ n<sub>i</sub>² ≤ 4N. You expect at most 2 draws.
+
+</Step>
+
+</Steps>
+
+<Guide fig="perfect hashing" shows="A two-level hash table. Each row is one first-level bucket together with its own small second-level table. Green cells hold keys. The figure writes c for the number of keys in a bucket, which lecture calls n_i.">
+1. Press **build again**. Each row of the drawing is one bucket that received keys, with its own small table of c² slots. The caption gives the total space Σc² against 4n.
+2. Type a key into **look up**, or press **a key we stored**: a lookup takes two probes (the top-level hash picks the bucket, the bucket's hash picks the slot) and never searches.
+3. Raise **keys n** and watch the total space stay under 4n.
+</Guide>
 
 <PerfectHash />
 
-<Sticky front="why c² and why it is still O(n) space">c keys have C(c,2) pairs, each colliding with probability ≤ 1/c², so expected collisions &lt; ½ and a draw works with probability ≥ ½ (2 tries on average). Σc² is 2n in expectation, so redraw level one until Σc² ≤ 4n.</Sticky>
+<Check q="A first-level bin received 4 keys. How big is its second-level table?" options={["16", "4", "8", "N"]} why="n_i² = 16. With 16 slots, the 6 pairs of keys collide with total probability at most 6/16, which is under 1/2, so a random h_i is perfect more than half the time." />
+
+<Check q="What does the sum of the n_i² count?" options={["ordered pairs of keys in the same bin, each key paired with itself too", "unordered pairs of different keys that collide", "the number of non-empty bins", "the number of keys"]} why="A bin with n_i keys has n_i · n_i ordered pairs. That turns a sum of squares into a sum of collision indicators, which linearity of expectation can handle." />
+
+<Check q="Universal hashing gives O(1) lookups in expectation. What does perfect hashing give, and at what price?" options={["O(1) in the worst case, but the set of keys must be fixed in advance", "O(1) in the worst case, with inserts too", "O(log N) in the worst case", "O(1) expected, in less space"]} why="The construction looks at all of S to build the tables, redrawing until there are no collisions. A new key could collide, so there are no inserts." />
+
+<Recall q="Define a universal hash family.">
+
+A set H of functions U → [M] such that, for h drawn uniformly from H, every pair of distinct keys x ≠ y has Pr[h(x) = h(y)] ≤ 1/M.
+
+</Recall>
+
+<Recall q="State and prove the bound on the expected number of collisions for a lookup.">
+
+If H is universal, the expected number of keys of S that collide with x is at most N/M. Proof: let C<sub>xy</sub> indicate h(x) = h(y). E[C<sub>xy</sub>] ≤ 1/M by universality. The number of collisions is the sum over y in S, y ≠ x, and by linearity its expectation is at most N · 1/M.
+
+</Recall>
+
+<Recall q="Why does a random function beat an adversary when a fixed one does not?">
+
+By the pigeonhole theorem, an adversary that knows a fixed h can find N keys that all collide. If h is drawn at random after the keys are fixed, each pair collides with probability at most 1/M, so the expected number of collisions is small whatever the keys are.
+
+</Recall>
+
+<Recall q="Matrix method: why do two different keys collide with probability exactly 1/M?">
+
+They differ in some bit i, where say x has 0 and y has 1. Fix all columns but column i. Then h(x) is fixed, and the 2<sup>b</sup> choices of column i give 2<sup>b</sup> different values of h(y), exactly one of which equals h(x).
+
+</Recall>
+
+<Recall q="In two-level perfect hashing, why is the total space O(N)?">
+
+Σ n<sub>i</sub>² counts ordered colliding pairs including each key with itself: N + (ordered pairs of different keys that collide). In expectation that is at most N + N(N − 1)/N &lt; 2N. By Markov it exceeds 4N with probability below 1/2, so redraw until it does not.
+
+</Recall>
+
+</Lecture>
 
 ---
 
-## lectures 1 to 3, the short version
+## homework map and solutions
 
-**Karatsuba:** 4 half-size products → 3 by computing (A+B)(C+D). T(n) = 3T(n/2) + cn = Θ(n<sup>log₂3</sup>).
+Homeworks 1 to 3 are old, so their answers are here. Each blue bar is one problem: **try it on paper first**, then tap the bar to open the solution. Each answer names the figure that shows the idea. Assumptions the homeworks allow: elements are distinct, and n and k are powers of 2 where needed.
 
-<KaratsubaDemo />
+### homework 1
 
-**Strassen:** 8 block products → 7. T(n) = 7T(n/2) + cn² = Θ(n<sup>log₂7</sup>).
+<Recall q="HW1.1 (asymptotics): decide true or false for each: (a) n tan n = O(2ⁿ), (b) eⁿ = Θ(2ⁿ), (c) n cos n = O(n), (d) 3ⁿ = Ω(3ⁿ⁺²), (e) log(n^(1/5)) = Θ(log n³), (f) f + g = Ω(max(f, g)).">
 
-<StrassenDemo />
+- **(b) false.** eⁿ/2ⁿ = (e/2)ⁿ → ∞, so no constant c has eⁿ ≤ c·2ⁿ for all large n: it is Ω(2ⁿ) but not O(2ⁿ).
+- **(c) true.** |cos n| ≤ 1, so n cos n ≤ 1·n with c = 1, n₀ = 1.
+- **(d) true.** 3ⁿ⁺² = 9·3ⁿ, so 3ⁿ ≥ (1/9)·3ⁿ⁺². Take c = 1/9.
+- **(e) true.** log(n<sup>1/5</sup>) = (1/5) log n and log(n³) = 3 log n, ratio 1/15. So both O and Ω hold, with c = 1/15 in one direction and c = 1 in the other.
+- **(f) true.** f, g are positive, so f + g ≥ max(f, g). Take c = 1, n₀ = 1.
+- **(a)** the lab treats n as an integer and shows n tan n staying far below 2ⁿ, so it is true in that sense. Be careful with the proof: tan is unbounded near π/2 + jπ, so you need to say what n ranges over (integers) and argue that tan of an integer cannot be exponentially large. That needs the fact that integers cannot get exponentially close to a multiple of π/2. State that as the key step, and say so if you rely on a known result about π.
 
-**Recurrences.** Draw the tree, sum each level, see which end wins.
+Figure: the big-O lab (watch f/g).
 
-<RecursionTree />
+</Recall>
 
-Not every recurrence has the master-theorem shape. Guess, then check the ratio:
+<Recall q="HW1.2 (recurrences): solve (a) T(n) = 5T(n−3), (b) T(n) = n^(1/4)·T(n^(3/4)) + n, (c) T(n) = 6T(n/4) + n.">
 
-<RecurrenceCheck />
+- **(a)** unroll: T(n) = 5<sup>j</sup>·T(n − 3j). It stops when n − 3j ≤ 5, so j ≈ (n − 5)/3. So T(n) = Θ(5<sup>n/3</sup>): the constant factors from the base case and rounding only change it by a constant multiple, and both bounds come from the same unrolling.
+- **(b)** divide by n. Let S(n) = T(n)/n. Then T(n<sup>3/4</sup>) = n<sup>3/4</sup>·S(n<sup>3/4</sup>), and n<sup>1/4</sup>·n<sup>3/4</sup> = n, so S(n) = S(n<sup>3/4</sup>) + 1. The argument shrinks by the power 3/4 each step and it takes log<sub>4/3</sub> log n steps to reach a constant. So S(n) = Θ(log log n) and <O>T(n) = Θ(n log log n)</O>.
+- **(c)** a = 6, b = 4, k = 1: a &gt; b<sup>k</sup>, so the bottom level dominates: T(n) = Θ(n<sup>log₄ 6</sup>) ≈ Θ(n<sup>1.29</sup>).
 
-- T(n) = 5T(n−3): unroll, 5<sup>n/3</sup>
-- T(n) = n<sup>¼</sup>T(n<sup>¾</sup>) + n: divide by n, S(n) = S(n<sup>¾</sup>) + 1, so log log n
-- in an induction, a constant that <X>changes</X> was never a constant (3T(n/3)+n: cn fails, n log₃(3n) works)
+Figure: the recursion tree (preset "HW1: 6T(n/4)+n") and the guess-and-check ratio figure.
 
-**Asymptotics.** f = O(g): ∃ c, n₀ with f(n) ≤ c·g(n) for all n > n₀.
+</Recall>
 
-<BigOLab />
+<Recall q="HW1.3 (group sorting): k-group-sort an array in O(n log k) worst-case time, and prove it.">
 
-<Margin>Θ(g) = O(g) and Ω(g).<br/>o and ω: the ratio<br/>goes to 0 or ∞.</Margin>
+**A k-group-sorted array** has k consecutive groups of n/k elements, every element of a group larger than all elements of earlier groups.
 
-**Proof techniques (lecture 3):** strong induction (recursive algorithms), contradiction (smallest counterexample), loop invariant (initialize, maintain, terminate), contrapositive, direct.
+**Algorithm** GroupSort(A, k): if k = 1, return A (any array is 1-group-sorted). Otherwise find the median of A with BFPRT, partition A around it into L (the n/2 smaller elements) and G (the n/2 larger elements), then return GroupSort(L, k/2) followed by GroupSort(G, k/2).
 
-<InvariantDemo />
+**Correctness** (induction on k). For k = 1 it is trivially true. For k &gt; 1: L and G each have n/2 elements, and every element of L is smaller than every element of G. By induction, GroupSort(L, k/2) is (k/2)-group-sorted, that is, it has k/2 groups of size (n/2)/(k/2) = n/k, and likewise for G. Put together, we get k groups of size n/k, and the groups from L are all smaller than the groups from G. So the output is k-group-sorted.
 
----
+**Time.** The median and the partition cost cn (BFPRT is linear). So T(n, k) = 2T(n/2, k/2) + cn and T(n, 1) = O(1). The recursion has log k levels (k halves down to 1). Each level does total work cn, because the pieces at one level have sizes summing to n. So T = cn log k + O(k) = O(n log k) (the leaves number k ≤ n).
 
-## homework map
+Figure: median quicksort, stopped after d = log k levels.
 
-Where each problem lives. The figures show the idea; the proof is yours to write.
+</Recall>
 
-- **HW1.1** asymptotics → the big-O lab (watch f/g)
-- **HW1.2** recurrences → recursion tree, guess-and-check. two of the three are not master-theorem shaped
-- **HW1.3** k-group sorting in O(n log k) → median quicksort, stopped after log k levels
-- **HW2.1** dumbbells Ω(n log n) → the game, "dumbbells", 3 outcomes
-- **HW2.2** k-group Ω(n log k) → group-answer counting
-- **HW2.3** strings in O(n) → the strings figure
-- **HW3.1** 2-3-4 splits → B-tree lab, then the bank figure
-- **HW3.2** move-to-front → the potential table, once with each reference list
-- **HW3.3** kth smallest of every growing prefix in O(n log k) → what heap size stays useful?
+### homework 2
+
+<Recall q="HW2.1 (dumbbells): two sets A and B of n dumbbells, you may only compare one from A with one from B (result &lt;, = or &gt;). Prove that any deterministic algorithm that finds the matching needs Ω(n log n) comparisons.">
+
+Model any deterministic algorithm as a decision tree. Each internal node is one allowed comparison (an A dumbbell against a B dumbbell) with three children, one for each outcome. Each leaf is a claimed matching.
+
+- The correct answer can be any of the n! bijections from A to B, since for each bijection there is a set of weights that realizes it. Two inputs with different matchings must end in different leaves, because the algorithm outputs one matching per leaf and it must be right for every input that reaches that leaf. So the tree has at least n! leaves.
+- A ternary tree of depth d has at most 3<sup>d</sup> leaves, so 3<sup>d</sup> ≥ n! and d ≥ log₃(n!).
+- log₃(n!) = (log₂ n!)/log₂ 3 = Θ(n log n), using n! ≥ (n/2)<sup>n/2</sup>, so log n! ≥ (n/2) log(n/2).
+
+So the worst case is at least Ω(n log n) comparisons.
+
+Figure: the adversary game, "dumbbells".
+
+</Recall>
+
+<Recall q="HW2.2 (group sorting lower bound): prove any comparison algorithm for k-group-sorting makes Ω(n log k) comparisons.">
+
+The algorithm must decide, for every element, which of the k groups it belongs to. Different assignments of elements to groups need different leaves of the decision tree.
+
+- The number of possible assignments (n elements into k labeled groups of size n/k each) is n!/((n/k)!)<sup>k</sup>. Every such assignment arises from some input, so the tree has at least that many leaves.
+- Binary comparisons: depth d ≥ log₂ of that count = log₂ n! − k·log₂((n/k)!).
+- Use n! ≥ (n/e)<sup>n</sup>, so log₂ n! ≥ n log₂ n − n log₂ e. And m! ≤ m<sup>m</sup>, so log₂((n/k)!) ≤ (n/k) log₂(n/k), which times k is n log₂(n/k).
+- Subtract: d ≥ n log₂ n − n log₂ e − n log₂ n + n log₂ k = n log₂ k − 1.44n.
+- For k ≥ 8, log₂ k ≥ 3, so 1.44n ≤ 0.48·n log₂ k and d ≥ 0.52·n log₂ k = Ω(n log k). For 2 ≤ k &lt; 8, log k is a constant and Ω(n log k) = Ω(n): every element must be compared at least once, otherwise an element that was never compared could belong to any group. That already needs n/2 comparisons.
+
+Figure: the group-answer counting figure (log₂ of the answer count against n log₂ k).
+
+</Recall>
+
+<Recall q="HW2.3 (strings): sort strings of different lengths, with total length n, lexicographically in O(n) time.">
+
+Let the alphabet be constant size (a to z), and let L be the longest length (L ≤ n).
+
+**Algorithm.**
+1. Bucket the strings by length (counting sort on length, O(n + L) = O(n)).
+2. Keep a list Q, empty at first. For p = L down to 1:
+   - put the strings of length exactly p at the front of Q
+   - stable counting sort Q by the character at position p (26 buckets)
+
+   After p = 1, Q is the answer.
+
+**Invariant:** after step p, Q holds exactly the strings of length ≥ p, sorted lexicographically by their suffix starting at position p.
+
+**Proof.** After step L this holds (only length-L strings, sorted by their last character). Assume it holds before step p (for suffixes starting at p + 1). Comparing suffixes from position p means comparing the character at p first and then the suffixes from p + 1. Strings of length exactly p have an empty suffix from p + 1, which is smaller than anything else, so putting them at the front keeps Q sorted by the suffix from p + 1. A <U>stable</U> sort on the character at p then gives order by (character at p, then suffix from p + 1), which is order by suffix from p. At p = 1 the suffix is the whole string. Since a &lt; ab &lt; b, an ended string sorts before a longer one with the same prefix, which is exactly what "empty is smallest" gives.
+
+**Time.** Step p touches only strings of length ≥ p, and each costs O(1) plus 26 for the buckets. A string of length ℓ takes part in ℓ steps, so the string work is Σ ℓ = n. The bucket overhead is 26·L ≤ 26n. Total O(n).
+
+Figure: the strings figure (only strings long enough take part in each pass).
+
+</Recall>
+
+### homework 3
+
+<Recall q="HW3.1(a): show one insert into a 2-3-4 tree can cause Ω(log n) splits.">
+
+A split happens only at a full node (3 keys), and an insert splits every full node on its path. So we want a tree with a whole root-to-leaf path of full nodes: then the next key that goes down that path splits all h nodes on it, where h is the height. A complete tree where every node is full has 4<sup>h</sup> − 1 keys, so h = log₄(n + 1) = Θ(log n).
+
+Such trees can be built by inserts. The lab's worst sequences show it: 3 inserts (3, 2, 1) leave a tree where the next insert does 1 split, 10 inserts leave a tree where the next does 2, and 46 inserts leave a tree where the next does 3. Each extra level needs about 4 to 5 times more keys, so with n inserts the next insert can do about log₄ n splits, which is Ω(log n). (The homework says an informal answer is enough.)
+
+Figure: the worst sequences in the split figure, and the B-tree lab.
+
+</Recall>
+
+<Recall q="HW3.1(b): why does the bank 'a node has 1 token if it is full, else 0' not prove O(1) amortized splits?">
+
+The amortized cost of an insert is (splits) + (change in the bank). Each split spends the split node's token (−1), but the split pushes a key up, and that can make the <U>parent</U> full, which deposits a new token (+1) on the parent. So one split can cost 1 and change the bank by −1 + 1 = 0: an amortized cost of 1 per split, no saving. For an insert that splits s nodes in a chain where each parent had 2 keys, the amortized cost is about s, and s can be Θ(log n). The bank never gets ahead because every split creates a new full node to pay for.
+
+Figure: choose the sequence "bad for '1 if full'" with the bank at (0, 0, 1). The chart shows the amortized cost going above 1.
+
+</Recall>
+
+<Recall q="HW3.1(c): give a bank on each node that proves the amortized number of splits per insert is O(1).">
+
+**Bank by key count:** a node with 1 key holds 0 tokens, with 2 keys holds 1 token, with 3 keys (full) holds 2 tokens. The lab confirms this with the sliders set to (0, 1, 2): the amortized cost never goes above 1.
+
+**Proof.** Consider one insert that splits s nodes and then adds the key to a leaf. All banks are ≥ 0 and the empty tree has bank 0.
+- A split takes a full node (bank 2) and turns it into two nodes of 1 key each (bank 0 each): the bank changes by −2.
+- The median moves up into the parent, which goes from 1 to 2 keys (+1) or from 2 to 3 keys (+1). The parent was not full, or we would have split it first. If the split node was the root, the new root has 1 key and its bank is 0 (change 0 ≤ +1).
+- Each of the s splits changes the bank by at most −2 + 1 = −1, and the final leaf gets one more key, which raises the bank by at most 1 (a leaf is never full before the insert, since we split full nodes on the way down).
+- So the change in the bank is at most −s + 1, and the amortized cost is s + (−s + 1) ≤ 1.
+
+Since banks start at 0 and never go negative, the total number of splits is at most the number of inserts, so the amortized number of splits per insert is O(1).
+
+Figure: the split figure with the sliders at 0, 1, 2.
+
+</Recall>
+
+<Recall q="HW3.2(a): prove C_MTF ≤ 2·C_init for move-to-front, starting from the initial list.">
+
+**Potential:** Φ = the number of pairs (x, y) that are in a different order in the current MTF list than in the initial list (inversions). Φ starts at 0 and is never negative.
+
+Look up x, which is at position i in the current list. Let A = the number of items before x in both the current list and the initial list, and B = the number of items before x in the current list but after x in the initial list. Then i = 1 + A + B.
+
+- The cost in the initial list is at least A + 1, because the A items are before x there too: c_init(x) ≥ A + 1.
+- Moving x to the front flips its order against the i − 1 items that were before it. For the A items, order was the same as the initial list and is now different: +1 inversion each. For the B items, order was different and is now the same: −1 each. So ΔΦ = A − B.
+- Amortized cost = i + ΔΦ = 1 + A + B + A − B = 1 + 2A ≤ 2(A + 1) − 1 &lt; 2·c_init(x).
+
+Summing over all lookups: C_MTF = Σ amortized − Φ_end + Φ_0 ≤ Σ amortized ≤ 2 C_init.
+
+Figure: move-to-front with "compare with the starting list": the last column of the totals row checks the bound.
+
+</Recall>
+
+<Recall q="HW3.2(b): prove C_MTF ≤ 2·C_static + n².">
+
+Let S be the best fixed list (sorted by number of lookups), and define Φ as the number of inversions between the current MTF list and S. The argument in (a) works with S in place of the initial list: for each lookup, the amortized cost is 1 + 2A ≤ 2·c_S(x) − 1 &lt; 2·c_S(x), where c_S(x) is the cost of x in S.
+
+The only change is the starting potential. MTF starts from the initial list, not from S, so Φ_0 is the number of inversions between the two lists, which is at most n(n − 1)/2 ≤ n². Then
+
+C_MTF = Σ amortized + Φ_0 − Φ_end ≤ 2 C_static + n(n − 1)/2 ≤ 2 C_static + n².
+
+Figure: move-to-front with "best fixed list": the Φ₀ row shows the starting potential.
+
+</Recall>
+
+<Recall q="HW3.3 (k-th smallest of every growing prefix): for each i, b_i is the k-th smallest of a_1 … a_(k+i−1). Give an O(n log k) algorithm and prove it.">
+
+**Algorithm.** Keep a **max-heap H of size exactly k** that will hold the k smallest elements seen so far.
+1. Put a_1 … a_k in H (build-heap, O(k)). Output b_1 = the root of H (the largest of these k, i.e. the k-th smallest of the first k).
+2. For j = k + 1 to n: if a_j &lt; root(H), replace the root by a_j and sink it (O(log k)); otherwise do nothing. Output b_(j−k+1) = root(H).
+
+**Invariant:** after reading a_1 … a_j (j ≥ k), H contains exactly the k smallest elements of a_1 … a_j, so its root, the largest of them, is the k-th smallest of a_1 … a_j.
+
+**Proof.** True for j = k. Suppose true for j and read x = a_(j+1). If x &gt; root: at least k elements (the ones in H) are smaller than x, so x is not among the k smallest and H is unchanged and still correct. If x &lt; root: then the old root now has k smaller elements (the other k − 1 in H, plus x), so it drops out of the k smallest, and the new k smallest are H minus its root plus x, which is exactly what the replace-and-sink produces. In both cases the invariant holds for j + 1, so each output is correct.
+
+**Time.** O(k) to build, then n − k steps each with one comparison and at most one sink of O(log k) (the heap has k elements): O(k + (n − k) log k) = O(n log k).
+
+Figure: the binary heap lab. The useful heap size is k, not the prefix length, because only the k smallest can ever matter for the k-th smallest.
+
+</Recall>
+
+**Recitation 1 warm-up** (selection from two sorted arrays): to find the kth smallest of two sorted arrays A and B of n elements each in O(log n) time, compare A[k/2] with B[k/2]. If A[k/2] ≤ B[k/2], the first k/2 elements of A are all smaller than the answer and can be discarded, and everything after B[k − k/2] can be discarded too. Recurse with k − k/2. The rank halves each time: T(k) = T(k/2) + O(1) = O(log k).
 
 ---
 
 ## the short version
 
 ```
+selection        input: A, k → output: kth smallest value
 quickselect      pivot in the middle → n,   min/max pivot → n²
 median of medians  groups of 5, 7n/10 + n/5 = 9n/10 < n → Θ(n)
 lower bounds     answers ≤ outcomes^depth → depth ≥ log(answers)
@@ -253,14 +2207,34 @@ amortized        cost + ΔΦ, Φ ≥ 0, Φ₀ = 0, one Φ for all operations
   doubling array 3n · counter 2n (Φ = #1s) · 2-3-4 splits ≤ n
 heaps            binary: extract-min O(1) am. (Φ = Σ depth)
                  binomial: insert O(1) am. (Φ = #trees), n in binary = trees
-union-find       by rank + compression: O(m α(n))
-hashing          universal: Pr[collide] ≤ 1/m · perfect: c² slots, O(n) total
+union-find       lists: O(m + n log n) · by rank + compression: O(m log* n)
+hashing          universal: Pr[collide] ≤ 1/M → N/M per lookup
+                 perfect: N² space, or two levels with n_i² slots, Σ ≤ 4N
+multiplication   Karatsuba 3T(n/2)+cn → n^1.585 · Strassen 7T(n/2)+cn² → n^2.807
+master theorem   a vs b^k: smaller → n^k, equal → n^k log n, bigger → n^(log_b a)
 ```
 
 <O>What is the answer set, and how fast can each step shrink it?</O>
 
+## the blank-page checklist
+
+For each line, write it from memory. If you get stuck, go to the lecture named on the left.
+
+- **1:** Karatsuba's split, the 3 products, the recurrence. Strassen: 7 products and the recurrence.
+- **2:** The definitions of O, Ω, Θ, o, ω. Unrolling, guess and check, the recursion tree. The master theorem's 3 cases and why.
+- **3:** Weak and strong induction. The smallest counterexample. The 3 parts of a loop invariant. The contrapositive.
+- **4:** Selection's input and output. Quickselect's three cases and the new k. BFPRT's 5 steps. The 3n/10 lemma. The recurrence and why 5.
+- **5:** Comparison model. Decision tree. log(n!). Counting sort's steps and stability. Radix sort's induction. The cost with base n.
+- **6:** Dictionary operations. B-tree's 3 properties, insert with splits, the cost O(log n). Red-black properties and the 2-3-4 correspondence.
+- **7:** Amortized cost. Bank ⇒ total cost ≤ total charge. The counter's Φ. The doubling array. One Φ for all operations.
+- **8:** Priority queue operations. Swim and sink. Build-heap in O(n). Φ = Σ depth. B<sub>k</sub> properties. Binomial insert is 2 amortized, meld is binary addition.
+- **9:** Make-Set, Union, Find. Lists and the doubling argument. Rank properties, path compression, O(m log\* n).
+- **10:** The pigeonhole theorem. Universal: the definition and the N/M bound. The matrix method and its proof. Perfect hashing in N² space, then two levels and Σ n<sub>i</sub>² ≤ 4N.
+
 ## drill
+
+Ten new multiple-choice questions every round, generated from the same code as the figures. Tap an answer to see whether it is right and why. Do a round, then go back to the lecture for any topic you missed.
 
 <ExamDrill />
 
-<Sticky front="what is not here yet" tone="blue">Lectures 11 to 25 (dynamic programming, graphs, flows, LP, NP) haven't been taught, and lectures 9 and 10 have no posted notes yet, so those two follow CLRS 19 and 11.</Sticky>
+<Sticky front="what is not here yet" tone="blue">Lectures 11 to 25 (dynamic programming, graphs, flows, LP, NP) haven't been taught. Lecture 3 has only slides, so that section follows the slides.</Sticky>

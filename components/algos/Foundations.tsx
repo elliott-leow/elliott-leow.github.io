@@ -25,7 +25,7 @@ export function KaratsubaDemo() {
   )
   return (
     <Fig
-      n={26}
+      n={1}
       title="Karatsuba: 3 half-size multiplications, not 4"
       hint="split each number in half. the middle term comes free from one extra product"
       controls={
@@ -102,7 +102,7 @@ export function StrassenDemo() {
   const ks = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
   return (
     <Fig
-      n={27}
+      n={2}
       title="Strassen: 7 block products, not 8"
       hint="X = [A B; C D], Y = [E F; G H]. edit the entries"
       controls={
@@ -176,7 +176,7 @@ export function RecursionTree() {
   const verdictText = m.kase === 'top' ? 'top level dominates' : m.kase === 'even' ? 'every level costs the same' : 'the leaves dominate'
   return (
     <Fig
-      n={28}
+      n={4}
       title="recursion tree: T(n) = a·T(n/b) + n^k"
       hint="each bar is the total work at one level. the master theorem is just which end is biggest"
       controls={
@@ -245,7 +245,7 @@ export function RecurrenceCheck() {
   const flat = r.integer ? spread < 0.7 : Math.abs(slope) < 0.045
   return (
     <Fig
-      n={29}
+      n={5}
       title="guess a Θ, then check the ratio T(n) / guess"
       hint="a right guess makes the ratio flat. too small a guess: it climbs. too big: it falls"
       controls={
@@ -316,7 +316,7 @@ export function BigOLab() {
   )
   return (
     <Fig
-      n={30}
+      n={3}
       title="f = O(g)? watch f/g, and try to find the witness (c, n₀)"
       hint="flat = Θ · falling = o · rising = ω. n is an integer here"
       controls={
@@ -378,7 +378,7 @@ export function InvariantDemo() {
   })
   return (
     <Fig
-      n={31}
+      n={6}
       title="proof by loop invariant: insertion sort"
       hint="at the start of iteration i, A[1..i−1] is sorted and has the original first i−1 elements"
       controls={

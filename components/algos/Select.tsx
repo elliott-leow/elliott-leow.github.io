@@ -41,7 +41,7 @@ export function QuickselectLab() {
   const reset = () => setShown(1)
   return (
     <Fig
-      n={1}
+      n={7}
       title="quickselect: find the kth smallest"
       hint="pick a pivot rule, then step through the rounds"
       controls={
@@ -82,11 +82,14 @@ export function QuickselectLab() {
         )
       }
     >
+      <p className="algo-say" style={{ margin: '0 0 4px' }}>
+        input: A = [{A.join(', ')}] and k = <b>{k}</b> · output: <b>{vis >= rows.length ? res.value : '?'}</b> (the value with exactly {k - 1} smaller elements in A)
+      </p>
       <svg viewBox={`0 0 560 ${H}`} className="orb-svg" role="img" aria-label="quickselect rounds">
         {rows.slice(0, vis).map((rd, i) => {
           const y = 6 + i * rh
           const x0 = 8
-          const dir = rd.size === 1 ? 'found' : rd.L.length === rd.k - 1 ? 'found' : rd.L.length > rd.k - 1 ? 'go left' : 'go right'
+          const dir = rd.size === 1 ? 'found' : rd.L.length === rd.k - 1 ? 'found' : rd.L.length > rd.k - 1 ? 'keep L' : 'keep G'
           return (
             <g key={i}>
               <Cells
@@ -97,13 +100,16 @@ export function QuickselectLab() {
                 size={cw >= 20 ? 11 : 8.5}
                 items={rd.arr.map((v) => ({ label: cw >= 14 ? v : '', tone: v === rd.pivot ? 'yellow' : v < rd.pivot ? 'blue' : 'red', bold: v === rd.pivot, title: String(v) }))}
               />
-              <T x={x0 + n * cw + 8} y={y + 14} anchor="start" size={12} ink={dir === 'found' ? 'green' : 'pencil'}>
-                {rd.size === 1 ? `only ${rd.pivot} left` : `p=${rd.pivot}  ${rd.L.length}|${rd.G.length}  ${dir}`}
+              <T x={x0 + n * cw + 8} y={y + 14} anchor="start" size={n > 24 ? 10.5 : 12} ink={dir === 'found' ? 'green' : 'pencil'}>
+                {rd.size === 1 ? `only ${rd.pivot} left = #${rd.k}` : `p=${rd.pivot}  want #${rd.k}  ${rd.L.length}|${rd.G.length}  ${dir === 'found' ? '✓ p is #' + rd.k : dir}`}
               </T>
             </g>
           )
         })}
       </svg>
+      <p className="algo-say" style={{ margin: '4px 0 0' }}>
+        reading a row: <b>p</b> = pivot (yellow) · <b>want #r</b> = the rank we still need inside this row · <b>|L|·|G|</b> = how many are smaller | larger · <b>keep L / keep G</b> = the side that holds rank r; the other side is thrown away, and if we keep G the rank drops by |L|+1
+      </p>
       <div className="algo-scroll">
         <table className="algo-table" aria-label="comparisons by pivot rule">
           <thead>
@@ -157,7 +163,7 @@ export function MedianOfMedians() {
   const side = top.L.length === kk - 1 ? 'the pivot is the answer' : top.L.length > kk - 1 ? `recurse on L (${top.L.length} left)` : `recurse on G (${top.G.length} left)`
   return (
     <Fig
-      n={2}
+      n={8}
       title="median of medians"
       hint="columns are the groups. each is sorted, then lined up by its median"
       controls={
@@ -245,7 +251,7 @@ export function WhyFive() {
   const bars = Array.from({ length: 10 }, (_, i) => Math.pow(s, i))
   return (
     <Fig
-      n={3}
+      n={9}
       title="why groups of 5, not 3"
       hint="T(n) ≤ T(worst side) + T(n/g) + cn"
       controls={<Seg label="group size" value={String(g) as '3' | '5' | '7' | '9'} onChange={(v) => setG(+v)} options={[3, 5, 7, 9].map((x) => ({ k: String(x) as '3', label: `g = ${x}` }))} />}
@@ -317,7 +323,7 @@ export function MedianQuicksort() {
   const final = blocks[blocks.length - 1]
   return (
     <Fig
-      n={4}
+      n={10}
       title="median quicksort, stopped after d levels"
       hint="every level costs O(n) with median-of-medians"
       controls={

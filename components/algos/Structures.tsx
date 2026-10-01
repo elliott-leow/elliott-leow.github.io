@@ -4,7 +4,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Box, Btn, Cells, Chart, Fig, Line, Seg, Slider, T, r1, type Tone } from './kit'
 import { components, depth, find, height, makeDSU, union, type DSU, type Opts } from '@/lib/algos/dsu'
-import { buildFKS, collisionFree, collisionProbability, collisions, fksLookup, hab, loads } from '@/lib/algos/hashing'
+import { buildFKS, collisionFree, collisionProbability, collisions, fksLookup, hab, loads, matHash } from '@/lib/algos/hashing'
 import { rng, ri } from '@/lib/algos/rng'
 
 /* ================================================================== union-find */
@@ -133,7 +133,7 @@ export function UnionFindLab() {
   }, [])
   return (
     <Fig
-      n={22}
+      n={28}
       title="union-find"
       hint="click two elements, then union. click one, then find. an arrow is 'my parent is…'"
       controls={
@@ -180,7 +180,7 @@ export function UnionFindLab() {
         </table>
       </div>
       <p className="algo-say" style={{ margin: '4px 0 0' }}>
-        rank r ⇒ at least 2^r elements, so height ≤ log n. with compression too, m operations cost O(m α(n)): α ≤ 4 for any n you will ever meet.
+        rank r ⇒ at least 2^r elements, so height ≤ log n. with compression too, m operations cost O(m log* n) (lecture 9's proof; the book gets O(m α), even smaller). log* n ≤ 5 for any n you will ever meet.
       </p>
     </Fig>
   )
@@ -236,7 +236,7 @@ export function UniversalHash() {
   }
   return (
     <Fig
-      n={23}
+      n={29}
       title="universal hashing: h(x) = ((a·x + b) mod p) mod m"
       hint="keys chosen against the fixed hash x mod m vs a random draw of (a, b)"
       controls={
@@ -287,7 +287,7 @@ export function CollisionProb() {
   const cw = 30
   return (
     <Fig
-      n={24}
+      n={31}
       title="exactly how often do two keys collide?"
       hint="every function in a family, p = 11. green: ≤ 1/m. red: worse. click a pair"
       controls={
@@ -319,6 +319,107 @@ export function CollisionProb() {
   )
 }
 
+/* ================================================================== the matrix method */
+
+const LECTURE_H = [0b101, 0b011, 0b011, 0b010]
+export function MatrixHash() {
+  const U = 4
+  const B = 3
+  const M = 2 ** B
+  const [cols, setCols] = useState(LECTURE_H)
+  const [x, setX] = useState([1, 0, 1, 0])
+  const [y, setY] = useState([0, 1, 1, 0])
+  const [seed, setSeed] = useState(1)
+  const hx = matHash(cols, x)
+  const hy = matHash(cols, y)
+  const di = x.findIndex((v, i) => v !== y[i])
+  const same = di < 0
+  // the key with a 1 in the column where they differ is the only one that column can move
+  const moverIsY = !same && y[di] === 1
+  const mover = moverIsY ? y : x
+  const rest = same ? 0 : matHash(cols.map((c, i) => (i === di ? 0 : c)), mover)
+  const still = moverIsY ? hx : hy
+  const sample = useMemo(() => {
+    const r = rng(seed * 7919 + 13)
+    let hit = 0
+    for (let t = 0; t < 400; t++) {
+      const c = Array.from({ length: U }, () => ri(r, 0, M - 1))
+      if (matHash(c, x) === matHash(c, y)) hit++
+    }
+    return hit
+  }, [x, y, seed, M])
+  const flip = (a: number[], i: number) => a.map((v, j) => (j === i ? 1 - v : v))
+  const bit = (v: number, r: number) => (v >> (B - 1 - r)) & 1
+  const bin = (v: number) => v.toString(2).padStart(B, '0')
+  const X0 = 150
+  const CW = 40
+  const tone = (c: number): Tone => (x[c] && y[c] ? 'yellow' : x[c] ? 'blue' : y[c] ? 'red' : 'none')
+  const vec = (v: number, x0: number, t: Tone, name: string) => (
+    <g>
+      <T x={x0 + 17} y={48} size={14} ink={t === 'blue' ? 'blue' : 'red'}>
+        {name}
+      </T>
+      {[0, 1, 2].map((r) => (
+        <Box key={r} x={x0} y={56 + r * 30} w={34} h={26} tone={t} label={bit(v, r)} />
+      ))}
+      <T x={x0 + 17} y={162} size={12} ink="pencil">
+        {`slot ${v}`}
+      </T>
+    </g>
+  )
+  return (
+    <Fig
+      n={30}
+      title="the matrix method: h(x) = h·x mod 2"
+      hint="click any bit of x, y or the matrix. a key adds up (XOR) the columns where it has a 1"
+      controls={
+        <>
+          <Btn onClick={() => { const r = rng(seed * 104729 + 7); setCols(Array.from({ length: U }, () => ri(r, 0, M - 1))); setSeed((v) => v + 1) }}>draw a random matrix</Btn>
+          <Btn onClick={() => { setCols(LECTURE_H); setX([1, 0, 1, 0]); setY([0, 1, 1, 0]) }}>the lecture&apos;s example</Btn>
+        </>
+      }
+      caption={
+        same ? (
+          <>x and y are the same key, so of course they land together. click a bit to make them differ.</>
+        ) : (
+          <>
+            x and y differ in bit {di + 1}, and {moverIsY ? 'y' : 'x'} has the 1 there. column {di + 1} never moves h({moverIsY ? 'x' : 'y'}) = slot {still}, but each of its {M} settings gives a different h({moverIsY ? 'y' : 'x'}): exactly 1 of {M} collides, so Pr = 1/{M} = 1/M. this matrix: {hx === hy ? <b className="algo-no">collision</b> : <b className="algo-ok">no collision</b>}. in 400 random matrices they collided <b>{sample}</b> times (1/{M} of 400 is {400 / M}).
+          </>
+        )
+      }
+    >
+      <svg viewBox="0 0 560 250" className="orb-svg" role="img" aria-label="a 3 by 4 binary matrix hashing two 4-bit keys into 8 slots">
+        <T x={X0 - 10} y={30} size={14} ink="blue" anchor="end">
+          key x
+        </T>
+        <Cells x={X0} y={10} cw={34} ch={26} gap={CW - 34} items={x.map((v, i) => ({ label: v, tone: (v ? 'blue' : 'none') as Tone, onClick: () => setX(flip(x, i)), title: `bit ${i + 1} of x` }))} />
+        <T x={X0 - 10} y={104} size={14} ink="pencil" anchor="end">
+          matrix h
+        </T>
+        {[0, 1, 2].map((r) => (
+          <Cells key={r} x={X0} y={56 + r * 30} cw={34} ch={26} gap={CW - 34} items={cols.map((c, i) => ({ label: bit(c, r), tone: tone(i), ring: i === di, onClick: () => setCols(cols.map((v, j) => (j === i ? v ^ (1 << (B - 1 - r)) : v))), title: `row ${r + 1}, column ${i + 1}` }))} />
+        ))}
+        <T x={X0 - 10} y={176} size={14} ink="red" anchor="end">
+          key y
+        </T>
+        <Cells x={X0} y={156} cw={34} ch={26} gap={CW - 34} items={y.map((v, i) => ({ label: v, tone: (v ? 'red' : 'none') as Tone, onClick: () => setY(flip(y, i)), title: `bit ${i + 1} of y` }))} />
+        {vec(hx, 370, 'blue', 'h(x)')}
+        {vec(hy, 450, 'red', 'h(y)')}
+        {!same && (
+          <g>
+            <T x={X0 - 10} y={222} size={12} ink="pencil" anchor="end">
+              {`column ${di + 1} set to…`}
+            </T>
+            {Array.from({ length: M }, (_, j) => (
+              <Box key={j} x={X0 + j * 44} y={200} w={40} h={34} size={12} tone={(rest ^ j) === still ? 'green' : 'none'} ring={cols[di] === j} label={`slot ${rest ^ j}`} sub={bin(j)} onClick={() => setCols(cols.map((v, i) => (i === di ? j : v)))} title={`set column ${di + 1} to ${bin(j)}`} />
+            ))}
+          </g>
+        )}
+      </svg>
+    </Fig>
+  )
+}
+
 /* ================================================================== perfect hashing */
 
 export function PerfectHash() {
@@ -340,7 +441,7 @@ export function PerfectHash() {
   const H = rows.length * 34 + 20
   return (
     <Fig
-      n={25}
+      n={32}
       title="perfect hashing: no collisions, O(n) space, 2 probes"
       hint="hash into n buckets; a bucket with c keys gets its own table of size c², re-drawn until collision-free"
       controls={

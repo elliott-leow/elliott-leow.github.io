@@ -29,7 +29,7 @@ export function ExamDrill() {
     setScore(0)
   }
   return (
-    <Fig n={32} title="exam drill" hint="ten new questions every round, computed from the same code as the figures" controls={done ? <Btn onClick={again}>ten new questions</Btn> : picked !== null ? <Btn onClick={next}>{i === qs.length - 1 ? 'see score' : 'next question'}</Btn> : undefined}>
+    <Fig n={33} title="exam drill" hint="ten new questions every round, computed from the same code as the figures" controls={done ? <Btn onClick={again}>ten new questions</Btn> : picked !== null ? <Btn onClick={next}>{i === qs.length - 1 ? 'see score' : 'next question'}</Btn> : undefined}>
       <div className="orb-quiz">
         {done ? (
           <>

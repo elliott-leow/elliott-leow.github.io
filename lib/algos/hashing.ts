@@ -46,6 +46,21 @@ export const collisions = (keys: number[], h: (x: number) => number) => {
   return c
 }
 
+/* ------------------------------------------------------------ the lecture's matrix method */
+/** h is a b×u 0/1 matrix stored by column: cols[i] is column i read top to bottom as a b-bit number. h(x) = h·x mod 2 = the XOR of the columns where x has a 1 */
+export const matHash = (cols: number[], bits: number[]) => cols.reduce((acc, c, i) => (bits[i] ? acc ^ c : acc), 0)
+/** exact: over every b×u matrix, how often do x and y collide? */
+export function matCollisionProbability(x: number[], y: number[], b: number) {
+  const u = x.length
+  const total = 2 ** (b * u)
+  let hit = 0
+  for (let code = 0; code < total; code++) {
+    const cols = Array.from({ length: u }, (_, i) => Math.floor(code / 2 ** (b * i)) % 2 ** b)
+    if (matHash(cols, x) === matHash(cols, y)) hit++
+  }
+  return { hit, total, prob: hit / total }
+}
+
 /* ------------------------------------------------------------ FKS perfect hashing */
 export type FKS = {
   p: number

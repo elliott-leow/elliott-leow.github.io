@@ -98,7 +98,7 @@ const allNotes: NoteMeta[] = [
     unlisted: true,
     date: '09.28.26',
     title: 'intro algorithms: everything to play with',
-    preview: 'selection to hashing, every idea as a demo',
+    preview: 'lectures 1 to 10, every idea as something to press',
     style: 'typed',
   },
   {

@@ -119,7 +119,7 @@ export function BstDegenerate() {
   const distinct = new Set(keys).size
   return (
     <Fig
-      n={11}
+      n={17}
       title="binary search tree: insert order is everything"
       hint="type keys, or use a preset"
       controls={
@@ -177,7 +177,7 @@ export function BTreeLab() {
   const total = root ? btNodes(root).reduce((s, n) => s + n.keys.length, 0) : 0
   return (
     <Fig
-      n={12}
+      n={18}
       title={t === 2 ? '2-3-4 tree (B-tree, t = 2)' : `B-tree, t = ${t}`}
       hint="full nodes split on the way down. yellow = what just moved"
       controls={
@@ -264,7 +264,7 @@ export function SplitBank() {
   const good = maxA <= 1
   return (
     <Fig
-      n={17}
+      n={23}
       title="splits in a 2-3-4 tree: worst case vs amortized"
       hint="set the bank each node holds, by how many keys it has"
       controls={
@@ -348,7 +348,7 @@ export function RedBlackLab() {
   const b = useMemo(() => to234(cur), [cur])
   return (
     <Fig
-      n={13}
+      n={19}
       title="red-black trees are 2-3-4 trees in disguise"
       hint="insert, step through the fix-up, flip to the 2-3-4 view, or rotate a node yourself"
       controls={

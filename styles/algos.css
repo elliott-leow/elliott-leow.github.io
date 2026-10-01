@@ -62,3 +62,315 @@
 .algo-no {
   color: var(--red-pen);
 }
+
+/* problem statements and recall questions in the note */
+.algo-spec {
+  margin: 14px 0 18px;
+  padding: 8px 14px 10px;
+  border: 1.4px solid var(--ink);
+  border-radius: 3px 8px 4px 7px;
+  background: rgba(238, 213, 111, 0.16);
+}
+.algo-spec-name {
+  font-size: 20px;
+  color: var(--blue-pen);
+}
+.algo-spec dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 14px;
+  margin: 4px 0 0;
+}
+.algo-spec dt {
+  font-family: var(--hand);
+  color: var(--pencil);
+}
+.algo-spec dd {
+  margin: 0;
+}
+.algo-recall {
+  margin: 10px 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--blue-pen);
+  background: rgba(44, 70, 116, 0.06);
+}
+.algo-recall summary {
+  cursor: pointer;
+}
+.algo-recall summary .hand {
+  color: var(--blue-pen);
+  margin-right: 6px;
+}
+.algo-recall summary:focus-visible {
+  outline: 2px solid var(--blue-pen);
+  outline-offset: 2px;
+}
+.algo-recall-a {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(102, 98, 92, 0.5);
+}
+
+.algo-recall-grade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 4px;
+  color: var(--pencil);
+}
+
+/* the strip of lectures at the top */
+.algo-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0 -10px 32px;
+  padding: 6px 10px;
+  background: var(--orb-paper);
+  box-shadow: var(--shadow-rest);
+  line-height: 1.3;
+  text-shadow: none;
+}
+.algo-nav-count {
+  color: var(--red-pen);
+  font-size: 17px;
+  margin-right: 4px;
+}
+.algo-nav-chip {
+  font-size: 15px;
+  padding: 2px 8px;
+  color: var(--ink);
+  background: none;
+  border: 1.3px solid var(--ink);
+  border-radius: 3px 8px 4px 7px;
+  cursor: pointer;
+}
+.algo-nav-chip:hover {
+  background: rgba(238, 213, 111, 0.4);
+}
+.algo-nav-chip.is-done {
+  background: var(--highlight-green);
+}
+.algo-nav-chip:focus-visible,
+.algo-lec summary:focus-visible,
+.algo-fold summary:focus-visible {
+  outline: 2px solid var(--blue-pen);
+  outline-offset: 2px;
+}
+
+/* one lecture, folded until you open it */
+.algo-lec {
+  margin: 0 0 32px;
+  scroll-margin-top: 56px;
+  border-top: 1.4px solid var(--ink);
+}
+.algo-lec > details > summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 12px;
+  padding: 10px 0 6px;
+  cursor: pointer;
+  list-style: none;
+}
+.algo-lec > details > summary::-webkit-details-marker {
+  display: none;
+}
+.algo-lec .note-h2 {
+  grid-column: 1 / -1;
+}
+.algo-lec-tldr {
+  line-height: 1.5;
+  color: var(--pencil);
+}
+.algo-lec-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--blue-pen);
+  white-space: nowrap;
+}
+.algo-lec.is-done .algo-lec-meta {
+  color: var(--orb-hyb);
+}
+.algo-lec-toggle {
+  color: var(--red-pen);
+  text-decoration: underline;
+}
+.algo-lec-body {
+  padding-top: 20px;
+}
+.algo-lec-end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0 0 32px;
+}
+
+/* one-tap questions */
+.algo-check {
+  margin: 0 0 32px;
+  padding: 8px 14px 10px;
+  border: 1.4px dashed var(--blue-pen);
+  border-radius: 4px 9px 5px 8px;
+  background: rgba(44, 70, 116, 0.05);
+  line-height: 1.5;
+  text-shadow: none;
+}
+.algo-check.is-solved {
+  border-style: solid;
+  border-color: var(--orb-hyb);
+  background: rgba(79, 122, 63, 0.07);
+}
+.algo-check-tag {
+  font-size: 16px;
+  color: var(--blue-pen);
+}
+.algo-check-q {
+  margin: 2px 0 8px;
+}
+.algo-check-why {
+  min-height: 24px;
+  margin-top: 6px;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--blue-pen);
+}
+
+/* proofs, one step per click */
+.algo-steps {
+  margin: 0 0 32px;
+  padding: 6px 14px 10px;
+  border-left: 3px solid var(--red-pen);
+  background: rgba(192, 67, 45, 0.04);
+}
+.algo-steps-title {
+  font-size: 19px;
+  color: var(--red-pen);
+}
+.note-body .algo-steps ol {
+  margin: 0;
+}
+.note-body .algo-steps li p {
+  margin: 0 0 8px;
+}
+.algo-steps li.is-new {
+  animation: algo-step-in 0.25s ease-out;
+}
+@keyframes algo-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .algo-steps li.is-new {
+    animation: none;
+  }
+}
+.algo-steps-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 4px;
+}
+.algo-steps-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.algo-steps-dots i {
+  width: 8px;
+  height: 8px;
+  border: 1.2px solid var(--ink);
+  border-radius: 50%;
+}
+.algo-steps-dots i.is-on {
+  background: var(--red-pen);
+  border-color: var(--red-pen);
+}
+
+/* reference lists that stay folded */
+.algo-fold {
+  margin: 0 0 32px;
+  padding: 4px 12px;
+  border: 1.2px solid rgba(102, 98, 92, 0.6);
+  border-radius: 3px 8px 4px 7px;
+}
+.algo-fold summary {
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--pencil);
+}
+.algo-fold-body {
+  margin-top: 6px;
+}
+.note-body .algo-fold-body > :last-child {
+  margin-bottom: 8px;
+}
+
+/* in front of every figure: what it is and what to press */
+.algo-guide {
+  margin: 0 0 20px;
+  padding: 8px 14px 4px;
+  border: 1.4px solid var(--orb-hyb);
+  border-radius: 4px 9px 5px 8px;
+  background: rgba(79, 122, 63, 0.07);
+  line-height: 1.5;
+  text-shadow: none;
+}
+.algo-guide-head {
+  font-size: 19px;
+  color: var(--orb-hyb);
+}
+.note-body .algo-guide p,
+.note-body .algo-guide ol {
+  margin: 4px 0 8px;
+}
+.algo-guide-do > .hand {
+  color: var(--pencil);
+  font-size: 16px;
+}
+.algo-guide-do li {
+  cursor: pointer;
+}
+.algo-guide-do li.is-ticked {
+  color: var(--pencil);
+  text-decoration: line-through;
+  text-decoration-color: var(--orb-hyb);
+}
+.algo-guide-do li.is-ticked::before {
+  content: '✓' !important;
+  color: var(--orb-hyb) !important;
+}
+/* say what a folded thing does before it is opened */
+.algo-recall:not([open]) > summary::after {
+  content: '  (say it first, then tap to check)';
+  font-family: var(--hand);
+  color: var(--pencil);
+}
+.algo-fold:not([open]) > summary::after {
+  content: '  (tap to open)';
+}
+@media (max-width: 560px) {
+  .algo-nav-name {
+    display: none;
+  }
+}
+/* a dash list inside a numbered step keeps its dashes */
+.note-body ol ul > li {
+  counter-increment: none;
+}
+.note-body ol ul > li::before {
+  content: '–';
+  left: 4px;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}

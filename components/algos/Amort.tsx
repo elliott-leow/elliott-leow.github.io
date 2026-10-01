@@ -23,7 +23,7 @@ export function ArrayGrowth() {
   const xs = costs.map((_, i) => i + 1)
   return (
     <Fig
-      n={14}
+      n={20}
       title="a stack in an array: when it fills up, how big is the new array?"
       hint="a copy costs the current size. pay a flat charge per push into a bank"
       controls={
@@ -84,7 +84,7 @@ export function CounterDemo() {
   const value = parseInt([...bits].reverse().join(''), 2)
   return (
     <Fig
-      n={15}
+      n={21}
       title="binary counter: three ways to see amortized 2"
       hint="pay 2 to turn a 0 into a 1: one for the flip, one saved on the bit for its flip back"
       controls={
@@ -176,7 +176,7 @@ export function LogDictionary() {
   const cw = Math.min(22, Math.floor(440 / Math.max(count, 1)))
   return (
     <Fig
-      n={16}
+      n={22}
       title="a dictionary from sorted arrays of size 1, 2, 4, 8…"
       hint="inserting is adding 1 in binary; a carry is a merge"
       controls={
@@ -241,7 +241,7 @@ export function MoveToFront() {
   const row = rows[rows.length - 1]
   return (
     <Fig
-      n={18}
+      n={24}
       title="move-to-front vs a fixed list"
       hint="potential Φ = number of pairs that are in a different order than in the fixed list"
       controls={

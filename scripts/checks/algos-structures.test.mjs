@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { pushCosts, increment, dictInsert, dictLookup, mtfRun, bestStatic, listCost } from '../../lib/algos/amort.ts'
 import { insert, extractMin, decreaseKey, deleteAt, isHeap, buildBySwim, buildBySink, sinkBound, potential, depthOf, sink, swim, bhInsert, bhExtractMin, bhFindMin, bhDecreaseKey, bhValid, meld, orders, treesIn, sizeH, heapKeys, single, cloneH } from '../../lib/algos/heaps.ts'
 import { makeDSU, find, union, height, components, depth } from '../../lib/algos/dsu.ts'
-import { collisionProbability, collisionFree, buildFKS, fksLookup, hab, loads, collisions } from '../../lib/algos/hashing.ts'
+import { collisionProbability, collisionFree, buildFKS, fksLookup, hab, loads, collisions, matHash, matCollisionProbability } from '../../lib/algos/hashing.ts'
 import { rng, shuffle, ri } from '../../lib/algos/rng.ts'
 
 test('array stack: +1 is quadratic; doubling is <= 3n total; each op amortizes to O(1)', () => {
@@ -262,4 +262,15 @@ test('dropping b from h(a,b) breaks universality (the demo family); the full fam
     if (worst > 1 / m + 1e-12) broke++
   }
   assert.ok(broke >= 4)
+})
+
+test('matrix method (theorem 10.3.5): every pair of distinct keys collides with probability exactly 1/M', () => {
+  const u = 4, b = 2
+  const keys = Array.from({ length: 2 ** u }, (_, v) => Array.from({ length: u }, (_, i) => (v >> i) & 1))
+  for (const x of keys) for (const y of keys) {
+    if (x === y) continue
+    assert.equal(matCollisionProbability(x, y, b).prob, 1 / 2 ** b)
+  }
+  // h(x) is the XOR of the columns picked out by x's 1 bits (the example in the notes: columns 1 and 3)
+  assert.equal(matHash([0b101, 0b011, 0b011, 0b010], [1, 0, 1, 0]), 0b110)
 })
