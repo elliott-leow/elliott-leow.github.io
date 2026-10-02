@@ -22,7 +22,7 @@ export default function Home() {
         <Hand as="h2" className="pg-notes-h" trigger="load">
           <span id="about-h">about me</span>
         </Hand>
-        <p className="mono pg-about-text">i study biomedical engineering and computer science at johns hopkins. im interested in medical devices and ai in healthcare.</p>
+        <p className="mono pg-about-text">i study biomedical engineering and computer science at johns hopkins. im interested in medical devices and ai in healthcare. i also like teaching. i have been a teaching assistant for undergraduate math courses and graduate computer science courses. i've also been a peer-led-team learning leader for organic chemistry.</p>
       </section>
 
       <section className="pg-music" aria-labelledby="music-h">
