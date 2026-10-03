@@ -97,7 +97,7 @@ const allNotes: NoteMeta[] = [
     slug: 'orgo-app',
     unlisted: true,
     date: '10.03.26',
-    title: 'orgo.eleow.com',
+    title: 'Visualizing Introductory Organic Chemistry',
     preview: 'Default Controls, Features, Planned Additions',
     style: 'typed',
   },
