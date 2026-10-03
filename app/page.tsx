@@ -1,5 +1,6 @@
 import { links } from '@/lib/content'
 import Signature from '@/components/Signature'
+import { Underlined } from '@/components/Doodles'
 import { Hand } from '@/components/Paper'
 import { InkLink, Typed } from '@/components/Ink'
 import NoteIndex from '@/components/NoteIndex'
@@ -22,7 +23,7 @@ export default function Home() {
         <Hand as="h2" className="pg-notes-h" trigger="load">
           <span id="about-h">about me</span>
         </Hand>
-        <p className="mono pg-about-text">i study biomedical engineering and computer science at johns hopkins. im interested in medical devices and ai in healthcare. i also like teaching. i have been a teaching assistant for undergraduate math courses and graduate computer science courses. i've also been a peer-led-team learning leader for organic chemistry.</p>
+        <p className="mono pg-about-text">i study biomedical engineering and computer science at johns hopkins. im interested in medical devices and ai in healthcare. i also like (assisting) <Link href="/notes/teaching-experience/" style={{ textDecoration: 'none' }}><Underlined>teaching</Underlined></Link></p>
       </section>
 
       <section className="pg-music" aria-labelledby="music-h">
