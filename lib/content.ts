@@ -94,6 +94,14 @@ export type NoteMeta = {
 /** newest first. each one needs a matching content/notes/<slug>.mdx */
 const allNotes: NoteMeta[] = [
   {
+    slug: 'orgo-app',
+    unlisted: true,
+    date: '10.03.26',
+    title: 'orgo.eleow.com',
+    preview: 'Default Controls, Features, Planned Additions',
+    style: 'typed',
+  },
+  {
     slug: 'teaching-experience',
     unlisted: true,
     date: '10.02.26',
