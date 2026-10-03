@@ -28,8 +28,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const older = notes.slice(i + 1).find((n) => !n.unlisted)
   return (
     <article className="note-page">
-      <Link href="/notes/" className="back-link hand">
-        ← all notes
+      <Link href={slug === 'teaching-experience' ? '/' : '/notes/'} className="back-link hand">
+        {slug === 'teaching-experience' ? '← home' : '← all notes'}
       </Link>
       <header className="note-head">
         <p className="mono note-page-date">{meta.date}</p>
