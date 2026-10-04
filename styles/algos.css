@@ -374,3 +374,92 @@
   font-size: inherit;
   color: inherit;
 }
+
+/* the one-button figures: a stage that scrolls sideways, things that pop in, a short log */
+.algo-stage {
+  padding: 4px 0 8px;
+  scrollbar-width: thin;
+}
+.algo-stage:focus-visible {
+  outline: 2px solid var(--blue-pen);
+  outline-offset: 2px;
+}
+.algo-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: algo-pop 0.4s ease-out;
+}
+@keyframes algo-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+.algo-fade {
+  animation: algo-fade 0.5s ease-out;
+}
+@keyframes algo-fade {
+  from {
+    opacity: 0;
+  }
+}
+.algo-go .orb-btn {
+  font-size: 19px;
+  padding: 7px 16px 8px;
+  border-width: 2px;
+  background: var(--highlight);
+}
+.algo-stepof {
+  display: inline-flex;
+  gap: 4px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.algo-stepof i {
+  width: 9px;
+  height: 9px;
+  border: 1.3px solid var(--blue-pen);
+  border-radius: 50%;
+}
+.algo-stepof i.is-on {
+  background: var(--blue-pen);
+}
+.algo-log {
+  margin: 8px 0 0;
+  padding: 6px 0 0;
+  border-top: 1px dashed rgba(102, 98, 92, 0.35);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--pencil);
+}
+.algo-log div:first-child {
+  color: var(--ink);
+}
+.algo-log div:nth-child(n + 4) {
+  opacity: 0.55;
+}
+.algo-log b {
+  display: inline-block;
+  min-width: 2.6em;
+  font-weight: 400;
+  color: var(--red-pen);
+}
+.algo-run {
+  margin: 0 6px;
+}
+/* three lines are kept free, so the drawing under it does not jump when the text changes */
+.note-body .algo-narr,
+.algo-narr {
+  margin: 8px 6px 6px;
+  min-height: 4.1em;
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--blue-pen);
+}
+@media (prefers-reduced-motion: reduce) {
+  .algo-pop,
+  .algo-fade {
+    animation: none;
+  }
+}

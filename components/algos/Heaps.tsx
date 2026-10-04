@@ -1,10 +1,11 @@
 'use client'
 
 /* lecture 8: binary heaps and binomial heaps */
-import { useMemo, useState, type ReactNode } from 'react'
-import { Box, Btn, Cells, Chart, Fig, Line, Seg, Slider, T, r1 } from './kit'
-import { buildBySink, buildBySwim, decreaseKey, deleteAt, depthOf, extractMin, insert, potential, sinkBound, swim, sink, bhDecreaseKey, bhExtractMin, bhInsert, bhValid, meld, orders, sizeH, treesIn, freshId, type BH, type BT, type MeldStep } from '@/lib/algos/heaps'
-import { rng, shuffle, ri } from '@/lib/algos/rng'
+import { useMemo, useRef, useState } from 'react'
+import { Box, Btn, Chart, Fig, Line, Seg, Slider, T, r1 } from './kit'
+import { Edge, Node, Narr, OpLog, PAINT, Pace, Run, Stage, draw, freshKey, randInt, useFrames, useLog, type Speed } from './Live'
+import { buildBySink, buildBySwim, byOrder, cloneT, decreaseKey, deleteAt, depthOf, extractMin, findPath, heapKeys, insert, linkSteps, potential, sinkBound, sink, sizeT, toHeap, bhInsert, bhValid, type BH, type BT } from '@/lib/algos/heaps'
+import { rng, shuffle } from '@/lib/algos/rng'
 
 /* ------------------------------------------------------------------ heap as a tree */
 function HeapTree({ a, hot = [], picked, onPick }: { a: number[]; hot?: number[]; picked?: number | null; onPick?: (i: number) => void }) {
@@ -35,97 +36,165 @@ function HeapTree({ a, hot = [], picked, onPick }: { a: number[]; hot?: number[]
 
 /* ================================================================== binary heap */
 
-type Frames = { arrs: number[][]; hots: number[][]; label: string; cost: number; dPhi: number }
-const start = [6, 10, 8, 17, 11, 25, 12, 21, 18, 19]
+type Item = { id: number; v: number }
+type HF = { a: Item[]; hot: number[]; say: string }
+type HeapOp = 'insert' | 'extract' | 'decrease' | 'delete'
+const START = [6, 10, 8, 17, 11, 25, 12].map((v, i) => ({ id: i + 1, v }))
+const HEAP_MAX = 63
+const s = (n: number) => (n === 1 ? '' : 's')
+const swapped = (a: Item[], i: number, j: number) => a.map((x, k) => (k === i ? a[j] : k === j ? a[i] : x))
 
 export function BinaryHeapLab() {
-  const [heap, setHeap] = useState<number[]>(start)
-  const [fr, setFr] = useState<Frames | null>(null)
-  const [f, setF] = useState(0)
-  const [picked, setPicked] = useState<number | null>(null)
-  const [val, setVal] = useState(7)
-  const cur = fr ? fr.arrs[Math.min(f, fr.arrs.length - 1)] : heap
-  const hot = fr ? fr.hots[Math.min(f, fr.arrs.length - 1)] : []
-  const run = (label: string, first: number[], swaps: { i: number; j: number }[], final: number[], dPhi: number, extra = 0) => {
-    const arrs = [first]
-    const hots: number[][] = [[]]
-    let a = first.slice()
-    for (const s of swaps) {
-      ;[a[s.i], a[s.j]] = [a[s.j], a[s.i]]
-      arrs.push(a.slice())
-      hots.push([s.i, s.j])
+  const [share, setShare] = useState(70)
+  const [pool, setPool] = useState({ extract: true, decrease: false, delete: false })
+  const [speed, setSpeed] = useState<Speed>('normal')
+  const [fit, setFit] = useState(false)
+  const [last, setLast] = useState<{ cost: number; dPhi: number } | null>(null)
+  const nid = useRef(100)
+  const fr = useFrames<HF>({ a: START, hot: [], say: '' }, speed)
+  const { log, count, add, clear } = useLog()
+  const reset = () => {
+    fr.play([{ a: START, hot: [], say: '' }])
+    clear()
+    setLast(null)
+  }
+  const go = () => {
+    const a0 = fr.end.a
+    const n = a0.length
+    const others = (['extract', 'decrease', 'delete'] as const).filter((k) => pool[k])
+    const op: HeapOp =
+      draw<HeapOp>([
+        { k: 'insert', w: share, ok: n < HEAP_MAX },
+        { k: 'extract', w: (100 - share) / others.length, ok: pool.extract && n > 0 },
+        { k: 'decrease', w: (100 - share) / others.length, ok: pool.decrease && a0.some((x) => x.v > 1) },
+        { k: 'delete', w: (100 - share) / others.length, ok: pool.delete && n > 0 },
+      ]) ?? (n < HEAP_MAX ? 'insert' : 'extract')
+    const frames: HF[] = []
+    let a = a0
+    const show = (say: string, ...hot: Item[]) => frames.push({ a, hot: hot.map((x) => x.id), say })
+    // the swaps come from the tested heap code; here they are replayed one per frame
+    const replay = (swaps: { i: number; j: number }[]) => {
+      for (const { i, j } of swaps) {
+        const [lo, hi] = i < j ? [i, j] : [j, i]
+        const say = i > j ? `${a[i].v} is smaller than its parent ${a[j].v}: swap, one level up.` : `${a[lo].v} is larger than its smaller child ${a[hi].v}: swap, one level down.`
+        a = swapped(a, i, j)
+        show(say, a[i], a[j])
+      }
+      return swaps.length
     }
-    setFr({ arrs, hots, label, cost: 1 + swaps.length + extra, dPhi })
-    setF(arrs.length - 1)
-    setHeap(final)
-    setPicked(null)
+    let text = ''
+    let swaps = 0
+    if (op === 'insert') {
+      const x = { id: nid.current++, v: freshKey(a.map((y) => y.v), 1, 99)! }
+      a = [...a, x]
+      show(`insert ${x.v}: it takes the next open spot at the bottom, position ${n} of the array. now it swims up while it is smaller than its parent.`, x)
+      swaps = replay(insert(a0.map((y) => y.v), x.v).swaps)
+      const at = a.indexOf(x)
+      show(at === 0 ? `${x.v} reached the root: it is the new minimum. ${swaps} swap${s(swaps)}.` : `${x.v} is not smaller than its parent ${a[(at - 1) >> 1].v}, so it stops. ${swaps} swap${s(swaps)}.`, x)
+      text = `insert ${x.v}`
+    } else if (op === 'extract') {
+      const min = a[0]
+      const tail = a[n - 1]
+      show(`extract-min: the minimum is always the root, here ${min.v}.`, min)
+      if (n > 1) {
+        a = swapped(a, 0, n - 1)
+        show(`swap it with the last node, ${tail.v}, so that removing it leaves no hole.`, min, tail)
+      }
+      a = a.slice(0, -1)
+      if (n > 1) show(`${min.v} is gone. ${tail.v} sits at the root and sinks while a child is smaller.`, tail)
+      swaps = replay(extractMin(a0.map((y) => y.v)).swaps)
+      show(n > 1 ? `heap order holds again. ${swaps} swap${s(swaps)}; the new minimum is ${a[0].v}.` : `${min.v} was the only node. the heap is empty.`)
+      text = `extract-min → ${min.v}`
+    } else if (op === 'decrease') {
+      const can = a.map((x, i) => i).filter((i) => a[i].v > 1)
+      const i = can[randInt(0, can.length - 1)]
+      const old = a[i]
+      const x = { id: old.id, v: freshKey(a.map((y) => y.v), 1, old.v - 1) ?? old.v - 1 }
+      a = a.map((y) => (y === old ? x : y))
+      show(`decrease-key: ${old.v} becomes ${x.v}. a smaller key can only be wrong against its parent, so it swims up.`, x)
+      swaps = replay(decreaseKey(a0.map((y) => y.v), i, x.v).swaps)
+      show(`${x.v} is in place. ${swaps} swap${s(swaps)}.`, x)
+      text = `decrease-key ${old.v} → ${x.v}`
+    } else {
+      const i = randInt(0, n - 1)
+      const gone = a[i]
+      const tail = a[n - 1]
+      show(`delete ${gone.v} (position ${i}).`, gone)
+      a = a.slice(0, -1).map((y) => (y === gone ? tail : y))
+      if (i < n - 1) show(`the last node, ${tail.v}, moves into its place. it may be too small for its parent or too big for its children.`, tail)
+      swaps = replay(deleteAt(a0.map((y) => y.v), i).swaps)
+      show(`heap order holds again. ${swaps} swap${s(swaps)}.`)
+      text = `delete ${gone.v}`
+    }
+    const dPhi = potential(a.length) - potential(n)
+    fr.play(frames)
+    setLast({ cost: 1 + swaps, dPhi })
+    add(`${text}: ${swaps} swap${s(swaps)}, ΔΦ ${dPhi > 0 ? '+' : ''}${dPhi}`)
   }
-  const doInsert = () => {
-    const r = insert(heap, val)
-    run(`insert ${val}: put it at the next open spot, then swim up`, [...heap, val], r.swaps, r.heap, potential(r.heap.length) - potential(heap.length))
+  const { a, hot } = fr.frame
+  const n = a.length
+  const levels = n ? depthOf(n - 1) + 1 : 1
+  const W = Math.max(520, 2 ** (levels - 1) * 30 + 40)
+  const pos = (i: number) => {
+    const d = depthOf(i)
+    return { x: 20 + ((i - (2 ** d - 1) + 0.5) / 2 ** d) * (W - 40), y: 22 + d * 48 }
   }
-  const doExtract = () => {
-    if (!heap.length) return
-    const r = extractMin(heap)
-    const first = heap.slice()
-    ;[first[0], first[first.length - 1]] = [first[first.length - 1], first[0]]
-    const pre = first.slice(0, -1)
-    run(`extract-min: swap the root with the last node, delete it, then sink the new root`, pre, r.swaps, r.heap, potential(r.heap.length) - potential(heap.length))
-  }
-  const doDecrease = () => {
-    if (picked === null) return
-    const nv = Math.max(0, heap[picked] - 10)
-    const r = decreaseKey(heap, picked, nv)
-    const first = heap.slice()
-    first[picked] = nv
-    run(`decrease-key: ${heap[picked]} → ${nv}, then swim up`, first, r.swaps, r.heap, 0)
-  }
-  const doDelete = () => {
-    if (picked === null) return
-    const last = heap.length - 1
-    const first = heap.slice()
-    first[picked] = first[last]
-    const pre = first.slice(0, -1)
-    const r = deleteAt(heap, picked)
-    run(`delete ${heap[picked]}: move the last node into its place, then swim up or sink down`, picked === last ? heap.slice(0, -1) : pre, r.swaps, r.heap, potential(r.heap.length) - potential(heap.length))
-  }
-  const phi = potential(cur.length)
+  const focus = a.findIndex((x) => hot.includes(x.id))
+  const PER = 20
   return (
     <Fig
       n={25}
       title="binary heap"
-      hint="click a node to pick it. drag the slider to replay the swaps"
+      hint="one press does one random operation, one swap at a time. yellow = the nodes that step is about"
       controls={
         <>
-          <label className="orb-slider hand">
-            <span className="orb-slider-label">value</span>
-            <input className="algo-num" value={val} onChange={(e) => setVal(Math.min(99, +e.target.value.replace(/[^0-9]/g, '') || 0))} aria-label="value to insert" />
-          </label>
-          <Btn onClick={doInsert} disabled={heap.length >= 31}>insert {val}</Btn>
-          <Btn onClick={doExtract} disabled={!heap.length}>extract-min</Btn>
-          <Btn onClick={doDecrease} disabled={picked === null || heap[picked] === 0}>decrease picked by 10</Btn>
-          <Btn onClick={doDelete} disabled={picked === null}>delete picked</Btn>
-          <Btn onClick={() => { setHeap(start); setFr(null); setPicked(null) }}>reset</Btn>
-          {fr && fr.arrs.length > 1 && <Slider label="replay" value={Math.min(f, fr.arrs.length - 1)} min={0} max={fr.arrs.length - 1} onChange={setF} format={(v) => `${v} / ${fr.arrs.length - 1} swaps`} />}
+          <span className="hand">settings:</span>
+            <Slider label="how often it inserts" value={share} min={10} max={100} step={5} onChange={setShare} format={(v) => `${v}%`} />
+            <span className="hand">the rest is split between:</span>
+            <Btn on={pool.extract} onClick={() => setPool({ ...pool, extract: !pool.extract })}>extract-min</Btn>
+            <Btn on={pool.decrease} onClick={() => setPool({ ...pool, decrease: !pool.decrease })}>decrease-key</Btn>
+            <Btn on={pool.delete} onClick={() => setPool({ ...pool, delete: !pool.delete })}>delete</Btn>
+          <Pace speed={speed} setSpeed={setSpeed} fit={fit} setFit={setFit} />
         </>
       }
-      caption={
-        fr ? (
+    >
+      <Run onGo={go} onReset={reset} count={count} />
+      <Narr step={fr.step} steps={fr.steps}>
+        {fr.frame.say ? (
           <>
-            {fr.label}. {fr.arrs.length - 1} swap{fr.arrs.length === 2 ? '' : 's'}. Φ = Σ depths = {phi}; last op ΔΦ = {fr.dPhi}; amortized ≈ cost + ΔΦ = {fr.cost} + {fr.dPhi} = <b>{fr.cost + fr.dPhi}</b>.
+            {fr.frame.say}
           </>
         ) : (
-          <>heap order: every node ≤ its children, so the minimum is the root. the tree is complete, so its height is ≤ log n.</>
-        )
-      }
-    >
-      <HeapTree a={cur} hot={hot} picked={picked} onPick={(i) => fr && f < fr.arrs.length - 1 ? undefined : setPicked(i)} />
-      <svg viewBox={`0 0 560 40`} className="orb-svg" role="img" aria-label="heap array">
-        <Cells x={4} y={6} cw={Math.min(34, Math.floor(552 / Math.max(cur.length, 1)))} ch={26} size={12} items={cur.map((v, i) => ({ label: v, tone: hot.includes(i) ? 'yellow' : 'none', sub: undefined }))} />
+          <>heap order: every node ≤ its children, so the minimum is the root. the tree is complete, so its height is ≤ log n. press the yellow button.</>
+        )}
+      </Narr>
+      <Stage w={W} h={levels * 48 + 6} focus={focus >= 0 ? pos(focus).x : undefined} fit={fit} speed={speed} label="the heap as a tree">
+        {!n && <T x={W / 2} y={28} size={14}>empty</T>}
+        {a.map((_, i) => (i > 0 ? <Edge key={i} x1={pos(i).x} y1={pos(i).y} x2={pos((i - 1) >> 1).x} y2={pos((i - 1) >> 1).y} /> : null))}
+        {a.map((x, i) => (
+          <Node key={x.id} x={pos(i).x} y={pos(i).y} label={x.v} paint={hot.includes(x.id) ? PAINT.hot : PAINT.plain} />
+        ))}
+      </Stage>
+      <svg viewBox={`0 0 560 ${Math.max(1, Math.ceil(n / PER)) * 44 + 4}`} className="orb-svg" role="img" aria-label="the same heap as the array it is stored in">
+        {a.map((x, i) => (
+          <Box key={i} x={10 + (i % PER) * 27} y={4 + Math.floor(i / PER) * 44} w={27} h={26} size={12} label={x.v} tone={hot.includes(x.id) ? 'yellow' : 'none'} />
+        ))}
+        {a.map((_, i) => (
+          <T key={i} x={23.5 + (i % PER) * 27} y={40 + Math.floor(i / PER) * 44} size={9}>
+            {i}
+          </T>
+        ))}
       </svg>
       <p className="algo-say" style={{ margin: '0' }}>
-        array: children of i are 2i+1 and 2i+2. Φ counts depth, so an insert deepens by d (swims ≤ d) while extract-min removes a depth-d node and sinks ≤ d: <b>extract-min is O(1) amortized</b>.
+        {n} node{s(n)} · the array above is the same heap: the children of position i are 2i+1 and 2i+2 · Φ = Σ depths = {potential(n)}
+        {last && fr.step === fr.steps ? (
+          <>
+            {' '}
+            · last operation: cost {last.cost} + ΔΦ {last.dPhi} = amortized <b>{last.cost + last.dPhi}</b>
+          </>
+        ) : null}
       </p>
+      <OpLog log={log} />
     </Fig>
   )
 }
@@ -203,164 +272,205 @@ export function BuildHeap() {
 
 /* ================================================================== binomial heaps */
 
-type Lay = { t: BT; x: number; y: number; kids: Lay[] }
-const U = 26
-const unitsOf = (t: BT): number => (t.kids.length ? t.kids.reduce((s, k) => s + unitsOf(k), 0) : 1)
-function placeTree(t: BT, x0: number, y: number): Lay {
-  let cx = x0
-  const kids = t.kids
-    .slice()
-    .reverse()
-    .map((k) => {
-      const l = placeTree(k, cx, y + 38)
+const U = 28
+const unitsOf = (t: BT): number => (t.kids.length ? t.kids.reduce((sum, k) => sum + unitsOf(k), 0) : 1)
+type Spot = { id: number; key: number; x: number; y: number; up: number | null; order: number | null }
+/** every node of a row of trees, biggest child leftmost */
+function spreadForest(forest: BT[]) {
+  const spots: Spot[] = []
+  const place = (t: BT, x0: number, y: number, up: number | null): number => {
+    let cx = x0
+    const xs = t.kids.slice().reverse().map((k) => {
+      const x = place(k, cx, y + 40, t.id)
       cx += unitsOf(k) * U
-      return l
+      return x
     })
-  const w = unitsOf(t) * U
-  const x = kids.length ? (kids[0].x + kids[kids.length - 1].x) / 2 : x0 + w / 2
-  return { t, x, y, kids }
-}
-function BinomialSvg({ heap, hot = [], picked, onPick }: { heap: BH; hot?: number[]; picked?: number | null; onPick?: (id: number) => void }) {
-  const ts = heap.map((t, k) => (t ? { t, k } : null)).filter(Boolean) as { t: BT; k: number }[]
-  if (!ts.length) return <svg viewBox="0 0 560 40" className="orb-svg"><T x={280} y={26} size={14}>empty heap</T></svg>
-  let x = 10
-  const placed = ts.map(({ t, k }) => {
-    const l = placeTree(t, x, 30)
-    x += unitsOf(t) * U + 22
-    return { l, k }
-  })
-  const W = Math.max(560, x)
-  const maxK = Math.max(...ts.map((q) => q.k))
-  const H = 44 + maxK * 38 + 20
-  const nodes: ReactNode[] = []
-  const edges: ReactNode[] = []
-  const walk = (l: Lay) => {
-    l.kids.forEach((c) => {
-      edges.push(<Line key={`e${l.t.id}-${c.t.id}`} x1={l.x} y1={l.y} x2={c.x} y2={c.y} tone="pencil" w={1.3} />)
-      walk(c)
-    })
-    nodes.push(
-      <g key={l.t.id} onClick={onPick ? () => onPick(l.t.id) : undefined} style={onPick ? { cursor: 'pointer' } : undefined} role={onPick ? 'button' : undefined} aria-label={`node ${l.t.key}`}>
-        <circle cx={r1(l.x)} cy={r1(l.y)} r={11} fill={hot.includes(l.t.id) ? 'rgba(238,213,111,0.75)' : 'var(--orb-paper)'} stroke={picked === l.t.id ? 'var(--blue-pen)' : 'var(--ink)'} strokeWidth={picked === l.t.id ? 3 : 1.3} />
-        <text x={r1(l.x)} y={r1(l.y + 4)} textAnchor="middle" fontSize={10.5} className="orb-t" fill="var(--ink)">
-          {l.t.key}
-        </text>
-      </g>,
-    )
+    const x = xs.length ? (xs[0] + xs[xs.length - 1]) / 2 : x0 + U / 2
+    spots.push({ id: t.id, key: t.key, x, y, up, order: up === null ? t.kids.length : null })
+    return x
   }
-  placed.forEach(({ l }) => walk(l))
-  return (
-    <div className="algo-scroll">
-    <svg viewBox={`0 0 ${W} ${H}`} className="orb-svg" style={{ minWidth: `${Math.round(W * 0.8)}px` }} role="img" aria-label="binomial heap">
-      {placed.map(({ l, k }) => (
-        <T key={k} x={l.x} y={12} size={13} ink="blue">
-          {`B${k}`}
-        </T>
-      ))}
-      {edges}
-      {nodes}
-    </svg>
-    </div>
-  )
+  let x = 14
+  for (const t of forest) {
+    place(t, x, 34, null)
+    x += unitsOf(t) * U + 26
+  }
+  const w = x - 12
+  const off = Math.max(0, (320 - w) / 2)
+  spots.forEach((p) => (p.x += off))
+  return { spots, w, h: 34 + Math.max(0, ...forest.map((t) => t.kids.length)) * 40 + 22 }
 }
 
-const build = (keys: number[]): BH => keys.reduce<BH>((h, k) => bhInsert(h, k).heap, [])
+type NF = { f: BT[]; hot: number[]; other: number[]; say: string }
+type BinOp = 'insert' | 'extract' | 'meld' | 'decrease'
+const firstN = (): NF => ({ f: byOrder(([31, 12, 45, 7, 22, 18, 50, 3, 27, 9, 36].reduce<BH>((h, k, i) => bhInsert(h, k, i + 1).heap, []).filter(Boolean) as BT[])), hot: [], other: [], say: '' })
+const ids = (t: BT): number[] => [t.id, ...t.kids.flatMap(ids)]
+const keysOf = (f: BT[]) => f.flatMap((t) => heapKeys([t]))
+const BIN_MAX = 96
+
 export function BinomialLab() {
-  const [heap, setHeap] = useState<BH>(() => build([31, 12, 45, 7, 22, 18, 50, 3, 27, 9, 36]))
-  const [note, setNote] = useState<{ text: string; steps: MeldStep[]; cost: number; dPhi: number } | null>(null)
-  const [hot, setHot] = useState<number[]>([])
-  const [picked, setPicked] = useState<number | null>(null)
-  const [counter, setCounter] = useState(1)
-  const [val, setVal] = useState(5)
-  const n = sizeH(heap)
-  const bad = bhValid(heap)
-  const doInsert = (key: number) => {
-    const before = treesIn(heap)
-    const id = freshId()
-    const r = bhInsert(heap, key, id)
-    setHeap(r.heap)
-    setHot([id])
-    setNote({ text: `insert ${key}: a new B0, then add it like +1 in binary (${r.links} link${r.links === 1 ? '' : 's'})`, steps: r.steps, cost: r.cost, dPhi: treesIn(r.heap) - before })
+  const [share, setShare] = useState(60)
+  const [pool, setPool] = useState({ extract: true, meld: true, decrease: false })
+  const [speed, setSpeed] = useState<Speed>('normal')
+  const [fit, setFit] = useState(false)
+  const [last, setLast] = useState<{ cost: number; dPhi: number } | null>(null)
+  const nid = useRef(100)
+  const fr = useFrames<NF>(firstN(), speed)
+  const { log, count, add, clear } = useLog()
+  const reset = () => {
+    fr.play([firstN()])
+    clear()
+    setLast(null)
   }
-  const doExtract = () => {
-    const r = bhExtractMin(heap)
-    if (!r) return
-    setHeap(r.heap)
-    setHot([])
-    setPicked(null)
-    setNote({ text: `extract-min: removed the smallest root (${r.min}); its ${r.kids} child trees become a heap, which is melded back`, steps: r.steps, cost: r.cost, dPhi: r.dPhi })
+  const go = () => {
+    const f0 = fr.end.f
+    const n = f0.reduce((sum, t) => sum + sizeT(t), 0)
+    const others = (['extract', 'meld', 'decrease'] as const).filter((k) => pool[k])
+    const inner = f0.flatMap((t) => t.kids.flatMap(ids))
+    const op: BinOp =
+      draw<BinOp>([
+        { k: 'insert', w: share, ok: n < BIN_MAX },
+        { k: 'extract', w: (100 - share) / others.length, ok: pool.extract && n > 0 },
+        { k: 'meld', w: (100 - share) / others.length, ok: pool.meld && n < BIN_MAX - 7 },
+        { k: 'decrease', w: (100 - share) / others.length, ok: pool.decrease && inner.length > 0 },
+      ]) ?? (n < BIN_MAX ? 'insert' : 'extract')
+    const frames: NF[] = []
+    // carries: link the lowest pair until no order appears twice
+    const carry = (row: BT[], other: number[]) => {
+      const steps = linkSteps(row)
+      for (const st of steps) {
+        const [top, low] = st.a.key <= st.b.key ? [st.a, st.b] : [st.b, st.a]
+        frames.push({ f: st.forest, hot: [top.id, low.id], other, say: `two trees of order ${st.order}, like 1 + 1 in binary: link them. the smaller root ${top.key} stays on top, ${low.key} hangs under it. that carries one B${st.order + 1}.` })
+      }
+      return steps.length ? steps[steps.length - 1].forest : byOrder(row)
+    }
+    let end: BT[]
+    let cost = 1
+    let text = ''
+    const fresh = () => freshKey(keysOf(f0), 1, 199)!
+    if (op === 'insert') {
+      const x: BT = { id: nid.current++, key: fresh(), kids: [] }
+      const row = byOrder([...f0, x])
+      const pair = f0.some((t) => !t.kids.length)
+      frames.push({ f: row, hot: [x.id], other: [], say: `insert ${x.key}: it starts as a one-node tree, a B0. that is adding 1 to n in binary. ${pair ? 'there is a B0 already, so there will be a carry.' : 'there was no B0, so nothing needs linking.'}` })
+      end = carry(row, [])
+      const links = f0.length + 1 - end.length
+      cost = links + 1
+      frames.push({ f: end, hot: [x.id], other: [], say: `done: ${links} link${s(links)}, and no order appears twice.` })
+      text = `insert ${x.key}: ${links} link${s(links)}`
+    } else if (op === 'extract') {
+      const m = f0.reduce((b, t) => (t.key < b.key ? t : b))
+      frames.push({ f: f0, hot: [m.id], other: [], say: `extract-min: the minimum is one of the ${f0.length} roots. compare them: it is ${m.key}.` })
+      const row = byOrder([...f0.filter((t) => t !== m), ...m.kids])
+      const k = m.kids.length
+      frames.push({ f: row, hot: m.kids.map((c) => c.id), other: [], say: k ? `remove ${m.key}. its ${k} child${k === 1 ? '' : 'ren'} ${k === 1 ? 'is a B0' : `are B0 … B${k - 1}`}: a small heap of ${2 ** k - 1}. meld it back, which is binary addition.` : `remove ${m.key}. it had no children, so nothing is left to do.` })
+      end = carry(row, [])
+      const links = row.length - end.length
+      cost = f0.length + k + links
+      if (k) frames.push({ f: end, hot: [], other: [], say: `done: ${links} link${s(links)}. the new minimum is ${end.length ? Math.min(...end.map((t) => t.key)) : '—'}.` })
+      text = `extract-min → ${m.key}: ${links} link${s(links)}`
+    } else if (op === 'meld') {
+      const size = randInt(2, 7)
+      const taken = keysOf(f0)
+      let h: BH = []
+      for (let i = 0; i < size; i++) {
+        const key = freshKey(taken, 1, 199)!
+        taken.push(key)
+        h = bhInsert(h, key, nid.current++).heap
+      }
+      const guest = h.filter(Boolean) as BT[]
+      const other = guest.flatMap(ids)
+      const row = byOrder([...f0, ...guest])
+      frames.push({ f: row, hot: [], other, say: `meld with another heap of ${size} keys (blue). ${n} + ${size} in binary is ${n.toString(2)} + ${size.toString(2)} = ${(n + size).toString(2)}: wherever both have a tree of the same order, there is a carry.` })
+      end = carry(row, other)
+      const links = row.length - end.length
+      cost = Math.max(1, links)
+      frames.push({ f: end, hot: [], other, say: `done: ${links} link${s(links)}. ${n + size} = ${(n + size).toString(2)} in binary, one tree for every 1.` })
+      text = `meld with ${size} keys: ${links} link${s(links)}`
+    } else {
+      const id = inner[randInt(0, inner.length - 1)]
+      const pathTo = (r: BT[]) => r.map((t) => findPath(t, id)).find(Boolean)!
+      let row = f0.map(cloneT)
+      let p = pathTo(row)
+      const old = p[p.length - 1].key
+      // usually low enough to pass its parent, so there is something to watch
+      const key = freshKey(keysOf(f0), 1, Math.random() < 0.7 ? Math.floor((p[0].key + p[p.length - 2].key) / 2) : old - 1) ?? freshKey(keysOf(f0), 1, old - 1) ?? old
+      p[p.length - 1].key = key
+      frames.push({ f: row, hot: [id], other: [], say: `decrease-key: ${old} becomes ${key}. it swims up inside its own tree while it is smaller than its parent.` })
+      let swaps = 0
+      for (;;) {
+        // a fresh copy of the row per frame, so earlier frames stay as they were
+        row = row.map(cloneT)
+        p = pathTo(row)
+        const [c, par] = [p[p.length - 1], p[p.length - 2]]
+        if (!par || c.key >= par.key) break
+        const up = par.key
+        ;[c.id, c.key, par.id, par.key] = [par.id, par.key, c.id, c.key]
+        swaps++
+        frames.push({ f: row, hot: [id, c.id], other: [], say: `${key} is smaller than its parent ${up}: the two trade places, one level up.` })
+      }
+      end = row
+      cost = 1 + swaps
+      frames.push({ f: row, hot: [id], other: [], say: `${key} is in place after ${swaps} swap${s(swaps)}. a B_k has height k ≤ log n, so that is the most it can take.` })
+      text = `decrease-key ${old} → ${key}: ${swaps} swap${s(swaps)}`
+    }
+    fr.play(frames)
+    setLast({ cost, dPhi: end.length - f0.length })
+    add(`${text}, trees ${f0.length} → ${end.length}`)
   }
-  const doMeld = () => {
-    const other = build(Array.from({ length: 7 }, (_, i) => 100 + ((counter * 37 + i * 13) % 60)))
-    const before = treesIn(heap)
-    const m = meld(heap, other)
-    setHeap(m.heap)
-    setHot([])
-    setCounter(counter + 1)
-    setNote({ text: `meld with a 7-item heap (B0 B1 B2): ${n} + 7 = ${n + 7}, added in binary, ${m.links} link${m.links === 1 ? '' : 's'}`, steps: m.steps, cost: m.steps.length, dPhi: treesIn(m.heap) - before })
-  }
-  const doDecrease = () => {
-    if (picked === null) return
-    const r = bhDecreaseKey(heap, picked, 0)
-    setHeap(r.heap)
-    setHot([picked])
-    setNote({ text: `decrease-key to 0: swims up ${r.swaps} level${r.swaps === 1 ? '' : 's'} inside its tree (a B_k has height k ≤ log n)`, steps: [], cost: 1 + r.swaps, dPhi: 0 })
-  }
+  const { f, hot, other } = fr.frame
+  const { spots, w, h } = useMemo(() => spreadForest(f), [f])
+  const at = new Map(spots.map((p) => [p.id, p]))
+  const n = spots.length
+  const settled = new Set(f.map((t) => t.kids.length)).size === f.length
+  const bad = settled ? bhValid(toHeap(f)) : []
+  const focus = at.get(hot[0] ?? other[0])
   return (
     <Fig
       n={27}
       title="binomial heap: a binary counter made of trees"
-      hint="B_k = two B_(k−1)s, one hung under the other's root. the heap has a B_k exactly when bit k of n is 1"
+      hint="one press does one random operation, one link at a time. yellow = the trees being linked"
       controls={
         <>
-          <label className="orb-slider hand">
-            <span className="orb-slider-label">key</span>
-            <input className="algo-num" value={val} onChange={(e) => setVal(+e.target.value.replace(/[^0-9]/g, '') || 0)} aria-label="key to insert" />
-          </label>
-          <Btn onClick={() => doInsert(val)} disabled={n >= 40}>insert {val}</Btn>
-          <Btn onClick={() => doInsert(2 + ((counter * 53 + n * 7) % 90)) } disabled={n >= 40}>insert random</Btn>
-          <Btn onClick={doExtract} disabled={!n}>extract-min</Btn>
-          <Btn onClick={doMeld} disabled={n > 28}>meld with a 7-heap</Btn>
-          <Btn onClick={doDecrease} disabled={picked === null}>decrease picked to 0</Btn>
-          <Btn onClick={() => { setHeap(build([31, 12, 45, 7, 22, 18, 50, 3, 27, 9, 36])); setNote(null); setHot([]); setPicked(null) }}>reset</Btn>
+          <span className="hand">settings:</span>
+            <Slider label="how often it inserts" value={share} min={10} max={100} step={5} onChange={setShare} format={(v) => `${v}%`} />
+            <span className="hand">the rest is split between:</span>
+            <Btn on={pool.extract} onClick={() => setPool({ ...pool, extract: !pool.extract })}>extract-min</Btn>
+            <Btn on={pool.meld} onClick={() => setPool({ ...pool, meld: !pool.meld })}>meld with a small heap</Btn>
+            <Btn on={pool.decrease} onClick={() => setPool({ ...pool, decrease: !pool.decrease })}>decrease-key</Btn>
+          <Pace speed={speed} setSpeed={setSpeed} fit={fit} setFit={setFit} />
         </>
       }
-      caption={
-        note ? (
+    >
+      <Run onGo={go} onReset={reset} count={count} />
+      <Narr step={fr.step} steps={fr.steps}>
+        {fr.frame.say ? (
           <>
-            {note.text}. cost {note.cost}, Φ (number of trees) changed by {note.dPhi} ⇒ amortized <b>{note.cost + note.dPhi}</b>.
+            {fr.frame.say}
           </>
         ) : (
-          <>click a node to pick it for decrease-key. Φ = number of trees; insert links k times and Φ drops by k − 1, so insert is O(1) amortized.</>
-        )
-      }
-    >
-      <BinomialSvg heap={heap} hot={hot} picked={picked} onPick={setPicked} />
+          <>B_k is two B_(k−1)s, one hung under the other&apos;s root, so it has 2^k nodes. the heap has a B_k exactly when bit k of n is 1. press the yellow button.</>
+        )}
+      </Narr>
+      <Stage w={w} h={h} focus={focus?.x} fit={fit} speed={speed} label="binomial heap">
+        {!n && <T x={160} y={28} size={14}>empty heap</T>}
+        {spots.map((p) => {
+          const up = p.up === null ? null : at.get(p.up)
+          return up ? <Edge key={p.id} x1={p.x} y1={p.y} x2={up.x} y2={up.y} /> : null
+        })}
+        {spots.map((p) => (
+          <Node key={p.id} x={p.x} y={p.y} r={12} size={11} label={p.key} paint={hot.includes(p.id) ? PAINT.hot : other.includes(p.id) ? PAINT.path : PAINT.plain} tag={p.order === null ? undefined : `B${p.order}`} />
+        ))}
+      </Stage>
       <p className="algo-say" style={{ margin: '4px 0 0' }}>
-        n = {n} = {n.toString(2)}₂ → trees {orders(n).map((k) => `B${k}`).join(' ') || '—'} ({treesIn(heap)} trees) {bad.length ? `· BROKEN: ${bad[0]}` : '· valid ✓'}
+        n = {n} = {n.toString(2)}₂ · trees on the page: {f.map((t) => `B${t.kids.length}`).join(' ') || '—'} {settled ? `(one per 1 bit${bad.length ? `, BROKEN: ${bad[0]}` : ', valid ✓'})` : '(an order appears twice: a carry is pending)'} · Φ = number of trees = {f.length}
+        {last && fr.step === fr.steps ? (
+          <>
+            {' '}
+            · last operation: cost {last.cost} + ΔΦ {last.dPhi} = amortized <b>{last.cost + last.dPhi}</b>
+          </>
+        ) : null}
       </p>
-      {note && note.steps.length > 0 && (
-        <div className="algo-scroll">
-          <table className="algo-table" aria-label="the carries">
-            <thead>
-              <tr>
-                <th>order</th>
-                <th>trees of that order</th>
-                <th>what happens</th>
-              </tr>
-            </thead>
-            <tbody>
-              {note.steps.filter((s) => s.have.length).map((s) => (
-                <tr key={s.order}>
-                  <td>B{s.order}</td>
-                  <td>{s.have.join(', ')}</td>
-                  <td>{s.action}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <OpLog log={log} />
     </Fig>
   )
 }

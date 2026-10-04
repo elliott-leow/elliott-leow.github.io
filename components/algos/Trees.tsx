@@ -3,7 +3,8 @@
 /* lecture 6 and homework 3: search trees */
 import { useMemo, useState, type ReactNode } from 'react'
 import { Box, Btn, Chart, Fig, Line, Seg, Slider, T, r1 } from './kit'
-import { bankRun, bestNextAmortized, bstDepthOf, bstHeight, bstInsert, btHeight, btInsert, btNodes, btValid, canRotate, NAIVE_BAD, rbBlackHeight, rbHeight, rbInsert, rbRotate, rbValid, to234, worstSequence, type BEvent, type BNode, type BST, type RB, type RBStep } from '@/lib/algos/trees'
+import { Edge, Node, Narr, OpLog, PAINT, Pace, Run, Stage, Tile, freshKey, randInt, useFrames, useLog, type Paint, type Speed } from './Live'
+import { bankRun, bestNextAmortized, bstDepthOf, bstHeight, bstInsert, btHeight, btInsert, btKeys, btNodes, btPath, btValid, NAIVE_BAD, rbBlackHeight, rbHeight, rbInsert, rbValid, to234, worstSequence, type BNode, type BST, type RB } from '@/lib/algos/trees'
 import { rng, shuffle } from '@/lib/algos/rng'
 
 /* ------------------------------------------------------------------ a multiway tree, drawn */
@@ -145,90 +146,135 @@ export function BstDegenerate() {
   )
 }
 
+/* ------------------------------------------------------------------ a multiway tree on a stage, moving */
+
+const TW = 30
+const GAPB = 14
+function spreadB(root: BNode | null) {
+  const cells: { key: string; x: number; y: number }[] = []
+  const links: { id: string; x1: number; y1: number; x2: number; y2: number }[] = []
+  if (!root) return { cells, links, w: 0, h: 44 }
+  const memo = new Map<BNode, number>()
+  const kidsW = (n: BNode): number => n.kids.reduce((s, k) => s + width(k), 0) + GAPB * Math.max(0, n.kids.length - 1)
+  const width = (n: BNode): number => {
+    if (!memo.has(n)) memo.set(n, Math.max(n.keys.length * TW, kidsW(n)))
+    return memo.get(n)!
+  }
+  const place = (n: BNode, x0: number, y: number): number => {
+    const own = n.keys.length * TW
+    const x = x0 + (width(n) - own) / 2
+    n.keys.forEach((k, i) => cells.push({ key: k, x: x + i * TW, y }))
+    let cx = x0 + (width(n) - kidsW(n)) / 2
+    n.kids.forEach((c, i) => {
+      links.push({ id: c.keys[0], x1: x + i * TW, y1: y + 26, x2: place(c, cx, y + LH), y2: y + LH })
+      cx += width(c) + GAPB
+    })
+    return x + own / 2
+  }
+  const w = width(root) + 24
+  place(root, 12 + Math.max(0, (320 - w) / 2), 8)
+  return { cells, links, w, h: (btHeight(root) - 1) * LH + 44 }
+}
+function BTreeStage({ root, paint, at, fit, speed, label }: { root: BNode | null; paint: (key: string) => Paint; at?: string; fit: boolean; speed: Speed; label: string }) {
+  const { cells, links, w, h } = useMemo(() => spreadB(root), [root])
+  const f = cells.find((c) => c.key === at)
+  return (
+    <Stage w={w} h={h} focus={f ? f.x + TW / 2 : undefined} fit={fit} speed={speed} label={label}>
+      {!root && <T x={160} y={28} size={14}>empty</T>}
+      {links.map((l) => (
+        <Edge key={l.id} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
+      ))}
+      {cells.map((c) => (
+        <Tile key={c.key} x={c.x} y={c.y} w={TW} label={c.key} size={c.key.length > 3 ? 10.5 : 12} paint={paint(c.key)} />
+      ))}
+    </Stage>
+  )
+}
+
 /* ================================================================== B-tree / 2-3-4 */
 
-const describe = (e: BEvent) => (e.type === 'split' ? `split [${e.before.join(' ')}]: ${e.median} moves up${e.root ? ' (new root)' : ''}` : `put ${e.key} → [${e.leaf.join(' ')}]`)
+type BF = { root: BNode | null; hot: string[]; path: string[]; full: string[]; say: string; at?: string }
+const SEED_B = ['50', '20', '80', '35']
+const firstB = (t: number): BF => ({ root: SEED_B.reduce<BNode | null>((r, k) => btInsert(r, k, t).root, null), hot: [], path: [], full: [], say: '' })
+const s = (n: number) => (n === 1 ? '' : 's')
 
 export function BTreeLab() {
   const [t, setT] = useState(2)
-  const [root, setRoot] = useState<BNode | null>(() => 'ABCD'.split('').reduce<BNode | null>((r, k) => btInsert(r, k, 2).root, null))
-  const [events, setEvents] = useState<BEvent[]>([])
-  const [text, setText] = useState('')
-  const [queue, setQueue] = useState<string[]>('E F G H I J K L M N O P'.split(' '))
-  const fresh = (tt: number) => {
-    setRoot('ABCD'.split('').reduce<BNode | null>((r, k) => btInsert(r, k, tt).root, null))
-    setEvents([])
-    setQueue('E F G H I J K L M N O P'.split(' '))
+  const [order, setOrder] = useState<'random' | 'up'>('random')
+  const [speed, setSpeed] = useState<Speed>('normal')
+  const [fit, setFit] = useState(false)
+  const [splits, setSplits] = useState(0)
+  const fr = useFrames<BF>(firstB(2), speed)
+  const { log, count, add, clear } = useLog()
+  const reset = (tt = t) => {
+    fr.play([firstB(tt)])
+    clear()
+    setSplits(0)
   }
-  const insertKeys = (ks: string[]) => {
-    let r = root
-    let ev: BEvent[] = []
-    for (const k of ks) {
-      const x = btInsert(r, k, t)
-      r = x.root
-      ev = x.events
-    }
-    setRoot(r)
-    setEvents(ev)
+  const go = () => {
+    const root = fr.end.root
+    const have = btKeys(root).map(Number)
+    const num = order === 'random' ? freshKey(have, 1, 999) : Math.max(0, ...have) + randInt(1, 5)
+    if (num === null) return
+    const k = String(num)
+    const path = btPath(root, k)
+    const full = path.filter((n) => n.keys.length === 2 * t - 1)
+    const x = btInsert(root, k, t)
+    const frames: BF[] = [
+      {
+        root,
+        hot: [],
+        path: path.flatMap((n) => n.keys),
+        full: full.flatMap((n) => n.keys),
+        at: path[path.length - 1]?.keys[0],
+        say: `insert ${k}: walk down from the root as a lookup would (blue). ${full.length ? `${full.length} node${s(full.length)} on the way ${full.length === 1 ? 'is' : 'are'} full (red): each splits before we step into it.` : 'no node on the way is full, so nothing will split.'}`,
+      },
+    ]
+    x.events.forEach((e, i) =>
+      frames.push(
+        e.type === 'split'
+          ? { root: x.snaps[i], hot: [e.median], path: [], full: [], at: e.median, say: `[${e.before.join(' ')}] is full. its middle key ${e.median} moves up${e.root ? ' into a brand new root, so the whole tree is one level taller' : ' into the parent'}, and the other ${2 * t - 2} keys become two nodes of ${t - 1}.` }
+          : { root: x.snaps[i], hot: [e.key], path: [], full: [], at: e.key, say: `${e.key} goes into the leaf, which is now [${e.leaf.join(' ')}]. ${x.splits} split${s(x.splits)} for this insert.` },
+      ),
+    )
+    fr.play(frames)
+    setSplits(splits + x.splits)
+    add(`insert ${k}: ${x.splits ? `${x.splits} split${s(x.splits)}` : 'no split'}, height ${btHeight(x.root)}`)
   }
-  const bad = btValid(root, t)
-  const splits = events.filter((e) => e.type === 'split')
-  const flashKeys = events.flatMap((e) => (e.type === 'split' ? [e.median] : [e.key]))
-  const total = root ? btNodes(root).reduce((s, n) => s + n.keys.length, 0) : 0
+  const { frame } = fr
+  const bad = btValid(frame.root, t)
+  const nodes = btNodes(frame.root)
+  const total = nodes.reduce((sum, n) => sum + n.keys.length, 0)
+  const paint = (k: string) => (frame.hot.includes(k) ? PAINT.hot : frame.full.includes(k) ? PAINT.bad : frame.path.includes(k) ? PAINT.path : PAINT.plain)
   return (
     <Fig
       n={18}
       title={t === 2 ? '2-3-4 tree (B-tree, t = 2)' : `B-tree, t = ${t}`}
-      hint="full nodes split on the way down. yellow = what just moved"
+      hint="one press inserts one random key. blue = the way down, red = full, yellow = what just moved"
       controls={
         <>
-          <Btn
-            onClick={() => {
-              if (!queue.length) return
-              insertKeys([queue[0]])
-              setQueue(queue.slice(1))
-            }}
-            disabled={!queue.length}
-          >
-            insert next: {queue[0] ?? '—'}
-          </Btn>
-          <Btn onClick={() => fresh(t)}>reset</Btn>
-          <Seg label="t" value={String(t) as '2' | '3'} onChange={(v) => { setT(+v); fresh(+v) }} options={[{ k: '2', label: 't = 2  (1–3 keys)' }, { k: '3', label: 't = 3  (2–5 keys)' }]} />
-          <label className="orb-slider hand">
-            <span className="orb-slider-label">insert</span>
-            <input
-              className="algo-num"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && text.trim()) {
-                  insertKeys(parseKeys(text))
-                  setText('')
-                }
-              }}
-              aria-label="key to insert"
-              placeholder="key + enter"
-            />
-          </label>
-          <Btn onClick={() => { if (text.trim()) { insertKeys(parseKeys(text)); setText('') } }}>insert</Btn>
+          <span className="hand">settings:</span>
+            <Seg label="t" value={String(t) as '2' | '3' | '4'} onChange={(v) => { setT(+v); reset(+v) }} options={[{ k: '2', label: 't = 2  (1–3 keys)' }, { k: '3', label: 't = 3  (2–5 keys)' }, { k: '4', label: 't = 4  (3–7 keys)' }]} />
+            <Seg label="keys arrive" value={order} onChange={setOrder} options={[{ k: 'random', label: 'random keys' }, { k: 'up', label: 'increasing keys' }]} />
+          <Pace speed={speed} setSpeed={setSpeed} fit={fit} setFit={setFit} />
         </>
       }
-      caption={
-        !events.length ? (
-          <>each non-root node holds {t - 1} to {2 * t - 1} keys; all leaves are at the same depth. keep inserting E, F, G… and watch it grow up, never down.</>
-        ) : (
-          <>
-            {splits.length ? `${splits.length} split${splits.length > 1 ? 's' : ''}: ` : 'no splits. '}
-            {events.map(describe).join(' · ')}
-            {bad.length ? ` ⚠ ${bad[0]}` : ''}
-          </>
-        )
-      }
     >
-      <BTreeSvg root={root} flash={flashKeys} />
+      <Run onGo={go} onReset={() => reset()} count={count} />
+      <Narr step={fr.step} steps={fr.steps}>
+        {frame.say ? (
+          <>
+            {frame.say}
+          </>
+        ) : (
+          <>each node other than the root holds {t - 1} to {2 * t - 1} keys, and all leaves are at the same depth. press the yellow button and watch where the key goes.</>
+        )}
+      </Narr>
+      <BTreeStage root={frame.root} paint={paint} at={frame.at} fit={fit} speed={speed} label="B-tree" />
       <p className="algo-say" style={{ margin: '4px 0 0' }}>
-        {total} keys · height {btHeight(root)} · properties {bad.length ? 'BROKEN' : 'all hold ✓'}
+        {total} keys in {nodes.length} nodes · height {btHeight(frame.root)} · {splits} split{s(splits)} in {count} insert{s(count)} · properties {bad.length ? `BROKEN: ${bad[0]}` : 'all hold ✓'}
       </p>
+      <OpLog log={log} />
     </Fig>
   )
 }
@@ -308,94 +354,120 @@ export function SplitBank() {
 
 /* ================================================================== red-black */
 
-const toBin = (t: RB | null): BinT | null => (t ? { key: String(t.key), red: t.red, l: toBin(t.l), r: toBin(t.r) } : null)
-const toBinB = (t: BNode | null) => t
+const DX = 32
+const DY = 46
+const RED: Paint = { fill: 'rgba(192, 67, 45, 0.9)', stroke: 'var(--red-pen)', ink: '#fdfcf8' }
+const BLACK: Paint = { fill: 'var(--ink)', ink: '#fdfcf8' }
+function spreadRB(t: RB | null) {
+  const nodes: { key: number; red: boolean; x: number; y: number; up: number | null }[] = []
+  let i = 0
+  let deep = 0
+  const walk = (n: RB | null, d: number, up: number | null) => {
+    if (!n) return
+    walk(n.l, d + 1, n.key)
+    nodes.push({ key: n.key, red: n.red, x: i++ * DX, y: 22 + d * DY, up })
+    deep = Math.max(deep, d)
+    walk(n.r, d + 1, n.key)
+  }
+  walk(t, 0, null)
+  const w = (nodes.length - 1) * DX + 48
+  const x0 = 24 + Math.max(0, (320 - w) / 2)
+  nodes.forEach((n) => (n.x += x0))
+  return { nodes, w, h: deep * DY + 46 }
+}
+
+type RF = { t: RB | null; mark: number[]; path: number[]; say: string; at?: number }
+const firstRB = (): RF => ({ t: [50, 20, 80].reduce<RB | null>((t, k) => rbInsert(t, k).root, null), mark: [], path: [], say: '' })
+const rbKeys = (t: RB | null): number[] => (t ? [...rbKeys(t.l), t.key, ...rbKeys(t.r)] : [])
 
 export function RedBlackLab() {
-  const seed = () => {
-    let t: RB | null = null
-    let last: RBStep[] = []
-    for (const k of [10, 20, 30]) {
-      const r = rbInsert(t, k)
-      if (r.steps.length) last = r.steps
-      t = r.root
-    }
-    return { t, last }
+  const [order, setOrder] = useState<'random' | 'up'>('random')
+  const [twin, setTwin] = useState(true)
+  const [speed, setSpeed] = useState<Speed>('normal')
+  const [fit, setFit] = useState(false)
+  const [work, setWork] = useState({ recolor: 0, rotate: 0 })
+  const fr = useFrames<RF>(firstRB(), speed)
+  const { log, count, add, clear } = useLog()
+  const reset = () => {
+    fr.play([firstRB()])
+    clear()
+    setWork({ recolor: 0, rotate: 0 })
   }
-  const [tree, setTree] = useState<RB | null>(() => seed().t)
-  const [steps, setSteps] = useState<RBStep[]>(() => seed().last)
-  const [si, setSi] = useState(() => Math.max(0, seed().last.length - 1))
-  const [view, setView] = useState<'rb' | '234'>('rb')
-  const [text, setText] = useState('')
-  const [queue, setQueue] = useState<number[]>([15, 25, 5, 3, 1, 40, 50, 60, 35])
-  const [picked, setPicked] = useState<number | null>(null)
-  const add = (ks: number[]) => {
-    let t = tree
-    let last: RBStep[] = []
-    for (const k of ks) {
-      const r = rbInsert(t, k)
-      if (r.steps.length) last = r.steps
-      t = r.root
-    }
-    setTree(t)
-    setSteps(last)
-    setSi(Math.max(0, last.length - 1))
-    setPicked(null)
+  const go = () => {
+    const tree = fr.end.t
+    const have = rbKeys(tree)
+    const k = order === 'random' ? freshKey(have, 1, 999) : Math.max(0, ...have) + randInt(1, 5)
+    if (k === null) return
+    const path: number[] = []
+    for (let n = tree; n; n = k < n.key ? n.l : n.r) path.push(n.key)
+    const { steps } = rbInsert(tree, k)
+    const frames: RF[] = [{ t: tree, mark: [], path, at: path[path.length - 1], say: `insert ${k}: walk down like any binary search tree (${path.join(' → ')}). ${k} will hang under ${path[path.length - 1]}.` }]
+    steps.forEach((st, i) =>
+      frames.push({
+        t: st.tree,
+        mark: st.mark,
+        path: [],
+        at: st.mark[0],
+        say: i > 0 ? `${st.note}.` : steps.length === 1 ? `${k} goes in as a red leaf. its parent is black, so no rule is broken: done.` : `${k} goes in as a red leaf, but its parent is red too. two reds in a row is not allowed, so fix it:`,
+      }),
+    )
+    const recolor = steps.filter((x) => x.note.startsWith('uncle red')).length
+    const rotate = steps.filter((x) => x.note.includes('rotate')).length
+    fr.play(frames)
+    setWork({ recolor: work.recolor + recolor, rotate: work.rotate + rotate })
+    add(`insert ${k}: ${recolor || rotate ? [recolor && `${recolor} recolor${s(recolor)}`, rotate && `${rotate} rotation${s(rotate)}`].filter(Boolean).join(', ') : 'nothing to fix'}, height ${rbHeight(steps[steps.length - 1].tree)}`)
   }
-  const shown = steps.length ? steps[Math.min(si, steps.length - 1)] : null
-  const cur = shown && si < steps.length - 1 ? shown.tree : tree
-  const problems = rbValid(cur)
-  const b = useMemo(() => to234(cur), [cur])
+  const { frame } = fr
+  const { nodes, w, h } = useMemo(() => spreadRB(frame.t), [frame.t])
+  const at = new Map(nodes.map((n) => [n.key, n]))
+  const problems = rbValid(frame.t)
+  const b = useMemo(() => to234(frame.t), [frame.t])
+  const n = nodes.length
   return (
     <Fig
       n={19}
       title="red-black trees are 2-3-4 trees in disguise"
-      hint="insert, step through the fix-up, flip to the 2-3-4 view, or rotate a node yourself"
+      hint="one press inserts one random key, then repairs the colors one step at a time. blue ring = the nodes that step is about"
       controls={
         <>
-          <Btn
-            onClick={() => {
-              if (!queue.length) return
-              add([queue[0]])
-              setQueue(queue.slice(1))
-            }}
-            disabled={!queue.length}
-          >
-            insert next: {queue[0] ?? '—'}
-          </Btn>
-          <Btn onClick={() => { const z = seed(); setTree(z.t); setSteps(z.last); setSi(Math.max(0, z.last.length - 1)); setQueue([15, 25, 5, 3, 1, 40, 50, 60, 35]); setPicked(null) }}>reset</Btn>
-          <Btn onClick={() => { setTree(null); setSteps([]); setSi(0); setQueue([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]); setPicked(null) }}>start over, sorted input</Btn>
-          <Seg label="view" value={view} onChange={setView} options={[{ k: 'rb', label: 'red-black' }, { k: '234', label: '2-3-4 tree' }]} />
-          {steps.length > 1 && <Slider label="fix-up step" value={Math.min(si, steps.length - 1)} min={0} max={steps.length - 1} onChange={setSi} format={(v) => `${v + 1} / ${steps.length}`} />}
-          <label className="orb-slider hand">
-            <span className="orb-slider-label">insert</span>
-            <input className="algo-num" value={text} onChange={(e) => setText(e.target.value.replace(/[^0-9 ]/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') { add(text.split(/\s+/).filter(Boolean).map(Number)); setText('') } }} aria-label="number to insert" placeholder="n + enter" />
-          </label>
-          <Btn onClick={() => { add(text.split(/\s+/).filter(Boolean).map(Number)); setText('') }}>insert</Btn>
-          <Btn onClick={() => picked !== null && setTree(rbRotate(tree, picked, 'L'))} disabled={picked === null || !canRotate(tree, picked, 'L')}>
-            rotate {picked ?? '?'} left
-          </Btn>
-          <Btn onClick={() => picked !== null && setTree(rbRotate(tree, picked, 'R'))} disabled={picked === null || !canRotate(tree, picked, 'R')}>
-            rotate {picked ?? '?'} right
-          </Btn>
+          <span className="hand">settings:</span>
+            <Seg label="keys arrive" value={order} onChange={setOrder} options={[{ k: 'random', label: 'random keys' }, { k: 'up', label: 'increasing keys' }]} />
+            <Btn on={twin} onClick={() => setTwin(!twin)}>show the 2-3-4 tree underneath</Btn>
+          <Pace speed={speed} setSpeed={setSpeed} fit={fit} setFit={setFit} />
         </>
       }
-      caption={
-        shown && si < steps.length ? (
-          <>
-            {shown.note}. {problems.length ? <span className="algo-no">broken so far: {problems[0]}</span> : <span className="algo-ok">all red-black properties hold.</span>}
-          </>
-        ) : problems.length ? (
-          <span className="algo-no">{problems[0]}. a bare rotation moves nodes but not colors.</span>
-        ) : (
-          <>click a node to select it. rules: root black · no red child of a red node · same number of black nodes on every path.</>
-        )
-      }
     >
-      {view === 'rb' ? <BinTreeSvg tree={toBin(cur)} color mark={shown ? shown.mark.map(String) : []} onPick={(k) => setPicked(Number(k))} picked={picked === null ? null : String(picked)} /> : <BTreeSvg root={toBinB(b)} />}
+      <Run onGo={go} onReset={reset} count={count} />
+      <Narr step={fr.step} steps={fr.steps}>
+        {frame.say ? (
+          <>
+            {frame.say} {fr.step > 1 && (problems.length ? <span className="algo-no">broken right now: {problems[0]}.</span> : <span className="algo-ok">all red-black rules hold.</span>)}
+          </>
+        ) : (
+          <>rules: the root is black · a red node never has a red child · every path down has the same number of black nodes. press the yellow button.</>
+        )}
+      </Narr>
+      <Stage w={w} h={h} focus={frame.at !== undefined ? at.get(frame.at)?.x : undefined} fit={fit} speed={speed} label="red-black tree">
+        {nodes.map((c) => {
+          const p = c.up === null ? null : at.get(c.up)
+          return p ? <Edge key={c.key} x1={c.x} y1={c.y} x2={p.x} y2={p.y} stroke={c.red ? 'var(--red-pen)' : 'var(--pencil)'} w={c.red ? 2.6 : 1.3} /> : null
+        })}
+        {nodes.map((c) => (
+          <Node key={c.key} x={c.x} y={c.y} label={c.key} size={c.key > 999 ? 9.5 : 11.5} paint={{ ...(c.red ? RED : BLACK), ...(frame.mark.includes(c.key) || frame.path.includes(c.key) ? { stroke: 'var(--blue-pen)', sw: 3.4 } : {}) }} />
+        ))}
+      </Stage>
+      {twin && (
+        <>
+          <p className="algo-say" style={{ margin: '6px 0 0' }}>
+            the same keys as a 2-3-4 tree: every black node swallows its red children.
+          </p>
+          <BTreeStage root={b} paint={(k) => (frame.mark.includes(+k) ? PAINT.hot : PAINT.plain)} at={frame.at !== undefined ? String(frame.at) : undefined} fit={fit} speed={speed} label="the same keys as a 2-3-4 tree" />
+        </>
+      )}
       <p className="algo-say" style={{ margin: '4px 0 0' }}>
-        height {rbHeight(cur)} · black height {rbBlackHeight(cur)} · 2-3-4 depth {btHeight(b)} · a red node is a key sharing a 2-3-4 node with its black parent.
+        {n} keys · height {rbHeight(frame.t)} (limit 2 log(n + 1) = {r1(2 * Math.log2(n + 1))}) · black height {rbBlackHeight(frame.t)} · {work.recolor} recolor{s(work.recolor)} and {work.rotate} rotation{s(work.rotate)} in {count} insert{s(count)}
       </p>
+      <OpLog log={log} />
     </Fig>
   )
 }

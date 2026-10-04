@@ -1,8 +1,9 @@
 'use client'
 
 /* lectures 9 and 10: union-find, universal hashing, perfect hashing */
-import { useMemo, useState, type ReactNode } from 'react'
-import { Box, Btn, Cells, Chart, Fig, Line, Seg, Slider, T, r1, type Tone } from './kit'
+import { useMemo, useState } from 'react'
+import { Box, Btn, Cells, Fig, Seg, Slider, T, r1, type Tone } from './kit'
+import { Edge, Node, Narr, OpLog, PAINT, Pace, Run, Stage, draw, randInt, useFrames, useLog, type Speed } from './Live'
 import { components, depth, find, height, makeDSU, union, type DSU, type Opts } from '@/lib/algos/dsu'
 import { buildFKS, collisionFree, collisionProbability, collisions, fksLookup, hab, loads, matHash } from '@/lib/algos/hashing'
 import { rng, ri } from '@/lib/algos/rng'
@@ -10,153 +11,142 @@ import { rng, ri } from '@/lib/algos/rng'
 /* ================================================================== union-find */
 
 const clone = (d: DSU): DSU => ({ parent: d.parent.slice(), rank: d.rank.slice(), size: d.size.slice() })
-type Lay = { v: number; x: number; y: number; kids: Lay[] }
-function forest(d: DSU) {
+const UW = 30
+const UF_MAX = 64
+/** where every element sits: one tree per set, roots along the top */
+function spreadSets(d: DSU) {
   const kids: number[][] = d.parent.map(() => [])
   d.parent.forEach((p, i) => p !== i && kids[p].push(i))
-  const units = (v: number): number => (kids[v].length ? kids[v].reduce((s, k) => s + units(k), 0) : 1)
-  const U = 30
-  let x = 10
-  const place = (v: number, x0: number, y: number): Lay => {
+  const units = (v: number): number => (kids[v].length ? kids[v].reduce((sum, k) => sum + units(k), 0) : 1)
+  const deep = height(d)
+  // a tall tree (no union by rank) gets its levels closer together instead of running off the page
+  const dy = Math.min(44, Math.max(28, 400 / Math.max(deep, 1)))
+  const spots: { v: number; x: number; y: number }[] = []
+  const place = (v: number, x0: number, y: number): number => {
     let cx = x0
-    const ks = kids[v].map((k) => {
-      const l = place(k, cx, y + 44)
-      cx += units(k) * U
-      return l
+    const xs = kids[v].map((k) => {
+      const x = place(k, cx, y + dy)
+      cx += units(k) * UW
+      return x
     })
-    const w = units(v) * U
-    return { v, x: ks.length ? (ks[0].x + ks[ks.length - 1].x) / 2 : x0 + w / 2, y, kids: ks }
+    const x = xs.length ? (xs[0] + xs[xs.length - 1]) / 2 : x0 + UW / 2
+    spots[v] = { v, x, y }
+    return x
   }
-  const roots = d.parent.map((p, i) => (p === i ? i : -1)).filter((i) => i >= 0)
-  const out = roots.map((r) => {
-    const l = place(r, x, 24)
-    x += units(r) * U + 14
-    return l
+  let x = 10
+  d.parent.forEach((p, i) => {
+    if (p !== i) return
+    place(i, x, 26)
+    x += units(i) * UW + 10
   })
-  return { trees: out, width: x }
+  const off = Math.max(0, (320 - x) / 2)
+  spots.forEach((p) => (p.x += off))
+  return { spots, w: x, h: 26 + deep * dy + 24 }
 }
 
+type UF = { d: DSU; path: number[]; hot: number[]; say: string }
+const s = (n: number) => (n === 1 ? '' : 's')
+
 export function UnionFindLab() {
-  const N = 12
-  const [d, setD] = useState<DSU>(() => makeDSU(N))
+  const [N, setN] = useState(12)
   const [o, setO] = useState<Opts>({ byRank: true, compress: true })
-  const [sel, setSel] = useState<number[]>([])
-  const [path, setPath] = useState<number[]>([])
+  const [share, setShare] = useState(55)
+  const [grow, setGrow] = useState(true)
+  const [speed, setSpeed] = useState<Speed>('normal')
+  const [fit, setFit] = useState(false)
   const [steps, setSteps] = useState(0)
-  const [msg, setMsg] = useState('')
-  const reset = (opts = o) => {
-    setD(makeDSU(N))
-    setSel([])
-    setPath([])
+  const fr = useFrames<UF>({ d: makeDSU(12), path: [], hot: [], say: '' }, speed)
+  const { log, count, add, clear } = useLog()
+  const reset = (n = N, opts = o) => {
+    fr.play([{ d: makeDSU(n), path: [], hot: [], say: '' }])
+    clear()
     setSteps(0)
-    setMsg('')
+    setN(n)
     setO(opts)
   }
-  const pick = (v: number) => setSel((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s.slice(-1), v]))
-  const doUnion = () => {
-    if (sel.length < 2) return
-    const c = clone(d)
-    const r = union(c, sel[0], sel[1], o)
-    setD(c)
-    setSteps(steps + r.steps)
-    setPath([])
-    setMsg(r.linked ? `union(${sel[0]}, ${sel[1]}): root ${r.child} goes under root ${r.top}. ${r.steps} steps` : `${sel[0]} and ${sel[1]} were already together. ${r.steps} steps`)
-    setSel([])
+  const go = () => {
+    const d0 = fr.end.d
+    const sets = components(d0)
+    const look = { byRank: o.byRank, compress: false }
+    const c = clone(d0)
+    const frames: UF[] = []
+    const squash = (paths: number[][]) => {
+      // only worth a frame when some node was more than one step from its root
+      if (!o.compress || paths.every((p) => p.length < 3)) return
+      for (const p of paths) find(c, p[0], o)
+      frames.push({ d: clone(c), path: [], hot: paths.flatMap((p) => p.slice(0, -2)), say: `path compression: every node on the way now points straight at the root, so the next find from there is one step.` })
+    }
+    const walk = (f: { path: number[]; hops: number }) => (f.hops ? `${f.path.join(' → ')} (${f.hops} step${s(f.hops)})` : `${f.path[0]} is a root (0 steps)`)
+    let cost = 0
+    const n = d0.parent.length
+    // make-set keeps a long run going: without it, everything ends up in one set and only finds are left
+    const op = draw([{ k: 'union', w: share, ok: sets.length > 1 }, { k: 'find', w: (100 - share) * (grow ? 0.5 : 1), ok: true }, { k: 'make', w: sets.length > 1 ? (100 - share) * 0.5 : 100, ok: grow && n < UF_MAX }]) ?? 'find'
+    if (op === 'make') {
+      c.parent.push(n)
+      c.rank.push(0)
+      c.size.push(1)
+      frames.push({ d: c, path: [], hot: [n], say: `make-set(${n}): a new element, in a set of its own. it is its own parent${o.byRank ? ', with rank 0' : ''}. no pointer is followed.` })
+      add(`make-set(${n}): ${sets.length + 1} sets`)
+    } else if (op === 'union') {
+      const a = randInt(0, n - 1)
+      // mostly a pair from two different sets, or late in a run nearly every union would do nothing
+      const apart = d0.parent.map((_, i) => i).filter((i) => find(c, i, look).root !== find(c, a, look).root)
+      const b = Math.random() < 0.85 ? apart[randInt(0, apart.length - 1)] : (a + randInt(1, n - 1)) % n
+      const fa = find(c, a, look)
+      const fb = find(c, b, look)
+      frames.push({ d: d0, path: [...fa.path, ...fb.path], hot: [a, b], say: `union(${a}, ${b}): first find the root of each. ${walk(fa)}; ${walk(fb)}.` })
+      squash([fa.path, fb.path])
+      cost = fa.hops + fb.hops
+      if (fa.root === fb.root) {
+        frames.push({ d: clone(c), path: [], hot: [fa.root], say: `both have root ${fa.root}: ${a} and ${b} are already in the same set, so there is nothing to link.` })
+        add(`union(${a}, ${b}): already together, ${cost} step${s(cost)}`)
+      } else {
+        const [ra, rb] = [c.rank[fa.root], c.rank[fb.root]]
+        const r = union(c, fa.root, fb.root, o)
+        cost++
+        frames.push({
+          d: clone(c),
+          path: [],
+          hot: [r.child, r.top],
+          say: !o.byRank
+            ? `link: root ${r.child} goes under root ${r.top}. with no rule, the first root always goes under the second, however tall it is.`
+            : ra === rb
+              ? `link: both roots have rank ${ra}, so either can go on top. ${r.child} goes under ${r.top}, and the rank of ${r.top} goes up to ${ra + 1}.`
+              : `link by rank: root ${r.child} (rank ${Math.min(ra, rb)}) goes under root ${r.top} (rank ${Math.max(ra, rb)}). the smaller rank goes underneath, so nothing gets taller.`,
+        })
+        add(`union(${a}, ${b}): ${r.child} under ${r.top}, ${cost} step${s(cost)}`)
+      }
+    } else {
+      const far = d0.parent.map((_, i) => i).filter((i) => depth(d0, i) > 1)
+      const a = far.length && Math.random() < 0.7 ? far[randInt(0, far.length - 1)] : randInt(0, n - 1)
+      const fa = find(c, a, look)
+      cost = fa.hops
+      frames.push({ d: d0, path: fa.path, hot: [a], say: `find(${a}): follow the parent pointers up. ${walk(fa)}. the root ${fa.root} is the name of ${a}'s set.${!o.compress && fa.hops > 1 ? ' nothing changes, so asking again costs the same.' : ''}` })
+      squash([fa.path])
+      add(`find(${a}) = ${fa.root}: ${cost} step${s(cost)}`)
+    }
+    fr.play(frames)
+    setSteps(steps + cost)
   }
-  const doFind = () => {
-    if (sel.length < 1) return
-    const c = clone(d)
-    const r = find(c, sel[0], o)
-    setD(c)
-    setSteps(steps + r.hops)
-    setPath(r.path)
-    setMsg(`find(${sel[0]}): followed ${r.hops} pointer${r.hops === 1 ? '' : 's'} to root ${r.root}${o.compress ? ', then pointed everything on the path at it' : ''}`)
-  }
-  const chain = () => {
-    const c = makeDSU(N)
-    let s = 0
-    for (let i = 0; i + 1 < N; i++) s += union(c, i, i + 1, o).steps
-    setD(c)
-    setSteps(s)
-    setPath([])
-    setSel([])
-    setMsg(`union(0,1), union(1,2), … union(${N - 2},${N - 1}): ${s} steps in all. height now ${height(c)}`)
-  }
-  const rand = () => {
-    const r = rng(Date.now() % 100000)
-    const c = clone(d)
-    const a = ri(r, 0, N - 1)
-    let b = ri(r, 0, N - 1)
-    if (b === a) b = (a + 1) % N
-    const x = union(c, a, b, o)
-    setD(c)
-    setSteps(steps + x.steps)
-    setMsg(`union(${a}, ${b}): ${x.steps} steps`)
-    setPath([])
-  }
-  const { trees, width } = forest(d)
-  const H = Math.max(...d.parent.map((_, i) => depth(d, i))) * 44 + 70
-  const nodes: ReactNode[] = []
-  const edges: ReactNode[] = []
-  const walk = (l: Lay) => {
-    l.kids.forEach((k) => {
-      edges.push(<Line key={`${l.v}-${k.v}`} x1={l.x} y1={l.y} x2={k.x} y2={k.y} tone={path.includes(l.v) && path.includes(k.v) ? 'red' : 'pencil'} w={path.includes(l.v) && path.includes(k.v) ? 2.6 : 1.3} />)
-      walk(k)
-    })
-    nodes.push(
-      <g key={l.v} onClick={() => pick(l.v)} style={{ cursor: 'pointer' }} role="button" aria-label={`element ${l.v}`}>
-        <circle cx={r1(l.x)} cy={r1(l.y)} r={12} fill={path.includes(l.v) ? 'rgba(238,213,111,0.75)' : 'var(--orb-paper)'} stroke={sel.includes(l.v) ? 'var(--blue-pen)' : 'var(--ink)'} strokeWidth={sel.includes(l.v) ? 3 : 1.3} />
-        <text x={r1(l.x)} y={r1(l.y + 4)} textAnchor="middle" fontSize={12} className="orb-t" fill="var(--ink)">
-          {l.v}
-        </text>
-        {d.parent[l.v] === l.v && o.byRank && (
-          <text x={r1(l.x + 15)} y={r1(l.y - 10)} fontSize={10} className="orb-t" fill="var(--blue-pen)">
-            r{d.rank[l.v]}
-          </text>
-        )}
-      </g>,
-    )
-  }
-  trees.forEach(walk)
-  // the same chain of unions, all four ways
+  const { d, path, hot } = fr.frame
+  const { spots, w, h } = useMemo(() => spreadSets(d), [d])
+  const sets = components(d).length
   const table = useMemo(() => {
     const rows: { label: string; h: number; s: number; f0: number }[] = []
     for (const byRank of [false, true]) for (const compress of [false, true]) {
       const c = makeDSU(64)
-      let s = 0
-      for (let i = 0; i + 1 < 64; i++) s += union(c, i, i + 1, { byRank, compress }).steps
-      const h = height(c)
+      let st = 0
+      for (let i = 0; i + 1 < 64; i++) st += union(c, i, i + 1, { byRank, compress }).steps
+      const hh = height(c)
       const f = find(c, 0, { byRank, compress })
-      rows.push({ label: `${byRank ? 'by rank' : 'naive'}${compress ? ' + compression' : ''}`, h, s, f0: f.hops })
+      rows.push({ label: `${byRank ? 'by rank' : 'naive'}${compress ? ' + compression' : ''}`, h: hh, s: st, f0: f.hops })
     }
     return rows
   }, [])
   return (
     <Fig
-      n={28}
-      title="union-find"
-      hint="click two elements, then union. click one, then find. an arrow is 'my parent is…'"
-      controls={
-        <>
-          <Btn onClick={doUnion} disabled={sel.length < 2}>union {sel.length === 2 ? `(${sel[0]}, ${sel[1]})` : ''}</Btn>
-          <Btn onClick={doFind} disabled={sel.length < 1}>find {sel.length ? `(${sel[0]})` : ''}</Btn>
-          <Btn onClick={rand}>random union</Btn>
-          <Btn onClick={chain}>chain: (0,1) (1,2) (2,3)…</Btn>
-          <Btn onClick={() => reset()}>reset</Btn>
-          <Btn on={o.byRank} onClick={() => reset({ ...o, byRank: !o.byRank })}>union by rank</Btn>
-          <Btn on={o.compress} onClick={() => reset({ ...o, compress: !o.compress })}>path compression</Btn>
-        </>
-      }
       caption={
         <>
-          {msg || 'union links one root under the other. find climbs to the root.'} total pointer steps {steps}, height {height(d)}, {components(d).length} set{components(d).length === 1 ? '' : 's'}.
-        </>
-      }
-    >
-      <svg viewBox={`0 0 ${Math.max(560, width)} ${H}`} className="orb-svg" role="img" aria-label="the forest">
-        {edges}
-        {nodes}
-      </svg>
       <div className="algo-scroll">
         <table className="algo-table" aria-label="the same 63 unions, four ways">
           <thead>
@@ -180,8 +170,52 @@ export function UnionFindLab() {
         </table>
       </div>
       <p className="algo-say" style={{ margin: '4px 0 0' }}>
-        rank r ⇒ at least 2^r elements, so height ≤ log n. with compression too, m operations cost O(m log* n) (lecture 9's proof; the book gets O(m α), even smaller). log* n ≤ 5 for any n you will ever meet.
+        rank r ⇒ at least 2^r elements, so height ≤ log n. with compression too, m operations cost O(m log* n) (lecture 9&apos;s proof; the book gets O(m α), even smaller). log* n ≤ 5 for any n you will ever meet.
       </p>
+        </>
+      }
+      n={28}
+      title="union-find"
+      hint="one press does one random union or find. a line going up is 'my parent is…'. red = the pointers followed, yellow = what that step is about"
+      controls={
+        <>
+          <span className="hand">settings:</span>
+            <Btn on={o.byRank} onClick={() => reset(N, { ...o, byRank: !o.byRank })}>union by rank</Btn>
+            <Btn on={o.compress} onClick={() => reset(N, { ...o, compress: !o.compress })}>path compression</Btn>
+            <Slider label="elements to start with" value={N} min={4} max={32} step={4} onChange={(v) => reset(v)} format={(v) => v} />
+            <Slider label="how often it is a union" value={share} min={0} max={100} step={5} onChange={setShare} format={(v) => `${v}%`} />
+            <span className="hand">the rest is finds, and:</span>
+            <Btn on={grow} onClick={() => setGrow(!grow)}>make-set (new elements, up to {UF_MAX})</Btn>
+          <Pace speed={speed} setSpeed={setSpeed} fit={fit} setFit={setFit} />
+        </>
+      }
+    >
+      <Run onGo={go} onReset={() => reset()} count={count} />
+      <Narr step={fr.step} steps={fr.steps}>
+        {fr.frame.say ? (
+          <>
+            {fr.frame.say}
+          </>
+        ) : (
+          <>{d.parent.length} elements, each in a set of its own: every one is a root. union links one root under another, and find climbs to the root. press the yellow button.</>
+        )}
+      </Narr>
+      <Stage w={w} h={h} focus={hot.length ? spots[hot[0]].x : undefined} fit={fit} speed={speed} label="the forest of sets">
+        {spots.map((p) => {
+          const up = d.parent[p.v]
+          const on = path.includes(p.v)
+          return up === p.v ? null : <Edge key={p.v} x1={p.x} y1={p.y} x2={spots[up].x} y2={spots[up].y} stroke={on ? 'var(--red-pen)' : 'var(--pencil)'} w={on ? 2.8 : 1.3} />
+        })}
+        {spots.map((p) => (
+          <Node key={p.v} x={p.x} y={p.y} r={12} label={p.v} paint={hot.includes(p.v) ? PAINT.hot : path.includes(p.v) ? PAINT.bad : PAINT.plain} tag={d.parent[p.v] === p.v && o.byRank ? `r${d.rank[p.v]}` : undefined} />
+        ))}
+      </Stage>
+      <p className="algo-say" style={{ margin: '4px 0 0' }}>
+        {d.parent.length} elements in {sets} set{s(sets)} · tallest tree {height(d)} · {steps} pointer step{s(steps)} in {count} operation{s(count)}
+        {count ? ` = ${r1(steps / count)} each` : ''}
+        {sets === 1 && (!grow || d.parent.length >= UF_MAX) ? ' · everything is one set now, so from here on it only does finds' : ''}
+      </p>
+      <OpLog log={log} />
     </Fig>
   )
 }

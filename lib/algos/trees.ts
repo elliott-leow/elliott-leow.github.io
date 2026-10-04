@@ -25,11 +25,13 @@ export type BEvent =
   | { type: 'put'; key: string; leaf: string[] }
 export const cloneB = (n: BNode): BNode => ({ keys: n.keys.slice(), kids: n.kids.map(cloneB) })
 
-export function btInsert(root: BNode | null, key: string, t: number): { root: BNode; events: BEvent[]; splits: number; dup: boolean } {
+/** `snaps[i]` is the whole tree right after `events[i]`, for drawing an insert one step at a time */
+export function btInsert(root: BNode | null, key: string, t: number): { root: BNode; events: BEvent[]; snaps: BNode[]; splits: number; dup: boolean } {
   const events: BEvent[] = []
+  const snaps: BNode[] = []
   if (!root) {
     events.push({ type: 'put', key, leaf: [key] })
-    return { root: { keys: [key], kids: [] }, events, splits: 0, dup: false }
+    return { root: { keys: [key], kids: [] }, events, snaps: [{ keys: [key], kids: [] }], splits: 0, dup: false }
   }
   let r = cloneB(root)
   const max = 2 * t - 1
@@ -43,20 +45,20 @@ export function btInsert(root: BNode | null, key: string, t: number): { root: BN
     parent.keys.splice(i, 0, med)
     parent.kids.splice(i + 1, 0, right)
     events.push({ type: 'split', before, median: med, root: isRoot, depth })
+    snaps.push(cloneB(r))
   }
   // already there? (no changes, no splits)
   {
     let n: BNode | undefined = r
     while (n) {
       const i = n.keys.findIndex((k) => cmp(k, key) >= 0)
-      if (i >= 0 && cmp(n.keys[i], key) === 0) return { root, events: [], splits: 0, dup: true }
+      if (i >= 0 && cmp(n.keys[i], key) === 0) return { root, events: [], snaps: [], splits: 0, dup: true }
       n = n.kids.length ? n.kids[i < 0 ? n.keys.length : i] : undefined
     }
   }
   if (r.keys.length === max) {
-    const nr: BNode = { keys: [], kids: [r] }
-    splitChild(nr, 0, 0, true)
-    r = nr
+    r = { keys: [], kids: [r] }
+    splitChild(r, 0, 0, true)
   }
   let node = r
   let depth = 0
@@ -74,7 +76,21 @@ export function btInsert(root: BNode | null, key: string, t: number): { root: BN
   if (j < 0) j = node.keys.length
   node.keys.splice(j, 0, key)
   events.push({ type: 'put', key, leaf: node.keys.slice() })
-  return { root: r, events, splits: events.filter((e) => e.type === 'split').length, dup: false }
+  snaps.push(cloneB(r))
+  return { root: r, events, snaps, splits: events.filter((e) => e.type === 'split').length, dup: false }
+}
+
+/** the nodes a lookup of `key` walks through, root first */
+export function btPath(root: BNode | null, key: string): BNode[] {
+  const out: BNode[] = []
+  let n: BNode | undefined = root ?? undefined
+  while (n) {
+    out.push(n)
+    const i = n.keys.findIndex((k) => cmp(key, k) <= 0)
+    if (i >= 0 && cmp(n.keys[i], key) === 0) break
+    n = n.kids.length ? n.kids[i < 0 ? n.keys.length : i] : undefined
+  }
+  return out
 }
 
 export const btHeight = (n: BNode | null): number => (!n ? 0 : 1 + (n.kids.length ? btHeight(n.kids[0]) : 0))

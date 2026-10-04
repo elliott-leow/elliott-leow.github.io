@@ -111,6 +111,27 @@ export function link(a: BT, b: BT): BT {
   const [lo, hi] = a.key <= b.key ? [a, b] : [b, a]
   return { ...lo, kids: [...lo.kids, hi] }
 }
+/** a loose row of trees (orders may repeat), smallest order first */
+export const byOrder = (f: BT[]) => f.map((t, i) => ({ t, i })).sort((a, b) => a.t.kids.length - b.t.kids.length || a.i - b.i).map((x) => x.t)
+/** binary addition one carry at a time: each step links the first two trees of the lowest order that has a pair */
+export function linkSteps(forest: BT[]) {
+  const steps: { forest: BT[]; a: BT; b: BT; order: number }[] = []
+  let f = byOrder(forest)
+  for (;;) {
+    const i = f.findIndex((t, j) => j + 1 < f.length && f[j + 1].kids.length === t.kids.length)
+    if (i < 0) return steps
+    const [a, b] = [f[i], f[i + 1]]
+    f = byOrder([...f.slice(0, i), link(a, b), ...f.slice(i + 2)])
+    steps.push({ forest: f, a, b, order: a.kids.length })
+  }
+}
+/** a row with no repeated order, as a heap indexed by order */
+export const toHeap = (forest: BT[]): BH => {
+  const h: BH = []
+  for (const t of forest) h[t.kids.length] = t
+  for (let i = 0; i < h.length; i++) h[i] ??= null
+  return h
+}
 export type MeldStep = { order: number; have: string[]; action: string; carryOut: boolean }
 export function meld(h1: BH, h2: BH) {
   const A = cloneH(h1)

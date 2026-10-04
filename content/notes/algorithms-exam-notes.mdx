@@ -14,6 +14,7 @@ Do not read it top to bottom. Open one lecture, finish it, close it. Every lectu
 - **Yellow box:** the problem, as an input and an output.
 - **Green box, "before you touch it":** it comes in front of every figure. It says what the figure is, what the colours mean, and what to press, in order. Tap a step to tick it off.
 - **Figures** are the taped-in sheets. Buttons, sliders and most cells in them respond to a tap. The caption under a figure changes as you play and says what just happened.
+- **Yellow button, "▶ random operation":** the data structures (trees, heaps, union-find) have one. Each press does one operation with random arguments and plays it step by step. Everything else in those figures is a setting.
 - **Red bar, "step through it":** a proof or derivation, one step per tap. Guess the next step before you tap.
 - **Blue dashed box, "quick check":** tap an answer. A wrong answer lets you try again. A lecture turns ✓ done when all of its checks are right.
 - **Blue bar, "recall":** say the answer out loud first, then tap to open it and grade yourself.
@@ -1167,12 +1168,12 @@ A **B-tree** for a chosen t ≥ 2 has three properties:
 - insert F: on the way down we meet that full leaf and split it. C moves up to the root, which becomes C H M R, and the leaf becomes [A B] and [D E F].
 - a later insert that meets a full root splits the root first: the median becomes a new one-key root and the tree is one level taller.
 
-<Guide fig="B-tree" shows="A B-tree. Each node holds several sorted keys and has one more child than it has keys. Yellow marks the key that just moved up in a split. The line under the tree checks the three B-tree properties.">
-1. Leave **t = 2** and press **insert next** repeatedly. The keys E, F, G, … are inserted in order. Yellow marks the key that just moved up. Predict which nodes will split before each press.
-2. Notice the nodes you pass on the way down: only <Hl>full</Hl> ones split, and only <U>while descending</U>. The parent can never be full, because a full parent would have been split already.
-3. Type your own key and press Enter, or switch to **t = 3** (up to 5 keys) and compare how often it splits.
-4. The line under the tree reports **properties all hold ✓**. Try to break it.
-5. Try inserting keys in sorted order: the tree still has all leaves at one depth.
+<Guide fig="B-tree" shows="A B-tree that grows by one random key each time you press the yellow button. Each node holds several sorted keys and has one more child than it has keys. Blue is the path the new key walks down, red is a full node on that path, and yellow is the key that just moved. The dots in the caption count the steps of the insert, and the line under the tree checks the three B-tree properties.">
+1. Press **▶ random operation** once and only watch. First the path down turns blue, then any full (red) node on it splits, then the key lands in a leaf (yellow). The caption says what each step did.
+2. Keep pressing. Before each press, look for full nodes and predict which will split. Only <Hl>full</Hl> ones split, and only <U>while descending</U>: the parent can never be full, because it would have been split already.
+3. Wait for a split of the root. That is the only moment the tree gets taller, and every leaf moves down together.
+4. The tree gets wider than the page. It scrolls to the key by itself, or switch **view** to "whole thing". Set **speed** to "fast" and press 40 times: the line under the tree counts splits against inserts.
+5. Under **settings**, switch to **t = 3** or **t = 4** (the tree starts over) and compare how often it splits. Then switch to **increasing keys**: sorted input, and still all leaves at one depth.
 </Guide>
 
 <BTreeLab />
@@ -1230,11 +1231,12 @@ Together: the longest root-to-leaf path has at most twice as many links as the s
 
 The lecture splits full nodes on the way down (like a B-tree); the book, and the figure, insert first and repair on the way back up. Both keep the same correspondence with the 2-3-4 tree.
 
-<Guide fig="red-black tree" shows="A red-black tree. A red link ties a node to its parent inside one 2-3-4 node. A black link is a real edge of the 2-3-4 tree. The view switch redraws the same keys as that 2-3-4 tree.">
-1. Press **insert next** and then move the **fix-up step** slider (it appears when an insert needs repairs). Each step is one recolor or rotation, and the caption tells you which. Between steps the line under the tree tells you whether all properties hold.
-2. Flip **view** to "2-3-4 tree" after each insert. Every black node with its red children is one 2-3-4 node. The tree beneath should look like the B-tree lab with t = 2.
-3. Press **start over, sorted input**, then insert 1, 2, 3, …. A plain BST would be a path. Here the height stays small.
-4. Click a node, then press **rotate left / right**. The order is kept but colors are not moved, so properties usually break: that is why rotations are always paired with recoloring.
+<Guide fig="red-black tree" shows="A red-black tree that grows by one random key each time you press the yellow button, and under it the same keys drawn as a 2-3-4 tree. A red node, with its thick red link, is glued to its parent inside one 2-3-4 node. A black link is a real edge of the 2-3-4 tree. A blue ring marks the nodes the current step is about. The dots in the caption count the steps of the insert.">
+1. Press **▶ random operation** and only watch. The path down gets blue rings, the key is hung on as a red leaf, and then each repair is one step: a recolor or a rotation. The caption names it and says whether a rule is still broken.
+2. Compare with the 2-3-4 tree underneath after each step. Every black node with its red children is one node there. A recolor is a split of a 3-key node, and a rotation does not change the 2-3-4 tree at all.
+3. Keep pressing. Most inserts need no fix, and the line under the tree counts recolors and rotations against inserts.
+4. Under **settings**, switch to **increasing keys** and press **start over**. A plain BST would be a path. Here the height stays under 2 log(n + 1), which the line under the tree prints.
+5. The tree gets wider than the page: it scrolls to the action, or switch **view** to "whole thing".
 </Guide>
 
 <RedBlackLab />
@@ -1465,12 +1467,12 @@ Doubling copies at sizes 1, 2, 4, …, total at most 2n, so the total cost is O(
 - **Delete:** swap with the last node, remove, then swim up or sink down as needed.
 - **Meld** two heaps of size n: put all of H₂ at the end of H₁'s array (O(n), heap order is now wrecked), then sink every node starting from the last parent and going back to the root. This is **build-heap**, and it costs O(n), not n log n.
 
-<Guide fig="the binary heap" shows="One min-heap drawn twice: as a tree, and underneath as the array it is really stored in. The smallest key is at the root, which is position 0 of the array.">
-1. Type a value and press **insert**. The new node appears at the bottom and swims up. Use the **replay** slider to step through the swaps.
-2. Press **extract-min**: the root is replaced by the last node and sinks.
-3. Click a node to pick it, then press **decrease picked by 10** (it swims) or **delete picked**.
-4. The array under the tree shows the same heap stored in an array: the children of index i are 2i + 1 and 2i + 2.
-5. Read the caption after an extract-min: the amortized cost.
+<Guide fig="the binary heap" shows="One min-heap drawn twice: as a tree, and underneath as the array it is really stored in, with the position under each cell. Each press of the yellow button does one random operation and plays it one swap at a time. Yellow marks the nodes the current step is about, and the dots in the caption count the steps.">
+1. Press **▶ random operation** and only watch. An insert appears at the bottom and swims up. An extract-min swaps the root with the last node, removes it, and sinks the new root. The caption explains every swap.
+2. Watch the array at the same time: a swap in the tree is a swap of positions i and (i − 1)/2 in the array.
+3. Keep pressing. The list under the figure keeps the last operations with their swaps and ΔΦ, and after each operation the blue line gives cost + ΔΦ. Find an extract-min and read its amortized cost.
+4. Under **settings**, slide **how often it inserts** down to make the heap shrink, or up to 100% to only grow it (it stops at 63 nodes).
+5. Turn on **decrease-key** and **delete** to mix those in. Decrease-key only ever swims up. Delete can go either way.
 </Guide>
 
 <BinaryHeapLab />
@@ -1498,13 +1500,13 @@ Doubling copies at sizes 1, 2, 4, …, total at most 2n, so the total cost is O(
 
 ### binomial heaps
 
-<Guide fig="the binomial heap" shows="A binomial heap: a row of trees, at most one of each size 1, 2, 4, 8, … The table shows the binary addition that an insert or a meld performs, where each carry is one link.">
-1. Start from 11 keys: 11 = 1011 in binary, so the heap has trees B₃, B₁ and B₀ (8 + 2 + 1 nodes). Check it against the drawing.
-2. Press **insert random** once. That is like adding 1: 1011 + 1 = 1100. The table of carries shows each link (the carry). The potential Φ (the number of trees) drops by the number of links minus one.
-3. Keep inserting until an insert links many trees at once, then note the amortized cost stays 2.
-4. Press **extract-min**: the minimum root is removed, its children (B<sub>k−1</sub> … B₀) are a heap, and that heap is melded back.
-5. Press **meld with a 7-heap**: binary addition of the two sizes.
-6. Click a node and press **decrease picked to 0**: it swims up.
+<Guide fig="the binomial heap" shows="A binomial heap: a row of trees with the smallest order on the left, each root labelled B0, B1, B2, … Each press of the yellow button does one random operation and plays it one link at a time. Yellow marks the two trees being linked, and blue marks a second heap that is being melded in. The dots in the caption count the steps.">
+1. It starts with 11 keys: 11 = 1011 in binary, so the trees are B0, B1 and B3 (1 + 2 + 8 nodes). Check that against the drawing and the blue line under it.
+2. Press **▶ random operation** and only watch. An insert drops in a new B0. If there was one already, the two link into a B1, and that may carry again: it is adding 1 in binary, one carry per step.
+3. Wait for an extract-min: the smallest root is removed, its children are a heap of their own, and that heap is added back.
+4. Wait for a meld: a blue heap appears, and the two sizes are added in binary.
+5. After each operation the blue line gives cost + ΔΦ, where Φ is the number of trees. Keep pressing until an insert links several trees at once and check that its amortized cost is still 2.
+6. Under **settings**, set **how often it inserts** to 100% to watch the counter count, or turn on **decrease-key** to see a key swim up inside its tree.
 </Guide>
 
 <BinomialLab />
@@ -1588,12 +1590,13 @@ Each set is a linked list. Every element points to the head (the representative)
 - **Link(r₁, r₂)** (roots only): the larger rank becomes the root. If ranks are equal, r₁ becomes the root and its rank goes up by one.
 - **Union(x, y):** Link(Find(x), Find(y)).
 
-<Guide fig="union-find" shows="Union-find drawn as a forest. Each element has an arrow to its parent. A root is the representative of its set and shows its rank (r0, r1, …). The table runs the same unions under four settings.">
-1. Click two elements (they get a blue ring) and press **union**. An arrow means "my parent is…". A root has its rank next to it (r0, r1, …).
-2. Click one element and press **find**: the path is highlighted, and with compression on, its nodes then point at the root.
-3. Press **chain: (0,1) (1,2) (2,3)…** with **union by rank** and **path compression** both off. This makes a long path, so Find is slow.
-4. Turn on **union by rank**: the same chain now stays shallow. Turn on **path compression** too.
-5. The table shows the same 63 unions four ways (naive, rank only, compression only, both) with steps and height.
+<Guide fig="union-find" shows="Union-find drawn as a forest, one tree per set. A line going up from an element means 'my parent is…'. The element at the top of a tree is the root, the name of its set, and shows its rank (r0, r1, …). Each press of the yellow button does one random operation: a make-set (a new element appears), a union or a find. Red marks the parent pointers that were followed and yellow the elements the current step is about. The table underneath runs the same unions under four settings.">
+1. Press **▶ random operation** and only watch. A union first finds both roots (red), then links one root under the other (yellow). The caption says which root went underneath and why.
+2. Keep pressing until the trees have a few levels, then wait for a find or a union that starts deep: with path compression on, the whole red path is re-pointed straight at the root in its own step.
+3. Under **settings**, turn off **union by rank** and **path compression** (the forest starts over) and press 30 times on "fast". The trees get tall and the line under the figure shows more pointer steps per operation.
+4. Turn **union by rank** back on and do the same. Then both. Compare the steps per operation.
+5. For a long run, leave **make-set** on: new elements keep arriving, up to 64. Turn it off and everything ends up in one set, after which it only does finds, which is where compression pays off.
+6. The table shows the same 63 unions four ways (naive, rank only, compression only, both) with steps and height.
 </Guide>
 
 <UnionFindLab />

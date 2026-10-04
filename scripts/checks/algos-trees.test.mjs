@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { bstInsert, bstHeight, bstInorder, btInsert, btValid, btKeys, btHeight, btNodes, worstSequence, NAIVE_BAD, bestNextAmortized, bankRun, rbInsert, rbValid, rbInorder, rbHeight, rbRotate, to234, rbBlackHeight } from '../../lib/algos/trees.ts'
+import { bstInsert, bstHeight, bstInorder, btInsert, btValid, btKeys, btHeight, btNodes, btPath, worstSequence, NAIVE_BAD, bestNextAmortized, bankRun, rbInsert, rbValid, rbInorder, rbHeight, rbRotate, to234, rbBlackHeight } from '../../lib/algos/trees.ts'
 import { rng, shuffle, ri } from '../../lib/algos/rng.ts'
 
 test('BST: lecture example H O P K I N S; sorted input is a path', () => {
@@ -106,4 +106,24 @@ test('red-black: inserting 1,2,3 makes a rotation with 2 at the top', () => {
   assert.equal(t.key, 2)
   assert.equal(t.red, false)
   assert.equal(t.l.red && t.r.red, true)
+})
+
+test('B-tree insert snapshots: one valid tree per event, the last one is the result; btPath ends at the key', () => {
+  const r = rng(5)
+  for (const t of [2, 3, 4]) {
+    let root = null
+    for (const k of shuffle(Array.from({ length: 120 }, (_, i) => String(i + 1)), r)) {
+      const x = btInsert(root, k, t)
+      assert.equal(x.snaps.length, x.events.length)
+      for (const s of x.snaps) assert.deepEqual(btValid(s, t), [])
+      assert.deepEqual(x.snaps[x.snaps.length - 1], x.root)
+      // a split moves keys around but adds none; only the last step adds the key
+      x.snaps.slice(0, -1).forEach((s) => assert.equal(btKeys(s).length, btKeys(root).length))
+      root = x.root
+      const path = btPath(root, k)
+      assert.ok(path[path.length - 1].keys.includes(k))
+      assert.equal(path[0], root)
+    }
+    assert.deepEqual(btInsert(root, '7', t).snaps, [])
+  }
 })

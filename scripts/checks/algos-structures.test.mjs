@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { pushCosts, increment, dictInsert, dictLookup, mtfRun, bestStatic, listCost } from '../../lib/algos/amort.ts'
-import { insert, extractMin, decreaseKey, deleteAt, isHeap, buildBySwim, buildBySink, sinkBound, potential, depthOf, sink, swim, bhInsert, bhExtractMin, bhFindMin, bhDecreaseKey, bhValid, meld, orders, treesIn, sizeH, heapKeys, single, cloneH } from '../../lib/algos/heaps.ts'
+import { insert, extractMin, decreaseKey, deleteAt, isHeap, buildBySwim, buildBySink, sinkBound, potential, depthOf, sink, swim, bhInsert, bhExtractMin, bhFindMin, bhDecreaseKey, bhValid, meld, orders, treesIn, sizeH, heapKeys, single, cloneH, linkSteps, toHeap, byOrder } from '../../lib/algos/heaps.ts'
 import { makeDSU, find, union, height, components, depth } from '../../lib/algos/dsu.ts'
 import { collisionProbability, collisionFree, buildFKS, fksLookup, hab, loads, collisions, matHash, matCollisionProbability } from '../../lib/algos/hashing.ts'
 import { rng, shuffle, ri } from '../../lib/algos/rng.ts'
@@ -173,6 +173,23 @@ test('binomial heap meld = binary addition; decrease-key swims up', () => {
       assert.deepEqual(bhValid(d.heap), [])
       assert.equal(bhFindMin(d.heap).key, -5)
     }
+  }
+})
+test('linking one carry at a time ends in the same shape as meld, and never loses a key', () => {
+  const r = rng(11)
+  for (let trial = 0; trial < 40; trial++) {
+    const mk = (n) => { let h = []; for (let i = 0; i < n; i++) h = bhInsert(h, ri(r, 1, 500)).heap; return h }
+    const a = mk(ri(r, 0, 40)), b = mk(ri(r, 1, 20))
+    const row = [...a, ...b].filter(Boolean)
+    const steps = linkSteps(row)
+    const end = steps.length ? steps[steps.length - 1].forest : byOrder(row)
+    const h = toHeap(end)
+    assert.deepEqual(bhValid(h), [])
+    assert.equal(steps.length, meld(a, b).links)
+    assert.deepEqual(orders(sizeH(a) + sizeH(b)), end.map((t) => t.kids.length))
+    assert.deepEqual(heapKeys(h).sort((x, y) => x - y), [...heapKeys(a), ...heapKeys(b)].sort((x, y) => x - y))
+    // each step removes exactly one tree and links two of the same order
+    steps.forEach((s, i) => { assert.equal(s.a.kids.length, s.b.kids.length); assert.equal(s.forest.length, row.length - i - 1) })
   }
 })
 test('lecture meld example sizes: 17 + 13 heaps', () => {
