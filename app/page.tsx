@@ -11,54 +11,64 @@ export default function Home() {
   return (
     <div className="page">
       {/* photos go back here, see content/notes/template.mdx */}
-      <div className="pg-intro">
+      <header className="pg-intro">
         <h1 className="sr-only">Elliott Leow</h1>
         <div className="pg-name">
           <Signature />
         </div>
-        <Typed className="mono pg-line" text="almost done with undergrad." speed={20} />
-      </div>
+        <div className="pg-card">
+          <Typed className="mono pg-fullname" text="Elliott Leow" speed={30} />
+          <Typed className="mono pg-line" text="Biomedical engineering + computer science, Johns Hopkins" delay={360} speed={14} />
+        </div>
+        {/* contact sits with the name, so it is the first thing you reach on a phone too */}
+        <ul className="pg-links" aria-label="Contact">
+          <li>
+            <InkLink href={`mailto:${links.email}`} icon="email">email</InkLink>
+          </li>
+          <li>
+            <InkLink href={links.github} i={1} icon="github">
+              github
+            </InkLink>
+          </li>
+          <li>
+            <InkLink href={links.linkedin} i={2} icon="linkedin">
+              linkedin
+            </InkLink>
+          </li>
+        </ul>
+      </header>
 
-      <section className="pg-about" aria-labelledby="about-h">
-        <Hand as="h2" className="pg-notes-h" trigger="load">
-          <span id="about-h">about me</span>
+      <section className="pg-section pg-about" aria-labelledby="about-h">
+        <Hand as="h2" className="pg-label" trigger="load">
+          <span id="about-h">about</span>
         </Hand>
-        <p className="mono pg-about-text">i study biomedical engineering and computer science at johns hopkins. im interested in medical devices and ai in healthcare. i also like (assisting) <Link href="/notes/teaching-experience/" style={{ textDecoration: 'none' }}><Underlined>teaching</Underlined></Link></p>
+        <p className="pg-prose">
+          I&rsquo;m interested in medical devices and AI in healthcare. I also like (assisting){' '}
+          <Link href="/notes/teaching-experience/" className="pg-inline">
+            <Underlined>teaching</Underlined>
+          </Link>
+          .
+        </p>
       </section>
 
-      <section className="pg-music" aria-labelledby="music-h">
-        <Hand as="h2" className="pg-notes-h" trigger="load">
-          <span id="music-h">music</span>
+      <section className="pg-section pg-music" aria-labelledby="music-h">
+        <Hand as="h2" className="pg-label" trigger="load">
+          <span id="music-h">listening</span>
         </Hand>
         <Music />
       </section>
 
-      <ul className="pg-links">
-        <li>
-          <InkLink href={`mailto:${links.email}`} icon="email">email</InkLink>
-        </li>
-        <li>
-          <InkLink href={links.github} i={1} icon="github">
-            github
-          </InkLink>
-        </li>
-        <li>
-          <InkLink href={links.linkedin} i={2} icon="linkedin">
-            linkedin
-          </InkLink>
-        </li>
-      </ul>
-
-      <section className="pg-notes" aria-labelledby="notes-h">
-        <Hand as="h2" className="pg-notes-h" trigger="load">
+      <section className="pg-section pg-notes" aria-labelledby="notes-h">
+        <Hand as="h2" className="pg-label" trigger="load">
           <span id="notes-h">notes</span>
         </Hand>
-        <NoteIndex limit={3} compact />
-        <Link href="/notes/" className="pg-notes-all hand">
-          all of them →
-        </Link>
+        <div>
+          <NoteIndex limit={3} compact />
+          <Link href="/notes/" className="pg-notes-all hand">
+            all notes →
+          </Link>
+        </div>
       </section>
-
     </div>
   )
 }

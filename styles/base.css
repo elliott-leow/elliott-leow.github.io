@@ -4,8 +4,8 @@
   --paper-dark: #ebe5d8;
   --paper-edge: #e2dac9;
   --ink: #1f1e1c;
-  /* the typed voice (Plex Mono) prints in pure black */
-  --mono-ink: #000;
+  /* the typed voice (Plex Mono) prints in a warm near-black: pure black on cream is harsh to read */
+  --mono-ink: #24221f;
   /* a paper-coloured halo, so the dot grid never cuts through the letters */
   --mono-halo: 0 0 1px var(--paper), 0 0 2px var(--paper), 0 0 4px var(--paper);
   --pencil: #66625c;
@@ -15,7 +15,9 @@
   --highlight: rgba(238, 213, 111, 0.45);
   --highlight-pink: rgba(232, 150, 160, 0.32);
   --highlight-green: rgba(160, 200, 140, 0.36);
-  --dot: rgba(70, 90, 100, 0.34);
+  --dot: rgba(70, 90, 100, 0.2);
+  /* a hairline, for separating the header from what follows */
+  --rule: rgba(80, 70, 55, 0.16);
   --shu: #c23b22;
   --tape: rgba(214, 196, 150, 0.8);
 
@@ -24,6 +26,8 @@
 
   /* the pen voice: neat marker handwriting, for the name, links and headings */
   --hand: var(--font-hand), 'Shantell Sans', 'Segoe Print', 'Bradley Hand', sans-serif;
+  /* the reading voice, for sentences: same family as the mono, so the two sit together */
+  --serif: var(--font-serif), 'IBM Plex Serif', Georgia, serif;
   --mono: var(--font-mono), 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
   --pad-x: clamp(18px, 6vw, 52px);

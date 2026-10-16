@@ -5,9 +5,9 @@ import { useEffect, type RefObject } from 'react'
 /** the pieces of each page that move on their own when the window changes size; none sits inside another */
 const PIECES = [
   '.pg-name',
-  '.pg-line',
+  '.pg-card',
   '.pg-links li',
-  '.pg-notes',
+  '.pg-section',
   '.pg-photos',
   '.notes-page > *',
   '.note-page > *',

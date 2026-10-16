@@ -77,7 +77,7 @@ export default function Music() {
     : playback.status === 'loading' ? 'tuning in…' : 'nothing playing here yet.'
   return (
     <div className="music-entry">
-        <Photo photo={{ id: 'music', src: track?.image ?? blank, alt: track ? `Album cover for ${track.album}` : 'An empty space for an album cover', caption: typeof track?.playlist === 'string' ? track.playlist : '', rotation: -3, aspect: 1, variant: 'polaroid', tape: [{ x: 30, y: -11, w: 68, rot: 5, opacity: 0.65 }] }} width={144} className="music-photo" />
+        <Photo photo={{ id: 'music', src: track?.image ?? blank, alt: track ? `Album cover for ${track.album}` : 'An empty space for an album cover', caption: typeof track?.playlist === 'string' ? track.playlist : '', rotation: -3, aspect: 1, variant: 'polaroid', tape: [{ x: 30, y: -11, w: 68, rot: 5, opacity: 0.65 }] }} width={108} className="music-photo" />
         <div className="music-writing" aria-live="polite" aria-atomic="true">
           {track ? <>
             <InkLink key={track.url} href={track.url} i={2} className="music-title">{track.title}</InkLink>
