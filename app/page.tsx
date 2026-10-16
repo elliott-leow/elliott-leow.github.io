@@ -17,8 +17,7 @@ export default function Home() {
           <Signature />
         </div>
         <div className="pg-card">
-          <Typed className="mono pg-fullname" text="Elliott Leow" speed={30} />
-          <Typed className="mono pg-line" text="Biomedical engineering + computer science, Johns Hopkins" delay={360} speed={14} />
+          <Typed className="pg-line" text="Biomedical engineering + computer science, Johns Hopkins" speed={14} />
         </div>
         {/* contact sits with the name, so it is the first thing you reach on a phone too */}
         <ul className="pg-links" aria-label="Contact">

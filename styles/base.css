@@ -26,8 +26,8 @@
 
   /* the pen voice: neat marker handwriting, for the name, links and headings */
   --hand: var(--font-hand), 'Shantell Sans', 'Segoe Print', 'Bradley Hand', sans-serif;
-  /* the reading voice, for sentences: same family as the mono, so the two sit together */
-  --serif: var(--font-serif), 'IBM Plex Serif', Georgia, serif;
+  /* the reading voice, for sentences */
+  --sans: var(--font-sans), 'Inter', system-ui, sans-serif;
   --mono: var(--font-mono), 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
   --pad-x: clamp(18px, 6vw, 52px);
