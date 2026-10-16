@@ -42,7 +42,7 @@ export default function Home() {
           <span id="about-h">about</span>
         </Hand>
         <p className="pg-prose">
-          I&rsquo;m interested in medical devices and AI in healthcare. I also like (assisting){' '}
+          I'm interested in medical devices and AI in healthcare. I also like (assisting){' '}
           <Link href="/notes/teaching-experience/" className="pg-inline">
             <Underlined>teaching</Underlined>
           </Link>

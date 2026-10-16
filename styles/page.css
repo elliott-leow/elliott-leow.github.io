@@ -123,9 +123,9 @@
   margin-top: 14px;
 }
 .pg-line {
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.6;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.7;
   color: var(--pencil);
   text-shadow: var(--mono-halo);
 }
@@ -357,8 +357,8 @@
   rotate: -1deg;
 }
 .pg-prose {
-  font-family: var(--sans);
-  font-size: 16px;
+  font-family: var(--mono);
+  font-size: 15px;
   line-height: 1.7;
   color: var(--ink);
   text-shadow: var(--mono-halo);
