@@ -155,3 +155,17 @@ if __name__ == '__main__':
     names = sys.argv[1:] or list(ART)
     with cf.ThreadPoolExecutor(8) as ex:
         for msg in ex.map(gen, names): print(msg, flush=True)
+
+
+# Chiikawa (art/raw/chiikawa3-*.png) is drawn from a reference picture through the edit endpoint, which this script
+# doesn't call. To redo it:
+#   curl https://api.openai.com/v1/images/edits -H "Authorization: Bearer $OPENAI_API_KEY" -F model=gpt-image-2 \
+#     -F "image[]=@chiikawa-reference.png" -F size=1024x1024 -F quality=high -F n=3 -F "prompt=$CHIIKAWA_EDIT"
+CHIIKAWA_EDIT = ("Redraw this character (Chiikawa) with the exact same shape, pose, proportions and sweet expression, as a "
+    "delicate line drawing in white gel pen on pure flat black paper, in the style of a fine stippled gel-pen illustration "
+    "of a pine tree on dark paper: the contour drawn as a fine white line made of tiny dots and short strokes; the body NOT "
+    "filled in, left as the black paper; the eyes are the character's cute shiny eyes drawn in line: each a small "
+    "white-outlined round eye with a small white highlight sparkle inside, looking sweet and friendly, never empty or "
+    "staring; the little brows and tiny cat-like mouth in thin white line; the blush marks as short hatched strokes in "
+    "pale gold gel pen. Cute and gentle, clearly Chiikawa. Small, centred, alone, nothing else; the background is "
+    "completely black with no texture, border, frame or text.")

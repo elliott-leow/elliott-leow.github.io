@@ -267,7 +267,7 @@ a:hover .pic-title, a:focus-visible .pic-title { background-size: 100% 0.5em; }
 /* Chiikawa on the ledge, drawn in the same white gel pen as the pine (its feet on the rock: placed by its foot, 5.8% of
    the drawing's height tall); still, there with the drawing from the start, found on a second look. Not on a phone:
    the tall drawing has no ledge with room for it */
-.critter { --ch: calc(var(--dh) * 0.058); width: calc(var(--ch) * 0.933); height: var(--ch); transform: translate(-50%, -94%); opacity: 0.92; }
+.critter { --ch: calc(var(--dh) * 0.058); width: calc(var(--ch) * 0.955); height: var(--ch); transform: translate(-50%, -94%); }
 @media (max-width: 700px) { .critter { display: none; } }
 .critter img { display: block; width: 100%; height: 100%; }
 
