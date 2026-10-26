@@ -72,25 +72,6 @@ def night():
     if os.path.exists(p): save(fit(Image.open(p).convert('RGB'), 900), 'cards/record.webp', 86)
 
 
-def critter(name='chiikawa3-2', fill=(27, 39, 70), close=45):
-    """Chiikawa on the ledge: drawn (tools/gen-art.py, from a reference, through the image edit endpoint) as stippled
-    white gel-pen line on black, like the pine. The line comes off the black as everything else does; underneath, the
-    inside of its contour is filled with the night's navy so the rock behind doesn't show through. (close: the contour
-    has small gaps, as a pen line does, so it is grown this many pixels to close them before its inside is found)"""
-    from PIL import ImageDraw
-    ink = unblack(raw(name), floor=0.07, gain=1.7)
-    a = ink.split()[3]
-    solid = a.point(lambda v: 255 if v > 40 else 0).filter(ImageFilter.MaxFilter(close))
-    ImageDraw.floodfill(solid, (0, 0), 128)
-    body = solid.point(lambda v: 255 if v != 128 else 0).filter(ImageFilter.MinFilter(close)).filter(ImageFilter.GaussianBlur(1.2))
-    out = Image.new('RGBA', ink.size, fill + (0,)); out.putalpha(body)
-    out.alpha_composite(ink)
-    box = out.getbbox()
-    pad = 8
-    out = out.crop((box[0] - pad, box[1] - pad, box[2] + pad, box[3] + pad))
-    save(fit(out, 320), 'hero/critter.webp', 90)
-
-
 # ------------------------------------------------------------------------------------------- papers
 def noise(size, scale, octaves=4, seed=0):
     """tileable value noise: sums of wrapped, blurred random fields"""
@@ -286,5 +267,5 @@ def rules():
 
 if __name__ == '__main__':
     import sys
-    which = sys.argv[1:] or ['night', 'critter', 'papers', 'edges', 'tapes', 'rules']
+    which = sys.argv[1:] or ['night', 'papers', 'edges', 'tapes', 'rules']
     for w in which: globals()[w]()

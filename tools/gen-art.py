@@ -105,33 +105,6 @@ ART.update({
     image is empty black apart from a few tiny stars. {DARK}"""),
 })
 
-CRITTER = ("a tiny, very round, soft little white creature shaped like a plump rice-ball or bean, no neck, two small round "
-           "ears on top, two dot eyes, a tiny mouth, little blush marks on its cheeks touched in gold, stubby little arms; "
-           "simple and endearing, drawn with only a few careful lines")
-ART.update({
-  'critter-moon': ('1024x1024', f"""{STYLE} {GEL} Subject: {CRITTER}, sitting seen from behind and a little to the side, looking up
-    and over its shoulder, one stubby arm raised as if waving at the moon. Small, centred, alone, nothing else in the image:
-    no ground line, no moon, no stars. {DARK}"""),
-  'critter-sit': ('1024x1024', f"""{STYLE} {GEL} Subject: {CRITTER}, sitting, seen in three-quarter view, looking up and to the
-    upper right with a small content smile, little arms resting on its round tummy. Small, centred, alone, nothing else in
-    the image: no ground line, no moon, no stars. {DARK}"""),
-  'critter-wave': ('1024x1024', f"""{STYLE} {GEL} Subject: {CRITTER}, sitting facing the viewer, one stubby arm up in a small
-    wave, eyes happy little arcs. Small, centred, alone, nothing else in the image: no ground line, no stars. {DARK}"""),
-})
-
-ART.update({
-  'chiikawa': ('1024x1024', f"""{STYLE} {GEL} Subject: Chiikawa, the small round white bear-like character from the manga
-    Chiikawa by Nagano: a tiny chubby white body with no neck, two small round ears, dot eyes, a tiny mouth, little blush
-    marks on its cheeks touched in gold, stubby arms. It sits facing the viewer and waves one little arm. Small, centred,
-    alone, nothing else in the image. Its body is filled in with soft white gel-pen stippling so it reads as a white
-    creature on the black paper. {DARK}"""),
-  'chiikawa-moon': ('1024x1024', f"""{STYLE} {GEL} Subject: Chiikawa, the small round white bear-like character from the manga
-    Chiikawa by Nagano, sitting seen in three-quarter view from behind and to the side, looking up over its shoulder at the
-    sky, one stubby arm raised in a little wave; tiny ears, dot eye, a gold blush mark on its cheek. Its body is filled in
-    with soft white gel-pen stippling so it reads as a white creature on the black paper. Small, centred, alone, nothing
-    else in the image. {DARK}"""),
-})
-
 HI = {'1536x1024': '3072x2048', '1024x1536': '2048x3072'}
 
 def gen(name):
@@ -156,16 +129,3 @@ if __name__ == '__main__':
     with cf.ThreadPoolExecutor(8) as ex:
         for msg in ex.map(gen, names): print(msg, flush=True)
 
-
-# Chiikawa (art/raw/chiikawa3-*.png) is drawn from a reference picture through the edit endpoint, which this script
-# doesn't call. To redo it:
-#   curl https://api.openai.com/v1/images/edits -H "Authorization: Bearer $OPENAI_API_KEY" -F model=gpt-image-2 \
-#     -F "image[]=@chiikawa-reference.png" -F size=1024x1024 -F quality=high -F n=3 -F "prompt=$CHIIKAWA_EDIT"
-CHIIKAWA_EDIT = ("Redraw this character (Chiikawa) with the exact same shape, pose, proportions and sweet expression, as a "
-    "delicate line drawing in white gel pen on pure flat black paper, in the style of a fine stippled gel-pen illustration "
-    "of a pine tree on dark paper: the contour drawn as a fine white line made of tiny dots and short strokes; the body NOT "
-    "filled in, left as the black paper; the eyes are the character's cute shiny eyes drawn in line: each a small "
-    "white-outlined round eye with a small white highlight sparkle inside, looking sweet and friendly, never empty or "
-    "staring; the little brows and tiny cat-like mouth in thin white line; the blush marks as short hatched strokes in "
-    "pale gold gel pen. Cute and gentle, clearly Chiikawa. Small, centred, alone, nothing else; the background is "
-    "completely black with no texture, border, frame or text.")
