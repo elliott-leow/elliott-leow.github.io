@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
-import { IBM_Plex_Mono } from 'next/font/google'
+import { IBM_Plex_Mono, Shantell_Sans } from 'next/font/google'
 import Notebook from '@/components/Notebook'
 import '@/styles/base.css'
 import '@/styles/notebook.css'
@@ -9,23 +9,17 @@ import '@/styles/page.css'
 import '@/styles/orbitals.css'
 import '@/styles/algos.css'
 
-const serif = localFont({
-  src: [
-    { path: '../public/fonts/KevinSerif-Regular.woff2', weight: '400', style: 'normal' },
-    { path: '../public/fonts/KevinSerif-Bold.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-serif',
+// a marker hand with an informality axis, set halfway between a clean sans and handwriting
+const hand = Shantell_Sans({ subsets: ['latin'], axes: ['INFM'], variable: '--font-hand' })
+const mono = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400', '500'] })
+
+const name = localFont({
+  src: '../public/fonts/KevinSerif-Bold.woff2',
+  weight: '700',
+  style: 'normal',
+  variable: '--font-name',
   display: 'swap',
 })
-const sans = localFont({
-  src: [
-    { path: '../public/fonts/KevinSans-Regular.woff2', weight: '400', style: 'normal' },
-    { path: '../public/fonts/KevinSans-Bold.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-sans',
-  display: 'swap',
-})
-const code = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-code', weight: ['400', '500'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://eleow.com'),
@@ -39,7 +33,7 @@ export const viewport: Viewport = { themeColor: '#f3eee1', width: 'device-width'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${code.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${hand.variable} ${mono.variable} ${name.variable}`} suppressHydrationWarning>
       <body>
         <Notebook>{children}</Notebook>
       </body>

@@ -40,7 +40,7 @@
   background-size: 640px 640px, 1011px 1011px, 100% 1400px, 100% 100%, 100% 1800px;
   background-position: 0 0, 217px 389px, 0 0, 0 0, 0 0;
   background-repeat: repeat, repeat, no-repeat, no-repeat, repeat-y;
-  opacity: 0.22;
+  opacity: 0.4;
 }
 /* opened on your lap: a little above it at first, the shadow tightening as it lands */
 @keyframes notebook-down {

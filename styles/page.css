@@ -112,25 +112,23 @@
 .pg-intro {
   padding-top: 24px;
 }
-/* The engraved serif is the hero's only flourish. */
+/* The name uses the static serif from the typography reference. */
 .pg-name {
   width: fit-content;
   max-width: 100%;
-  font-family: var(--serif);
+  font-family: var(--font-name), 'Iowan Old Style', Georgia, serif;
   font-size: clamp(48px, 8vw, 68px);
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: 0.005em;
 }
 .pg-card {
-  margin-top: 18px;
+  margin-top: 14px;
 }
 .pg-line {
   font-family: var(--mono);
-  font-size: 17px;
-  line-height: 1.6;
-  max-width: 48ch;
-  text-wrap: pretty;
+  font-size: 13.5px;
+  line-height: 1.7;
   color: var(--pencil);
   text-shadow: var(--mono-halo);
 }
@@ -252,8 +250,7 @@
 }
 .pg-links .ink-link {
   gap: 7px;
-  font-family: var(--sans);
-  font-size: 17px;
+  font-size: 19px;
 }
 .pg-links .ink-link-icon {
   width: 17px;
@@ -344,8 +341,8 @@
 /* a label in the margin and the entry beside it, like a page of a lab notebook */
 .pg-section {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  column-gap: 28px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 24px;
   align-items: baseline;
   /* takes the width the page gives it, and never widens the page itself */
   contain: inline-size;
@@ -358,12 +355,13 @@
   border-top: 1px solid var(--rule);
 }
 .pg-label {
-  font-size: 21px;
+  font-size: 19px;
   color: var(--pencil);
+  rotate: -1deg;
 }
 .pg-prose {
   font-family: var(--mono);
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.7;
   color: var(--ink);
   text-shadow: var(--mono-halo);
@@ -389,8 +387,7 @@
 .pg-notes-all {
   display: inline-block;
   margin-top: 6px;
-  font-family: var(--sans);
-  font-size: 16px;
+  font-size: 17px;
   color: var(--pencil);
   text-decoration: none;
 }
@@ -554,7 +551,7 @@
 }
 .note-body.typed {
   font-family: var(--mono);
-  font-size: 17px;
+  font-size: 14.5px;
   line-height: 32px;
   color: var(--mono-ink);
   text-shadow: var(--mono-halo);
@@ -596,7 +593,7 @@
   color: var(--pencil);
 }
 .note-body code {
-  font-family: var(--code);
+  font-family: var(--mono);
   font-size: 0.88em;
   background: rgba(36, 35, 33, 0.06);
   padding: 1px 4px;

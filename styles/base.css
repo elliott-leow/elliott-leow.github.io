@@ -4,7 +4,7 @@
   --paper-dark: #ebe5d8;
   --paper-edge: #e2dac9;
   --ink: #1f1e1c;
-  /* supporting text prints in a warm near-black */
+  /* the typed voice (Plex Mono) prints in a warm near-black: pure black on cream is harsh to read */
   --mono-ink: #24221f;
   /* a paper-coloured halo, so the dot grid never cuts through the letters */
   --mono-halo: 0 0 1px var(--paper), 0 0 2px var(--paper), 0 0 4px var(--paper);
@@ -15,7 +15,7 @@
   --highlight: rgba(238, 213, 111, 0.45);
   --highlight-pink: rgba(232, 150, 160, 0.32);
   --highlight-green: rgba(160, 200, 140, 0.36);
-  --dot: rgba(70, 90, 100, 0.13);
+  --dot: rgba(70, 90, 100, 0.2);
   /* a hairline, for separating the header from what follows */
   --rule: rgba(80, 70, 55, 0.16);
   --shu: #c23b22;
@@ -24,12 +24,9 @@
   --shadow-rest: 0 2px 4px rgba(30, 25, 20, 0.12), 0 8px 18px rgba(30, 25, 20, 0.06);
   --shadow-lift: 0 12px 24px rgba(30, 25, 20, 0.18), 0 3px 6px rgba(30, 25, 20, 0.1);
 
-  --serif: var(--font-serif), 'Iowan Old Style', Georgia, serif;
-  --sans: var(--font-sans), 'Avenir Next', 'Segoe UI', sans-serif;
-  --code: var(--font-code), 'IBM Plex Mono', ui-monospace, Menlo, monospace;
-  /* Retain the existing component tokens for the two text voices. */
-  --hand: var(--serif);
-  --mono: var(--sans);
+  /* the pen voice: neat marker handwriting, for the name, links and headings */
+  --hand: var(--font-hand), 'Shantell Sans', 'Segoe Print', 'Bradley Hand', sans-serif;
+  --mono: var(--font-mono), 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
   --pad-x: clamp(18px, 6vw, 52px);
   color-scheme: light;
@@ -54,13 +51,12 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.7;
   /* nothing may hang past the window's edge, so the page can never be scrolled sideways */
   overflow-x: hidden;
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: 'calt' 1;
 }
 img,
 svg {
@@ -117,8 +113,12 @@ ol {
 /* ------------------------------------------------------------------ voices */
 .hand {
   font-family: var(--hand);
-  font-weight: 400;
-  line-height: 1.2;
+  font-weight: 500;
+  /* halfway between print and handwriting */
+  font-variation-settings: 'INFM' 50;
+  /* sizes around the site were set for a handwriting face with a small x-height; this keeps them in proportion */
+  font-size-adjust: 0.42;
+  line-height: 1.15;
 }
 .mono {
   font-family: var(--mono);
