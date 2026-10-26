@@ -28,7 +28,9 @@ export function createHandler(fetcher = fetch, { now = () => Date.now() } = {}) 
     } catch {}
     return lastSeen
   }
-  const retryAfter = (response) => Math.max(30, Number(response.headers.get('Retry-After')) || 30)
+  // Spotify's own Retry-After (a rate limit) is honored; any other failure (a timeout, a 5xx) is retried soon
+  const retryAfter = (response) => Math.max(5, Number(response.headers.get('Retry-After')) || 5)
+  const FRESH = 5_000 // how long a reading of playback is served before Spotify is asked again
   const rememberPlaylist = (id, name, until) => {
     if (playlistCache.size >= 32 && !playlistCache.has(id)) playlistCache.delete(playlistCache.keys().next().value)
     playlistCache.set(id, { name, until })
@@ -61,7 +63,7 @@ export function createHandler(fetcher = fetch, { now = () => Date.now() } = {}) 
     ? entry.body
     : { ...entry.body, remainingMs: Math.max(0, Math.floor(entry.remainingAt - (now() - entry.receivedAt))) }
   async function read(env) {
-    let retry = 30
+    let retry = 5
     try {
       if (now() >= tokenUntil) {
         const response = await fetcher('https://accounts.spotify.com/api/token', {
@@ -98,8 +100,8 @@ export function createHandler(fetcher = fetch, { now = () => Date.now() } = {}) 
       const body = isTrack
         ? { status: 'playing', remainingMs: remainingAt, track: { ...trackOf(item), playlist: await playlistName(data.context?.uri) }, last: null }
         : empty('idle', await lastPlayed())
-      cached = { body, status: 200, retry: 15, receivedAt, remainingAt }
-      cacheUntil = receivedAt + (remainingAt == null ? 15_000 : Math.min(15_000, remainingAt))
+      cached = { body, status: 200, retry: 5, receivedAt, remainingAt }
+      cacheUntil = receivedAt + (remainingAt == null ? FRESH : Math.min(FRESH, remainingAt))
     } catch {
       cached = { body: empty('unavailable', lastSeen), status: 503, retry, receivedAt: now(), remainingAt: null }
       cacheUntil = now() + retry * 1000

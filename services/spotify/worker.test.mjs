@@ -56,8 +56,8 @@ test('ages remaining time from the playback response and reuses the playback cac
     return Response.json({ is_playing: true, progress_ms: 1_000, item: { type: 'track', name: 'Song', duration_ms: 30_000, album: { name: 'Album', images: [{ url: 'https://i.scdn.co/image/test' }] }, artists: [{ name: 'Artist' }], external_urls: { spotify: 'https://open.spotify.com/track/test' } } })
   }, { now: () => now })
   assert.equal((await (await handle(request(), env)).json()).remainingMs, 29_000)
-  now = 6_000
-  assert.equal((await (await handle(request(), env)).json()).remainingMs, 24_000)
+  now = 5_000 // (inside the 5-second cache)
+  assert.equal((await (await handle(request(), env)).json()).remainingMs, 25_000)
   assert.equal(calls, 2)
 })
 
@@ -191,4 +191,28 @@ test('without recently-played access, idle falls back to the last track seen pla
   const body = await (await handle(request(), env)).json()
   assert.equal(body.status, 'idle')
   assert.equal(body.last.title, 'Was on')
+})
+
+test('a reading is fresh for 5 seconds, so starting or skipping a track shows quickly', async () => {
+  let now = 0, calls = 0
+  const handle = createHandler(async (url) => {
+    if (String(url).includes('/api/token')) return token()
+    if (String(url).includes('/recently-played')) return Response.json({ items: [] })
+    calls++
+    return new Response(null, { status: 204 })
+  }, { now: () => now })
+  await handle(request(), env)
+  now = 4_999
+  await handle(request(), env)
+  assert.equal(calls, 1)
+  now = 5_000
+  await handle(request(), env)
+  assert.equal(calls, 2)
+})
+
+test('a transient failure is retried in 5 seconds, not held for 30', async () => {
+  const handle = createHandler(async (url) => String(url).includes('/api/token') ? token() : new Response(null, { status: 502 }))
+  const response = await handle(request(), env)
+  assert.equal(response.status, 503)
+  assert.equal(response.headers.get('Retry-After'), '5')
 })

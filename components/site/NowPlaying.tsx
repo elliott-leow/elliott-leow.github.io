@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TapeStrip } from './Print'
-import { nextPlaybackDelay } from '@/lib/music-polling'
+import { IDLE_POLL, nextPlaybackDelay } from '@/lib/music-polling'
 
 type Track = { title: string; album: string; artist: string; image: string; url: string; playlist?: string | null }
 type Playback = { status: 'playing' | 'idle' | 'unavailable' | 'unconnected' | 'loading'; track: Track | null; last: Track | null }
@@ -34,13 +34,13 @@ export default function NowPlaying() {
       }
       controller = new AbortController()
       const current = controller
-      let delay = 20000
+      let delay = IDLE_POLL
       try {
         const response = await fetch(endpoint!, { cache: 'no-store', signal: AbortSignal.any([current.signal, AbortSignal.timeout(20000)]) })
         if (current.signal.aborted || stopped) return
         if (!response.ok) {
           const retry = Number(response.headers.get('Retry-After'))
-          delay = Math.min(2147483647, Math.max(30, Number.isFinite(retry) ? retry : 30) * 1000)
+          delay = Math.min(2147483647, Math.max(5, Number.isFinite(retry) ? retry : 5) * 1000)
           throw new Error('Unavailable')
         }
         const data = await response.json()
@@ -54,9 +54,10 @@ export default function NowPlaying() {
           : { status: data.status === 'idle' ? 'idle' : 'unavailable', track: null, last: validTrack(data.last) ? data.last : null })
       } catch {
         if (current.signal.aborted || stopped) return
-        delay = Math.max(30000, delay)
+        delay = Math.max(IDLE_POLL, delay)
         retryAt = performance.now() + delay
-        setPlayback((p) => ({ status: 'unavailable', track: null, last: p.last ?? p.track }))
+        // (a hiccup keeps what's shown, rather than claiming the music stopped; it's asked again in a few seconds)
+        setPlayback((p) => p.status === 'loading' ? p : { ...p, status: 'unavailable' })
       } finally {
         if (!stopped && !current.signal.aborted && !document.hidden) timer = setTimeout(refresh, delay)
       }
@@ -67,14 +68,23 @@ export default function NowPlaying() {
       controller?.abort()
       if (!document.hidden) void refresh()
     }
+    // (coming back to the tab or the window, or back online, asks at once)
+    const onReturn = () => { retryAt = 0; void refresh() }
     document.addEventListener('visibilitychange', onVisibility)
-    return () => { stopped = true; clearTimeout(timer); controller?.abort(); document.removeEventListener('visibilitychange', onVisibility) }
+    window.addEventListener('focus', onReturn)
+    window.addEventListener('online', onReturn)
+    return () => {
+      stopped = true; clearTimeout(timer); controller?.abort()
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onReturn)
+      window.removeEventListener('online', onReturn)
+    }
   }, [])
 
   // playing: the track now. Not playing: the one played last, under "Last listened to". Neither known: the quiet room
   const track = playback.track ?? playback.last
   const live = !!playback.track
-  const message = playback.status === 'loading' ? 'tuning in…' : 'a little quiet right now.'
+  const message = playback.status === 'idle' ? 'a little quiet right now.' : 'tuning in…'
   const sleeve = (
     <span className="pic" style={{ '--r': '-1.6deg' } as React.CSSProperties}>
       <TapeStrip n={1} className="wt-top" />

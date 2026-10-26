@@ -84,18 +84,22 @@ Worker, override `NEXT_PUBLIC_SPOTIFY_ENDPOINT` in `.env.local` or the GitHub
 repository's Actions variables, then rebuild. The deploy workflow passes this
 public URL to Next.js. Never put Spotify tokens or secrets in `NEXT_PUBLIC_*`.
 
-The Worker coalesces concurrent requests and caches playback for up to 15 seconds
-per instance, never past the predicted end of a timed track. Playlist names use a
+The Worker coalesces concurrent requests and caches playback for up to 5 seconds
+per instance, never past the predicted end of a timed track, so starting, skipping
+or pausing a track shows on the page within a few seconds. Playlist names use a
 small bounded per-instance cache; playlist rate limits pause further playlist
 lookups for Spotify's `Retry-After` interval without making playback unavailable.
-Playback errors return `503` with `Retry-After`, exposed through CORS.
+Playback errors return `503` with `Retry-After` (Spotify's own when it rate-limits,
+otherwise 5 seconds), exposed through CORS.
 
-While visible, the page schedules the next playing-track poll for
-`remainingMs + 1 second` of settling grace, with a 2-second minimum. It must not
-subtract the full request duration: the Worker has already aged `remainingMs`
-through its own upstream and playlist work. Idle playback, missing timing, and
-unavailable timing fall back to 20 seconds; errors wait at least 30 seconds and
-respect `Retry-After`. This is a small personal-site service, not a globally
+While visible, the page asks again at the playing track's predicted end
+(`remainingMs + 1 second`, at least 2 seconds) but never more than 8 seconds out,
+so skips and pauses show quickly. It must not subtract the full request duration:
+the Worker has already aged `remainingMs` through its own upstream and playlist
+work. Idle playback and missing timing poll every 5 seconds; errors keep what is
+shown and retry after the Worker's `Retry-After` (5 seconds unless Spotify is
+rate-limiting). Returning to the tab or window, or coming back online, asks at
+once. This is a small personal-site service, not a globally
 coordinated rate limiter; if traffic grows, add shared caching/rate limiting.
 
 Check: `node --test services/spotify/worker.test.mjs`.
