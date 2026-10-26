@@ -1,0 +1,292 @@
+/* ================================================================== the front page */
+
+/*
+ * Printed type on dotted paper. The serif names things (me, and each section),
+ * the sans says them; the pen keeps to what a pen would do on a real page:
+ * the underline, the icons, the tape, the caption on the print.
+ * On a wide window the record sits to the right of the words, level with
+ * the first paragraph, the way a print is taped beside a page of writing.
+ */
+
+/* a calmer grid under the words, still the same paper */
+:root:has(.home) {
+  --dot: rgba(70, 90, 100, 0.15);
+}
+.workspace:has(.home) .sheet-texture {
+  opacity: 0.3;
+}
+.notebook:has(.home) {
+  max-width: 800px;
+}
+/* the front page is short: the sheet ends with it, rather than running on as an empty A4 */
+.sheet:has(.home) {
+  aspect-ratio: auto;
+}
+
+.home {
+  --ink-2: #534f4a;
+  /* a paper-coloured halo, so the dots never cut through the thin engraved strokes */
+  --halo: 0 0 1px var(--paper), 0 0 3px var(--paper), 0 0 6px var(--paper);
+  max-width: none;
+  padding: clamp(4px, 3vw, 36px) 0 8px;
+  font-family: var(--sans);
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- the name */
+
+.home .pg-name {
+  width: fit-content;
+  max-width: 100%;
+  font-family: var(--serif);
+  font-size: clamp(44px, 3vw + 26px, 64px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.005em;
+}
+.home .pg-card {
+  margin-top: 0.85em;
+  font-size: clamp(16.5px, 0.25vw + 15.5px, 18.5px);
+}
+.home .pg-line {
+  font-family: var(--sans);
+  font-size: inherit;
+  line-height: 1.5;
+  color: var(--ink-2);
+  text-shadow: var(--halo);
+  text-wrap: balance;
+}
+
+/* contact, right under the name, in one quiet line of blue pen */
+.home .pg-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin-top: 22px;
+}
+.home .pg-links li {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both;
+}
+.home .pg-links .ink-link {
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 400;
+  font-size-adjust: none;
+  line-height: 1.4;
+  text-shadow: var(--halo);
+}
+.home .pg-links .ink-link-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------------------------------------------------------------- sections */
+
+.home .pg-section {
+  /* takes the width the page gives it, and never widens the page itself */
+  contain: inline-size;
+  margin-top: 52px;
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.home .pg-intro + .pg-section {
+  margin-top: 60px;
+}
+/* a label sits close over its entry, with more room above it than below */
+.home .pg-label {
+  margin-bottom: 12px;
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 400;
+  font-size-adjust: none;
+  font-variation-settings: normal;
+  line-height: 1.2;
+  color: var(--ink-2);
+  text-shadow: var(--halo);
+}
+.home .pg-prose {
+  max-width: 31em;
+  font-family: var(--sans);
+  font-size: clamp(17px, 0.3vw + 16px, 19px);
+  line-height: 1.7;
+  color: var(--ink);
+  text-shadow: var(--halo);
+  text-wrap: pretty;
+}
+.home .pg-inline {
+  color: inherit;
+  text-decoration: none;
+}
+.home .pg-inline:hover {
+  color: var(--blue-pen);
+}
+
+/* ---------------------------------------------------------------- the record */
+
+.home .music-entry {
+  display: grid;
+  /* the print keeps its own width; the details take what's left */
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  padding: 10px 0 0 4px;
+}
+.home .music-writing {
+  min-width: 0;
+  padding-bottom: 4px;
+}
+.home .music-title {
+  display: inline-flex;
+  max-width: 100%;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  font-size-adjust: none;
+  line-height: 1.25;
+  color: var(--blue-pen);
+  text-decoration: none;
+  text-shadow: var(--halo);
+  overflow-wrap: anywhere;
+}
+.home .music-title .ink-link-text {
+  min-width: 0;
+}
+.home .music-artist,
+.home .music-empty {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size-adjust: none;
+  font-variation-settings: normal;
+  text-shadow: var(--halo);
+  color: var(--ink-2);
+}
+.home .music-artist {
+  margin-top: 4px;
+  font-size: 15.5px;
+  line-height: 1.4;
+}
+.home .music-empty {
+  max-width: 16ch;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.home .music-photo .photo-card img {
+  filter: none;
+}
+.home .music-photo .photo-card::after {
+  display: none;
+}
+/* the playlist is written on the print by hand, so it keeps the pen */
+.home .music-photo .photo-caption {
+  font-size: 15px;
+  left: 10px;
+  right: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------------------------------------------------------- notes */
+
+.home .note-index {
+  gap: 0;
+}
+.home .note-row {
+  /* the date column grows if a reader widens the letter spacing */
+  grid-template-columns: minmax(74px, max-content) auto 1fr;
+  gap: 16px;
+  padding: 5px 0;
+  font-size: 17px;
+  line-height: 1.5;
+  text-shadow: var(--halo);
+}
+.home .note-date {
+  font-family: var(--sans);
+  font-size: 14.5px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.home .note-title {
+  font-family: var(--sans);
+  color: var(--ink);
+}
+.home .note-preview {
+  padding-left: 90px;
+}
+.home .pg-notes-all {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--sans);
+  font-size: 15.5px;
+  font-weight: 400;
+  font-size-adjust: none;
+  font-variation-settings: normal;
+  line-height: 1.4;
+  color: var(--ink-2);
+  text-decoration: none;
+  text-shadow: var(--halo);
+}
+.home .pg-notes-all:hover {
+  color: var(--blue-pen);
+}
+
+/* ---------------------------------------------------------------- wide: words left, the print beside them */
+
+@media (min-width: 880px) {
+  .home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 188px;
+    /* the last row takes whatever the print needs past the words, so the words stay together */
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: clamp(56px, 6vw, 88px);
+  }
+  .home .pg-intro {
+    grid-column: 1 / -1;
+  }
+  .home .pg-about {
+    grid-area: 2 / 1;
+  }
+  .home .pg-notes {
+    grid-area: 3 / 1;
+  }
+  .home .pg-music {
+    grid-area: 2 / 2 / 5 / 3;
+  }
+  .home .pg-intro ~ .pg-about,
+  .home .pg-intro ~ .pg-music {
+    margin-top: 76px;
+  }
+  .home .pg-notes {
+    margin-top: 56px;
+  }
+  /* the record stands up in its column, its details written under it */
+  .home .music-entry {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    align-items: start;
+    gap: 18px;
+    padding: 14px 0 0 6px;
+  }
+}
+
+/* ---------------------------------------------------------------- narrow */
+
+@media (max-width: 879px) {
+  .home .pg-label {
+    font-size: 20px;
+  }
+}
+/* too narrow to write beside the print without breaking words: write under it instead */
+@media (max-width: 380px) {
+  .home .music-entry {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: 16px;
+  }
+  .home .music-title {
+    font-size: 19px;
+  }
+  .home .pg-links {
+    column-gap: 22px;
+  }
+}

@@ -109,29 +109,7 @@
 .pg-me {
   margin: 6px 0 0 -10px;
 }
-.pg-intro {
-  padding-top: 24px;
-}
-/* The name uses the static serif from the typography reference. */
-.pg-name {
-  width: fit-content;
-  max-width: 100%;
-  font-family: var(--font-name), 'Iowan Old Style', Georgia, serif;
-  font-size: clamp(48px, 8vw, 68px);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: 0.005em;
-}
-.pg-card {
-  margin-top: 14px;
-}
-.pg-line {
-  font-family: var(--mono);
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: var(--pencil);
-  text-shadow: var(--mono-halo);
-}
+/* the name, the sections and the record on the front page are set in styles/home.css */
 
 /* ---------------------------------------------------------------- typed */
 
@@ -238,24 +216,6 @@
 
 /* ---------------------------------------------------------------- links */
 
-/* contact, right under the name, in one quiet line */
-.pg-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 26px;
-  margin: 16px 0 0;
-}
-.pg-links li {
-  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both;
-}
-.pg-links .ink-link {
-  gap: 7px;
-  font-size: 19px;
-}
-.pg-links .ink-link-icon {
-  width: 17px;
-  height: 17px;
-}
 @keyframes rise {
   from {
     opacity: 0;
@@ -334,76 +294,6 @@
 .ink-link:focus-visible .ink-link-line path {
   stroke-dashoffset: 0;
   transition-duration: 0.4s;
-}
-
-/* ---------------------------------------------------------------- sections, on the front page */
-
-/* a label in the margin and the entry beside it, like a page of a lab notebook */
-.pg-section {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  column-gap: 24px;
-  align-items: baseline;
-  /* takes the width the page gives it, and never widens the page itself */
-  contain: inline-size;
-  margin-top: 44px;
-  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-.pg-intro + .pg-section {
-  margin-top: 56px;
-  padding-top: 40px;
-  border-top: 1px solid var(--rule);
-}
-.pg-label {
-  font-size: 19px;
-  color: var(--pencil);
-  rotate: -1deg;
-}
-.pg-prose {
-  font-family: var(--mono);
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--ink);
-  text-shadow: var(--mono-halo);
-  max-width: 46ch;
-  text-wrap: pretty;
-}
-.pg-inline {
-  color: inherit;
-  text-decoration: none;
-}
-.pg-inline:hover {
-  color: var(--blue-pen);
-}
-.pg-music {
-  align-items: start;
-}
-.pg-music .pg-label {
-  padding-top: 2px;
-}
-.pg-notes .note-row {
-  padding: 3px 0 5px;
-}
-.pg-notes-all {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 17px;
-  color: var(--pencil);
-  text-decoration: none;
-}
-.pg-notes-all:hover {
-  color: var(--blue-pen);
-}
-@media (max-width: 560px) {
-  .pg-section {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 6px;
-    margin-top: 36px;
-  }
-  .pg-intro + .pg-section {
-    margin-top: 40px;
-    padding-top: 32px;
-  }
 }
 
 /* ================================================================== the folded corner */
@@ -787,27 +677,6 @@
   gap: 28px 34px;
   margin: 0 0 40px;
   padding-top: 14px;
-}
-
-/* A record tucked into the notebook, with its details beside it. */
-.music-entry {
-  display: grid;
-  grid-template-columns: 116px minmax(0, 1fr);
-  align-items: center;
-  gap: 30px;
-  padding: 4px 0 0 4px;
-}
-.music-writing { min-width: 0; padding-bottom: 4px; }
-.music-title { display: inline-flex; max-width: 100%; font-size: 21px; line-height: 1.15; color: var(--blue-pen); text-decoration: none; overflow-wrap: anywhere; }
-.music-title .ink-link-text { min-width: 0; }
-.music-artist { font-size: 17px; color: var(--pencil); margin-top: 4px; line-height: 1.2; }
-.music-empty { font-size: 18px; line-height: 1.25; color: var(--pencil); max-width: 16ch; }
-.music-photo .photo-card img { filter: none; }
-.music-photo .photo-card::after { display: none; }
-.music-photo .photo-caption { font-size: 15px; left: 10px; right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 380px) {
-  .music-entry { gap: 16px; grid-template-columns: 100px minmax(0, 1fr); }
-  .music-title { font-size: 19px; }
 }
 
 /* The orgo app guide keeps its numbered outline and lettered substeps. */

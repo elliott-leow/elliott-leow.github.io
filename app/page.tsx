@@ -8,7 +8,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="page">
+    <div className="page home">
       {/* photos go back here, see content/notes/template.mdx */}
       <header className="pg-intro">
         <h1 className="pg-name" aria-label="Elliott Leow">Elliott.</h1>

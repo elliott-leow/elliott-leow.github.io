@@ -6,6 +6,7 @@ import '@/styles/base.css'
 import '@/styles/notebook.css'
 import '@/styles/objects.css'
 import '@/styles/page.css'
+import '@/styles/home.css'
 import '@/styles/orbitals.css'
 import '@/styles/algos.css'
 
@@ -13,11 +14,20 @@ import '@/styles/algos.css'
 const hand = Shantell_Sans({ subsets: ['latin'], axes: ['INFM'], variable: '--font-hand' })
 const mono = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400', '500'] })
 
-const name = localFont({
-  src: '../public/fonts/KevinSerif-Bold.woff2',
-  weight: '700',
+// the home page is set in the reference's two engraving faces: a serif to name things, a sans to say them
+const serif = localFont({
+  src: [
+    { path: '../public/fonts/KevinSerif-Regular.woff2', weight: '400', style: 'normal' },
+    { path: '../public/fonts/KevinSerif-Bold.woff2', weight: '700', style: 'normal' },
+  ],
+  variable: '--font-serif',
+  display: 'swap',
+})
+const sans = localFont({
+  src: '../public/fonts/KevinSans-Regular.woff2',
+  weight: '400',
   style: 'normal',
-  variable: '--font-name',
+  variable: '--font-sans',
   display: 'swap',
 })
 
@@ -33,7 +43,7 @@ export const viewport: Viewport = { themeColor: '#f3eee1', width: 'device-width'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${hand.variable} ${mono.variable} ${name.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${hand.variable} ${mono.variable} ${serif.variable} ${sans.variable}`} suppressHydrationWarning>
       <body>
         <Notebook>{children}</Notebook>
       </body>
