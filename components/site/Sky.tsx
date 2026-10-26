@@ -38,7 +38,7 @@ export default function Sky() {
       ))}
       <span className="shooting" />
       {/* Chiikawa, on the ledge by the pine */}
-      <span className="spot critter" style={at({ w: [0.876, 0.583], t: [0.66, 0.583] })}>
+      <span className="spot critter" style={at({ w: [0.876, 0.583], t: [0.876, 0.583] })}>
         <img src="/art/hero/critter.webp" width={320} height={343} alt="" decoding="async" />
       </span>
       {petals.map((p, i) => (

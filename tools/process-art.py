@@ -72,43 +72,53 @@ def night():
     if os.path.exists(p): save(fit(Image.open(p).convert('RGB'), 900), 'cards/record.webp', 86)
 
 
-def critter(name='chiikawa2-1', fill=(27, 39, 70), floor=0.2, blush=((0.255, 0.745), 0.445), tone=0.72):
-    """Chiikawa on the cliff: a white gel-pen body with dark eyes and mouth, drawn on dark paper. The dark features
-    come out transparent, so underneath it is filled solid with the night's navy (the inside of its outline: the outline
-    grown, its outside flooded from a corner, the rest is body): the eyes read as dark, and no rock shows through.
-    (floor: this drawing's paper is a dark grey rather than black, so more of the dark is cut away; blush: where its cheeks
-    are, as fractions of it; tone: how much of the body's white is kept)"""
+def critter(name='chiikawa2-1', fill=(27, 39, 70), floor=0.2, blush=((0.255, 0.745), 0.445)):
+    """Chiikawa on the ledge, redrawn in the hero's own hand: white gel-pen line on the navy night, like the pine. The
+    reference drawing (a white body, dark features) gives the shapes: its body becomes navy paper (filled solid, so no
+    rock shows through), its edge a stippled white contour, its dark eyes and mouth white marks, its cheeks gold
+    hatching. (floor: the raw drawing's paper is dark grey, so more of the dark is cut away; blush: where its cheeks are,
+    as fractions of it)"""
     from PIL import ImageDraw
-    ink = unblack(raw(name), floor=floor, gain=1.7)
-    a = ink.split()[3]
-    solid = a.point(lambda v: 255 if v > 40 else 0).filter(ImageFilter.MaxFilter(15))
+    src = raw(name)
+    W, H = src.size
+    lum = np.asarray(src.convert('L'), np.float32) / 255
+    a = np.asarray(unblack(src, floor=floor, gain=1.7).split()[3])
+    solid = Image.fromarray(((a > 40) * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(15))
     ImageDraw.floodfill(solid, (0, 0), 128)
-    body = solid.point(lambda v: 255 if v != 128 else 0).filter(ImageFilter.MinFilter(15)).filter(ImageFilter.GaussianBlur(1.2))
-    # the body's white is let down to a light stipple, as gel pen dotted over the paper, so it's a drawing, not a cut-out;
-    # its contour (a band just inside the edge) and its features stay at full strength
-    if tone < 1:
-        a = np.asarray(ink, np.float32).copy()
-        inner = np.asarray(body.filter(ImageFilter.MinFilter(int(ink.size[0] * 0.025) | 1)), np.float32) / 255
-        light = a[..., :3].mean(axis=2) / 255 * a[..., 3] / 255 > 0.55  # the white of the body, not the dark features
-        r = np.random.default_rng(3).random(inner.shape)
-        stipple = np.where(r < 0.55, 1.0, 0.8)
-        k = np.where(light, 1 - inner * (1 - tone * stipple), 1)
-        a[..., 3] *= k
-        ink = Image.fromarray(a.clip(0, 255).astype(np.uint8), 'RGBA')
-    out = Image.new('RGBA', ink.size, fill + (0,)); out.putalpha(body)
-    out.alpha_composite(ink)
-    box = out.getbbox()
-    # its blush, in soft pink gel pen under the hatching (the drawing's own came out too faint to read)
-    if blush:
-        w, h = box[2] - box[0], box[3] - box[1]
-        cheeks = Image.new('RGBA', out.size, (0, 0, 0, 0))
-        d = ImageDraw.Draw(cheeks)
-        for cx in blush[0]:
-            x, y = box[0] + cx * w, box[1] + blush[1] * h
-            d.ellipse((x - 0.075 * w, y - 0.035 * h, x + 0.075 * w, y + 0.035 * h), fill=(242, 160, 172, 150))
-        cheeks = cheeks.filter(ImageFilter.GaussianBlur(w * 0.008))
-        cheeks.putalpha(Image.fromarray(np.minimum(np.asarray(cheeks.split()[3]), np.asarray(body))))
-        out.alpha_composite(cheeks)
+    body = solid.point(lambda v: 255 if v != 128 else 0).filter(ImageFilter.MinFilter(15))
+    box = body.getbbox()
+    bw = box[2] - box[0]
+    band = max(3, int(bw * 0.014)) | 1
+    inner = body.filter(ImageFilter.MinFilter(band))
+    B = np.asarray(body) > 127
+    I = np.asarray(inner) > 127
+    contour = B & ~I
+    # the features: what's dark inside the body (eyes, brows, mouth, the lines of its arms)
+    deep = np.asarray(inner.filter(ImageFilter.MinFilter(band * 2 + 1))) > 127
+    feat = deep & (lum < 0.45)
+    feat = np.asarray(Image.fromarray((feat * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3))) > 127
+    rng_ = np.random.default_rng(5)
+    dots = rng_.random((H, W))
+    # stippled like the drawing's own gel pen: most of the line, with gaps and fainter dots
+    line = np.where(contour, np.where(dots < 0.78, 1.0, 0.35), 0) + np.where(feat, np.where(dots < 0.9, 1.0, 0.5), 0)
+    line = np.clip(line, 0, 1)
+    rgb = np.zeros((H, W, 3), np.float32) + np.array(fill, np.float32)
+    white = np.array((242, 238, 228), np.float32)
+    rgb = rgb * (1 - line[..., None]) + white * line[..., None]
+    # gold hatching on the cheeks
+    hatch = Image.new('L', (W, H), 0)
+    d = ImageDraw.Draw(hatch)
+    bh = box[3] - box[1]
+    for cx in blush[0]:
+        x, y = box[0] + cx * bw, box[1] + blush[1] * bh
+        for k in range(-3, 4):
+            hx = x + k * bw * 0.018
+            d.line((hx + bw * 0.008, y - bh * 0.03, hx - bw * 0.008, y + bh * 0.03), fill=255, width=max(2, int(bw * 0.006)))
+    G = (np.asarray(hatch) > 0) & I
+    gold = np.array((240, 180, 106), np.float32)
+    rgb[G] = rgb[G] * 0.25 + gold * 0.75
+    alpha = np.asarray(body.filter(ImageFilter.GaussianBlur(1.0)), np.float32)
+    out = Image.fromarray(np.dstack([rgb, alpha]).clip(0, 255).astype(np.uint8), 'RGBA')
     pad = 8
     out = out.crop((box[0] - pad, box[1] - pad, box[2] + pad, box[3] + pad))
     save(fit(out, 320), 'hero/critter.webp', 90)

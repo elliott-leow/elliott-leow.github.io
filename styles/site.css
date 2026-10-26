@@ -264,10 +264,11 @@ a:hover .pic-title, a:focus-visible .pic-title { background-size: 100% 0.5em; }
   background: linear-gradient(90deg, rgba(244, 239, 228, 0), rgba(244, 239, 228, 0.95)); transform-origin: 100% 50%;
   animation: shoot 13s ease-in 4s infinite; }
 @keyframes shoot { 0% { opacity: 0; transform: translate(0, 0) rotate(16deg) scaleX(0.2); } 2% { opacity: 1; } 7% { opacity: 0; transform: translate(380px, 110px) rotate(16deg) scaleX(1); } 100% { opacity: 0; } }
-/* Chiikawa on the ledge (its feet on the rock: placed by its foot, 7.5% of the drawing's height tall); still, there
-   with the drawing from the start */
-.critter { --ch: calc(var(--dh) * 0.075); width: calc(var(--ch) * 0.933); height: var(--ch); transform: translate(-50%, -94%); }
-@media (max-width: 700px) { .critter { --ch: calc(var(--dh) * 0.095); } }
+/* Chiikawa on the ledge, drawn in the same white gel pen as the pine (its feet on the rock: placed by its foot, 5.8% of
+   the drawing's height tall); still, there with the drawing from the start, found on a second look. Not on a phone:
+   the tall drawing has no ledge with room for it */
+.critter { --ch: calc(var(--dh) * 0.058); width: calc(var(--ch) * 0.933); height: var(--ch); transform: translate(-50%, -94%); opacity: 0.92; }
+@media (max-width: 700px) { .critter { display: none; } }
 .critter img { display: block; width: 100%; height: 100%; }
 
 /* blossom on the wind: it comes in high and to the right of where it lands, turns over and over on the way down,
