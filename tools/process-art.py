@@ -72,7 +72,7 @@ def night():
     if os.path.exists(p): save(fit(Image.open(p).convert('RGB'), 900), 'cards/record.webp', 86)
 
 
-def critter(name='critter-wave', fill=(27, 39, 70)):
+def critter(name='chiikawa-0', fill=(27, 39, 70)):
     """the little one on the cliff: drawn as an outline on black, so its body is filled solid with the night's navy
     (the inside of its outline: the outline grown, its outside flooded from a corner, the rest is body), or the rocks
     behind it would show through"""
