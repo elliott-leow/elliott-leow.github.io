@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { links, listedNotes } from '@/lib/content'
-import { Colophon, TopNav } from '@/components/site/Chrome'
+import { Colophon } from '@/components/site/Chrome'
 import NoteList from '@/components/site/NoteList'
 import NowPlaying from '@/components/site/NowPlaying'
 import Sky from '@/components/site/Sky'
@@ -20,7 +20,6 @@ export default function Home() {
           <img className="sky" src="/art/sheets/night.webp" alt="" fetchPriority="high" decoding="async" />
         </picture>
         <Sky />
-        <TopNav />
         <div className="title">
           {/* the name inks in a letter at a time */}
           <h1 className="name" aria-label={name}>

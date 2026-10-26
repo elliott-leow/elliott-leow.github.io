@@ -1,30 +1,11 @@
 import Link from 'next/link'
-import { links } from '@/lib/content'
 import Fall from './Fall'
 
-export const sections = [
-  { href: '/#about', label: 'About' },
-  { href: '/#listening', label: 'Listening' },
-  { href: '/#notes', label: 'Notes' },
-]
-
-export function TopNav({ current }: { current?: string }) {
-  return (
-    <nav className="topnav" aria-label="Sections">
-      {sections.map((s) => (
-        <a key={s.href} href={s.href} aria-current={current === s.label ? 'page' : undefined}>{s.label}</a>
-      ))}
-      <a href={`mailto:${links.email}`} className="tagged">Say hello</a>
-    </nav>
-  )
-}
-
-/** the bar across the top of every page but the front: the name, home, and the sections */
-export function TopBar({ current }: { current?: string }) {
+/** the bar across the top of every page but the front: the name, the way home */
+export function TopBar() {
   return (
     <header className="top">
       <Link href="/" className="home-link">Elliott Leow</Link>
-      <TopNav current={current} />
     </header>
   )
 }

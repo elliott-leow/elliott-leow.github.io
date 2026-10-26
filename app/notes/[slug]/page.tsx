@@ -29,7 +29,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const home = slug === 'teaching-experience'
   return (
     <>
-      <TopBar current="Notes" />
+      <TopBar />
       <main className="leaf-wrap">
         <article className="leaf leaf-dusk note-leaf">
           <div className="note-page">

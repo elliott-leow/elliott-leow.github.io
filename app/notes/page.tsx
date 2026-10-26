@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'Notes' }
 export default function Notes() {
   return (
     <>
-      <TopBar current="Notes" />
+      <TopBar />
       <main className="leaf-wrap">
         <section className="leaf leaf-pine" aria-labelledby="h-notes">
           <img className="deco deco-cranes float" data-reveal src="/art/sheets/cranes.webp" alt="" decoding="async" />
