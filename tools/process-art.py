@@ -72,6 +72,24 @@ def night():
     if os.path.exists(p): save(fit(Image.open(p).convert('RGB'), 900), 'cards/record.webp', 86)
 
 
+def critter(name='critter-wave', fill=(27, 39, 70)):
+    """the little one on the cliff: drawn as an outline on black, so its body is filled solid with the night's navy
+    (the inside of its outline: the outline grown, its outside flooded from a corner, the rest is body), or the rocks
+    behind it would show through"""
+    from PIL import ImageDraw
+    ink = unblack(raw(name), floor=0.07, gain=1.7)
+    a = ink.split()[3]
+    solid = a.point(lambda v: 255 if v > 40 else 0).filter(ImageFilter.MaxFilter(15))
+    ImageDraw.floodfill(solid, (0, 0), 128)
+    body = solid.point(lambda v: 255 if v != 128 else 0).filter(ImageFilter.MinFilter(15)).filter(ImageFilter.GaussianBlur(1.2))
+    out = Image.new('RGBA', ink.size, fill + (0,)); out.putalpha(body)
+    out.alpha_composite(ink)
+    box = out.getbbox()
+    pad = 8
+    out = out.crop((box[0] - pad, box[1] - pad, box[2] + pad, box[3] + pad))
+    save(fit(out, 320), 'hero/critter.webp', 90)
+
+
 # ------------------------------------------------------------------------------------------- papers
 def noise(size, scale, octaves=4, seed=0):
     """tileable value noise: sums of wrapped, blurred random fields"""
@@ -267,5 +285,5 @@ def rules():
 
 if __name__ == '__main__':
     import sys
-    which = sys.argv[1:] or ['night', 'papers', 'edges', 'tapes', 'rules']
+    which = sys.argv[1:] or ['night', 'critter', 'papers', 'edges', 'tapes', 'rules']
     for w in which: globals()[w]()
