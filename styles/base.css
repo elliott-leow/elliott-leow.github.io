@@ -27,9 +27,6 @@
   /* the pen voice: neat marker handwriting, for the name, links and headings */
   --hand: var(--font-hand), 'Shantell Sans', 'Segoe Print', 'Bradley Hand', sans-serif;
   --mono: var(--font-mono), 'IBM Plex Mono', ui-monospace, Menlo, monospace;
-  /* the printed voices of the home page, after the typography reference */
-  --serif: var(--font-serif), 'Iowan Old Style', Georgia, serif;
-  --sans: var(--font-sans), 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
 
   --pad-x: clamp(18px, 6vw, 52px);
   color-scheme: light;
