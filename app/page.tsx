@@ -1,8 +1,7 @@
 import { links } from '@/lib/content'
-import Signature from '@/components/Signature'
 import { Underlined } from '@/components/Doodles'
 import { Hand } from '@/components/Paper'
-import { InkLink, Typed } from '@/components/Ink'
+import { InkLink } from '@/components/Ink'
 import NoteIndex from '@/components/NoteIndex'
 import Music from '@/components/Music'
 import Link from 'next/link'
@@ -12,12 +11,9 @@ export default function Home() {
     <div className="page">
       {/* photos go back here, see content/notes/template.mdx */}
       <header className="pg-intro">
-        <h1 className="sr-only">Elliott Leow</h1>
-        <div className="pg-name">
-          <Signature />
-        </div>
+        <h1 className="pg-name" aria-label="Elliott Leow">Elliott.</h1>
         <div className="pg-card">
-          <Typed className="pg-line" text="Biomedical engineering + computer science, Johns Hopkins" speed={14} />
+          <p className="pg-line">Biomedical engineering + computer science, Johns Hopkins</p>
         </div>
         {/* contact sits with the name, so it is the first thing you reach on a phone too */}
         <ul className="pg-links" aria-label="Contact">
