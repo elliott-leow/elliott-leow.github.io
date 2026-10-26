@@ -1,24 +1,28 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import NoteIndex from '@/components/NoteIndex'
-import { Hand } from '@/components/Paper'
-import { DoodleUnderline } from '@/components/Doodles'
+import { listedNotes } from '@/lib/content'
+import NoteList from '@/components/site/NoteList'
+import Fall from '@/components/site/Fall'
+import { Colophon, TopBar } from '@/components/site/Chrome'
 
-export const metadata: Metadata = { title: 'notes' }
+export const metadata: Metadata = { title: 'Notes' }
 
 export default function Notes() {
   return (
-    <div className="notes-page">
-      <Link href="/" className="back-link hand">
-        ← back
-      </Link>
-      <header className="notes-head">
-        <Hand as="h1" className="page-title">
-          notes
-        </Hand>
-        <DoodleUnderline width={110} ink="blue" variant={2} />
-      </header>
-      <NoteIndex />
-    </div>
+    <>
+      <TopBar current="Notes" />
+      <main className="leaf-wrap">
+        <section className="leaf leaf-pine" aria-labelledby="h-notes">
+          <img className="deco deco-cranes float" data-reveal src="/art/sheets/cranes.webp" alt="" decoding="async" />
+          <img className="deco-m float" data-reveal src="/art/sheets/cranes-top.webp" alt="" decoding="async" />
+          <Fall seed={9} n={6} kind="ginkgo" x={[1, 11]} y={[4, 94]} spread={6} />
+          <Fall seed={11} n={5} kind="ginkgo" x={[89, 99]} y={[4, 94]} spread={6} />
+          <div className="shelf">
+            <h1 id="h-notes" className="shelf-title pen" data-reveal>Notes</h1>
+            <NoteList notes={listedNotes} />
+          </div>
+        </section>
+      </main>
+      <Colophon />
+    </>
   )
 }

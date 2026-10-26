@@ -106,7 +106,7 @@ const allNotes: NoteMeta[] = [
     unlisted: true,
     date: '10.02.26',
     title: 'teaching experience',
-    preview: 'math, machine learning, and organic chemistry at Johns Hopkins',
+    preview: '',
     style: 'typed',
   },
   {

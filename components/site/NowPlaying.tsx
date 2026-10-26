@@ -1,14 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Photo from './Photo'
-import { InkLink } from './Ink'
+import { TapeStrip } from './Print'
 import { nextPlaybackDelay } from '@/lib/music-polling'
 
 type Track = { title: string; album: string; artist: string; image: string; url: string; playlist?: string | null }
-type Playback = { status: 'playing' | 'idle' | 'unavailable' | 'unconnected' | 'loading'; track: Track | null }
+type Playback = { status: 'playing' | 'idle' | 'unavailable' | 'unconnected' | 'loading'; track: Track | null; last: Track | null }
 const endpoint = process.env.NEXT_PUBLIC_SPOTIFY_ENDPOINT || 'https://notebook-music.leowelliottd23.workers.dev/now-playing'
-const blank = '/photos/music-empty.svg'
 
 function validTrack(value: unknown): value is Track {
   if (!value || typeof value !== 'object') return false
@@ -17,8 +15,9 @@ function validTrack(value: unknown): value is Track {
     && t.image.startsWith('https://i.scdn.co/') && t.url.startsWith('https://open.spotify.com/')
 }
 
-export default function Music() {
-  const [playback, setPlayback] = useState<Playback>({ status: endpoint ? 'loading' : 'unconnected', track: null })
+/** what's playing on Spotify right now, as a record sleeve taped to the sheet; when nothing is, a drawing of a quiet room */
+export default function NowPlaying() {
+  const [playback, setPlayback] = useState<Playback>({ status: endpoint ? 'loading' : 'unconnected', track: null, last: null })
   useEffect(() => {
     if (!endpoint) return
     let stopped = false
@@ -49,14 +48,15 @@ export default function Music() {
         const playing = data.status === 'playing' && validTrack(data.track)
         if (playing) delay = nextPlaybackDelay(data.remainingMs)
         retryAt = 0
+        // (when nothing is playing, the Worker sends what played last, if it knows)
         setPlayback(playing
-          ? { status: 'playing', track: data.track }
-          : { status: data.status === 'idle' ? 'idle' : 'unavailable', track: null })
+          ? { status: 'playing', track: data.track, last: null }
+          : { status: data.status === 'idle' ? 'idle' : 'unavailable', track: null, last: validTrack(data.last) ? data.last : null })
       } catch {
         if (current.signal.aborted || stopped) return
         delay = Math.max(30000, delay)
         retryAt = performance.now() + delay
-        setPlayback({ status: 'unavailable', track: null })
+        setPlayback((p) => ({ status: 'unavailable', track: null, last: p.last ?? p.track }))
       } finally {
         if (!stopped && !current.signal.aborted && !document.hidden) timer = setTimeout(refresh, delay)
       }
@@ -71,19 +71,31 @@ export default function Music() {
     return () => { stopped = true; clearTimeout(timer); controller?.abort(); document.removeEventListener('visibilitychange', onVisibility) }
   }, [])
 
-  const track = playback.track
-  const message = playback.status === 'idle' ? 'a little quiet right now.'
-    : playback.status === 'unavailable' ? 'couldn’t tune in just now.'
-    : playback.status === 'loading' ? 'tuning in…' : 'nothing playing here yet.'
+  // playing: the track now. Not playing: the one played last, under "Last listened to". Neither known: the quiet room
+  const track = playback.track ?? playback.last
+  const live = !!playback.track
+  const message = playback.status === 'loading' ? 'tuning in…' : 'a little quiet right now.'
+  const sleeve = (
+    <span className="pic" style={{ '--r': '-1.6deg' } as React.CSSProperties}>
+      <TapeStrip n={1} className="wt-top" />
+      <span className="pic-paper">
+        <img className="pic-img pic-square" src={track?.image ?? '/art/cards/record.webp'} alt={track ? `Album cover for ${track.album}` : ''} decoding="async" />
+      </span>
+    </span>
+  )
   return (
-    <div className="music-entry">
-        <Photo photo={{ id: 'music', src: track?.image ?? blank, alt: track ? `Album cover for ${track.album}` : 'An empty space for an album cover', caption: typeof track?.playlist === 'string' ? track.playlist : '', rotation: -3, aspect: 1, variant: 'polaroid', tape: [{ x: 30, y: -11, w: 68, rot: 5, opacity: 0.65 }] }} width={108} className="music-photo" />
-        <div className="music-writing" aria-live="polite" aria-atomic="true">
-          {track ? <>
-            <InkLink key={track.url} href={track.url} i={2} className="music-title">{track.title}</InkLink>
-            <p className="music-artist hand">{track.artist}</p>
-          </> : <p className="music-empty hand">{message}</p>}
-        </div>
+    <div className="playing" aria-live="polite" aria-atomic="true">
+      <div className="print playing-print">
+        {track ? <a href={track.url} target="_blank" rel="noreferrer">{sleeve}</a> : <div>{sleeve}</div>}
       </div>
+      <div className="playing-words">
+        {track && <p className="kicker">{live ? (track.playlist ? `Now playing, from ${track.playlist}` : 'Now playing') : 'Last listened to'}</p>}
+        {track ? <>
+          <p className="playing-title"><a className="link" href={track.url} target="_blank" rel="noreferrer">{track.title}</a></p>
+          <p className="playing-artist">{track.artist}</p>
+          <p className="playing-album quiet">{track.album}</p>
+        </> : <p className="playing-title">{message}</p>}
+      </div>
+    </div>
   )
 }

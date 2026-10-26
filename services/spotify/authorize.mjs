@@ -15,7 +15,7 @@ if (!id || !secret) {
 const redirect = 'http://127.0.0.1:8888/callback'
 const state = randomBytes(32).toString('hex')
 const url = new URL('https://accounts.spotify.com/authorize')
-url.search = new URLSearchParams({ client_id: id, response_type: 'code', redirect_uri: redirect, state, scope: 'user-read-currently-playing' }).toString()
+url.search = new URLSearchParams({ client_id: id, response_type: 'code', redirect_uri: redirect, state, scope: 'user-read-currently-playing user-read-recently-played' }).toString()
 let exchanging = false
 const server = createServer(async (req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8')
@@ -47,4 +47,4 @@ const server = createServer(async (req, res) => {
     exchanging = false
   }
 })
-server.listen(8888, '127.0.0.1', () => console.log(`Open this link to authorize read-only playback access:\n${url}`))
+server.listen(8888, '127.0.0.1', () => console.log(`Open this link to authorize read-only playback and recently-played access:\n${url}`))

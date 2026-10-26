@@ -4,8 +4,9 @@ The notebook stays a static GitHub Pages site. This small Cloudflare Worker read
 only the owner's current Spotify playback. Visitors never sign in. Credentials
 stay in Worker secrets; the browser receives title, album, artist, artwork, the
 Spotify link, an optional playlist title, and a best-effort `remainingMs` value.
-A paused track, ad, podcast, or no active session shows an empty Polaroid. Errors
-clear the track rather than claiming stale music is live.
+When nothing is playing (a paused track, ad, podcast, or no active session) it
+sends the last played track instead, as `last`, which the site shows under "Last
+listened to". Errors clear the track rather than claiming stale music is live.
 
 `GET /now-playing` returns one of these shapes:
 
@@ -20,9 +21,22 @@ clear the track rather than claiming stale music is live.
     "image": "…",
     "url": "…",
     "playlist": "…"
-  }
+  },
+  "last": null
 }
 ```
+
+and, when idle:
+
+```json
+{ "status": "idle", "remainingMs": null, "track": null,
+  "last": { "title": "…", "album": "…", "artist": "…", "image": "…", "url": "…", "playedAt": "2026-10-26T04:21:48.843Z" } }
+```
+
+`last` comes from Spotify's recently-played (scope `user-read-recently-played`);
+without that scope, or if the call fails, it falls back to the last track this
+Worker instance saw playing, and otherwise is `null`. It never makes the
+response an error.
 
 `playlist` and `remainingMs` can be `null`. The Worker derives remaining time
 from Spotify's `duration_ms - progress_ms` when it receives the playback response,
@@ -42,7 +56,7 @@ endpoint; inaccessible playlists and playlist lookup failures simply return
    SPOTIFY_CLIENT_SECRET=your_client_secret
    ```
 3. Run `node services/spotify/authorize.mjs`, then open its authorization link.
-   Approve `user-read-currently-playing`. The script saves the refresh token in
+   Approve `user-read-currently-playing` and `user-read-recently-played`. The script saves the refresh token in
    `.dev.vars` with owner-only permissions; it never prints tokens.
 4. Run `node services/spotify/dev.mjs`. Put this in root `.env.local`:
    ```dotenv
@@ -59,6 +73,9 @@ npx wrangler login
 npx wrangler deploy
 npx wrangler secret bulk .dev.vars
 ```
+
+After re-running `authorize.mjs` (for example, to add a scope), upload the new
+`SPOTIFY_REFRESH_TOKEN` the same way.
 
 The endpoint is `https://notebook-music.<your-subdomain>.workers.dev/now-playing`.
 The notebook defaults to the deployed endpoint at

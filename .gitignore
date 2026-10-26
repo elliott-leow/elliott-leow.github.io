@@ -8,3 +8,6 @@ next-env.d.ts
 !.env.example
 .dev.vars*
 .wrangler/
+
+# the raw drawings from the image API (tools/gen-art.py): ~100 MB of PNGs; the site uses the webps made from them
+art/raw/

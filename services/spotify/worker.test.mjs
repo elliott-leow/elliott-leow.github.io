@@ -14,7 +14,7 @@ test('publishes only display metadata; caches upstream calls', async () => {
     return Response.json({ is_playing: true, item: { type: 'track', name: 'Song', album: { name: 'Album', images: [{ url: 'https://i.scdn.co/image/test' }] }, artists: [{ name: 'Artist' }], external_urls: { spotify: 'https://open.spotify.com/track/test' } }, device: { name: 'private' } })
   })
   const response = await handle(request(), env)
-  assert.deepEqual(await response.json(), { status: 'playing', remainingMs: null, track: { title: 'Song', album: 'Album', artist: 'Artist', image: 'https://i.scdn.co/image/test', url: 'https://open.spotify.com/track/test', playlist: null } })
+  assert.deepEqual(await response.json(), { status: 'playing', remainingMs: null, track: { title: 'Song', album: 'Album', artist: 'Artist', image: 'https://i.scdn.co/image/test', url: 'https://open.spotify.com/track/test', playlist: null }, last: null })
   await handle(request(), env)
   assert.equal(calls, 2)
 })
@@ -22,7 +22,7 @@ test('publishes only display metadata; caches upstream calls', async () => {
 test('204, paused playback and episodes produce honest empty states', async () => {
   for (const playback of [null, { is_playing: false, item: { type: 'track' } }, { is_playing: true, item: { type: 'episode' } }]) {
     const handle = createHandler(async (url) => String(url).includes('/api/token') ? token() : playback === null ? new Response(null, { status: 204 }) : Response.json(playback))
-    assert.deepEqual(await (await handle(request(), env)).json(), { status: 'idle', remainingMs: null, track: null })
+    assert.deepEqual(await (await handle(request(), env)).json(), { status: 'idle', remainingMs: null, track: null, last: null })
   }
 })
 
@@ -31,7 +31,7 @@ test('missing configuration and upstream failure never leak credentials', async 
   assert.equal((await handle(request(), {})).status, 503)
   const result = await handle(request(), env)
   assert.equal(result.status, 503)
-  assert.deepEqual(await result.json(), { status: 'unavailable', remainingMs: null, track: null })
+  assert.deepEqual(await result.json(), { status: 'unavailable', remainingMs: null, track: null, last: null })
 })
 
 test('rate limits honor Retry-After without repeatedly calling Spotify', async () => {
@@ -164,4 +164,31 @@ test('treats negative Spotify timing values as unavailable', async () => {
     const handle = createHandler(async (url) => String(url).includes('/api/token') ? token() : Response.json({ is_playing: true, progress_ms, item: { type: 'track', name: 'Song', duration_ms, album: { name: 'Album', images: [{ url: 'https://i.scdn.co/image/test' }] }, artists: [{ name: 'Artist' }], external_urls: { spotify: 'https://open.spotify.com/track/test' } } }))
     assert.equal((await (await handle(request(), env)).json()).remainingMs, null)
   }
+})
+
+const song = (name) => ({ type: 'track', name, album: { name: 'Album', images: [{ url: 'https://i.scdn.co/image/test' }] }, artists: [{ name: 'Artist' }], external_urls: { spotify: 'https://open.spotify.com/track/test' } })
+
+test('idle playback carries the last played track from recently-played, display metadata only', async () => {
+  const handle = createHandler(async (url) => {
+    if (String(url).includes('/api/token')) return token()
+    if (String(url).includes('/recently-played')) return Response.json({ items: [{ track: song('Earlier'), played_at: '2026-10-25T20:00:00.000Z', context: { uri: 'private' } }] })
+    return new Response(null, { status: 204 })
+  })
+  assert.deepEqual(await (await handle(request(), env)).json(), { status: 'idle', remainingMs: null, track: null,
+    last: { title: 'Earlier', album: 'Album', artist: 'Artist', image: 'https://i.scdn.co/image/test', url: 'https://open.spotify.com/track/test', playedAt: '2026-10-25T20:00:00.000Z' } })
+})
+
+test('without recently-played access, idle falls back to the last track seen playing', async () => {
+  let t = Date.parse('2026-10-25T20:00:00.000Z'), playing = true
+  const handle = createHandler(async (url) => {
+    if (String(url).includes('/api/token')) return token()
+    if (String(url).includes('/recently-played')) return Response.json({ error: { status: 403 } }, { status: 403 })
+    return playing ? Response.json({ is_playing: true, item: song('Was on') }) : new Response(null, { status: 204 })
+  }, { now: () => t })
+  await handle(request(), env)
+  playing = false
+  t += 60_000
+  const body = await (await handle(request(), env)).json()
+  assert.equal(body.status, 'idle')
+  assert.equal(body.last.title, 'Was on')
 })

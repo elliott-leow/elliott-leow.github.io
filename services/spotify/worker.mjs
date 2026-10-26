@@ -1,8 +1,33 @@
 // Credentials stay in Worker secrets. Only the owner's public music metadata leaves here.
 export function createHandler(fetcher = fetch, { now = () => Date.now() } = {}) {
-  let accessToken = '', tokenUntil = 0, cached, cacheUntil = 0, pending, playlistBlockedUntil = 0
+  let accessToken = '', tokenUntil = 0, cached, cacheUntil = 0, pending, playlistBlockedUntil = 0, lastSeen = null
   const playlistCache = new Map()
-  const empty = (status) => ({ status, remainingMs: null, track: null })
+  const empty = (status, last = null) => ({ status, remainingMs: null, track: null, last })
+  const trackOf = (item) => ({
+    title: item.name,
+    album: item.album.name,
+    artist: item.artists.map(a => a.name).join(', '),
+    image: item.album.images[0].url,
+    url: item.external_urls.spotify,
+  })
+  // what was playing last, for when nothing is: Spotify's recently-played (needs user-read-recently-played), else the
+  // last track this instance saw playing. Best effort: any failure is simply no last track, never an error
+  async function lastPlayed() {
+    try {
+      const response = await fetcher('https://api.spotify.com/v1/me/player/recently-played?limit=1', {
+        headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(8000),
+      })
+      if (response.ok) {
+        const entry = (await response.json())?.items?.[0]
+        if (entry?.track?.type === 'track' && entry.track.album?.images?.[0]?.url) {
+          const played = { ...trackOf(entry.track), playedAt: typeof entry.played_at === 'string' ? entry.played_at : null }
+          // (a track that was playing more recently than recently-played knows of, because it was never finished, wins)
+          if (!lastSeen || !played.playedAt || Date.parse(played.playedAt) >= Date.parse(lastSeen.playedAt)) return played
+        }
+      }
+    } catch {}
+    return lastSeen
+  }
   const retryAfter = (response) => Math.max(30, Number(response.headers.get('Retry-After')) || 30)
   const rememberPlaylist = (id, name, until) => {
     if (playlistCache.size >= 32 && !playlistCache.has(id)) playlistCache.delete(playlistCache.keys().next().value)
@@ -69,24 +94,14 @@ export function createHandler(fetcher = fetch, { now = () => Date.now() } = {}) 
       const remainingAt = isTrack && Number.isFinite(item.duration_ms) && item.duration_ms >= 0 && Number.isFinite(data.progress_ms) && data.progress_ms >= 0
         ? Math.max(0, item.duration_ms - data.progress_ms)
         : null
+      if (isTrack) lastSeen = { ...trackOf(item), playedAt: new Date(receivedAt).toISOString() }
       const body = isTrack
-        ? {
-            status: 'playing',
-            remainingMs: remainingAt,
-            track: {
-              title: item.name,
-              album: item.album.name,
-              artist: item.artists.map(a => a.name).join(', '),
-              image: item.album.images[0].url,
-              url: item.external_urls.spotify,
-              playlist: await playlistName(data.context?.uri),
-            },
-          }
-        : empty('idle')
+        ? { status: 'playing', remainingMs: remainingAt, track: { ...trackOf(item), playlist: await playlistName(data.context?.uri) }, last: null }
+        : empty('idle', await lastPlayed())
       cached = { body, status: 200, retry: 15, receivedAt, remainingAt }
       cacheUntil = receivedAt + (remainingAt == null ? 15_000 : Math.min(15_000, remainingAt))
     } catch {
-      cached = { body: empty('unavailable'), status: 503, retry, receivedAt: now(), remainingAt: null }
+      cached = { body: empty('unavailable', lastSeen), status: 503, retry, receivedAt: now(), remainingAt: null }
       cacheUntil = now() + retry * 1000
     }
   }
