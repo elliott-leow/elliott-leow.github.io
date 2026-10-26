@@ -119,10 +119,10 @@ a:hover .pic-title, a:focus-visible .pic-title { background-size: 100% 0.5em; }
   mask: var(--torn) 0 0 / 600px 40px repeat-x, linear-gradient(#000 0 0) 0 39px / 100% calc(100% - 39px) no-repeat; }
 .leaf::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: 40px; background: var(--tear, none) 0 0 / 600px 40px repeat-x; pointer-events: none; }
 .leaf-slate { --paper: #1c232c; --tile: url(/art/paper/slate.webp); --ink-2: #bfc8d2; --torn: url(/art/paper/edge-slate.webp); --tear: url(/art/paper/tear-slate.webp); }
-.leaf-dusk { --paper: #1d2136; --tile: url(/art/paper/dusk.webp); --ink-2: #c4c8de; --torn: url(/art/paper/edge-dusk.webp); }
+.leaf-dusk { --paper: #1d2136; --tile: url(/art/paper/dusk-note.webp); --ink-2: #c4c8de; --torn: url(/art/paper/edge-dusk.webp); }
 .leaf-pine { --paper: #182521; --tile: url(/art/paper/pine.webp); --ink-2: #bccbc4; --torn: url(/art/paper/edge-pine.webp); }
 .leaf-ink { --paper: #11141e; --tile: url(/art/paper/ink.webp); --ink-2: #b9bfd0; --torn: url(/art/paper/edge-ink.webp); --tear: url(/art/paper/tear-ink.webp); }
-/* (on the dot grid, a halo of paper round the letters so no dot cuts through them) */
+/* (the dot grid is pressed faint, and the letters carry a halo of paper, so no dot reads as part of a word) */
 .leaf-dusk .shelf, .leaf-dusk .note-page { text-shadow: 0 0 2px var(--paper), 0 0 4px var(--paper); }
 
 .shelf { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; padding: clamp(80px, 9vw, 140px) var(--gutter) clamp(100px, 11vw, 170px); }
@@ -197,7 +197,7 @@ a:hover .pic-title, a:focus-visible .pic-title { background-size: 100% 0.5em; }
 /* a note is written on the indigo dot grid in pale ink: its pens and highlighters (styles/page.css, objects.css)
    take the night's colours. The figures taped into it (orbitals, algorithms, sketches, code, sticky notes, the
    lecture strip) stay sheets of white drawing paper, so inside them the pens go back to dark ink */
-.note-leaf { --tile: url(/art/paper/dusk-note.webp); padding-bottom: clamp(90px, 10vw, 150px);
+.note-leaf { padding-bottom: clamp(90px, 10vw, 150px);
   --mono-ink: var(--ink); --pencil: #bdb7ac; --faded-ink: #a9a398; --blue-pen: #a9c0f0; --red-pen: #f29a82; --shu: #f29a82;
   --highlight: rgba(240, 180, 106, 0.3); --highlight-pink: rgba(232, 140, 160, 0.3); --highlight-green: rgba(140, 200, 140, 0.26);
   --rule: rgba(220, 212, 196, 0.18); --dot: rgba(200, 210, 235, 0.2); }
@@ -264,11 +264,11 @@ a:hover .pic-title, a:focus-visible .pic-title { background-size: 100% 0.5em; }
   background: linear-gradient(90deg, rgba(244, 239, 228, 0), rgba(244, 239, 228, 0.95)); transform-origin: 100% 50%;
   animation: shoot 13s ease-in 4s infinite; }
 @keyframes shoot { 0% { opacity: 0; transform: translate(0, 0) rotate(16deg) scaleX(0.2); } 2% { opacity: 1; } 7% { opacity: 0; transform: translate(380px, 110px) rotate(16deg) scaleX(1); } 100% { opacity: 0; } }
-/* the little one on the ledge (its feet on the rock: placed by its foot, a few % of the drawing's height tall); it
+/* Chiikawa on the ledge (its feet on the rock: placed by its foot, 7.5% of the drawing's height tall); it
    comes out once the name is written, waves now and then, and hops when found */
-.critter { --ch: calc(var(--dh) * 0.056); width: calc(var(--ch) * 0.906); height: var(--ch); transform: translate(-50%, -94%);
+.critter { --ch: calc(var(--dh) * 0.075); width: calc(var(--ch) * 0.933); height: var(--ch); transform: translate(-50%, -94%);
   pointer-events: auto; cursor: default; animation: critter-in 1s ease 1.8s both; }
-@media (max-width: 700px) { .critter { --ch: calc(var(--dh) * 0.072); } }
+@media (max-width: 700px) { .critter { --ch: calc(var(--dh) * 0.095); } }
 .critter img { display: block; width: 100%; height: 100%; transform-origin: 50% 100%; animation: critter-wave 7s ease-in-out 3s infinite; }
 .critter:hover img { animation: critter-hop 0.6s cubic-bezier(0.3, 0.7, 0.4, 1); }
 @keyframes critter-in { from { opacity: 0; } }

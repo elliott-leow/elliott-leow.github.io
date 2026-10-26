@@ -38,8 +38,8 @@ export default function Sky() {
       ))}
       <span className="shooting" />
       {/* Chiikawa, on the ledge by the pine, waving at whoever finds it */}
-      <span className="spot critter" style={at({ w: [0.876, 0.583], t: [0.785, 0.692] })}>
-        <img src="/art/hero/critter.webp" width={320} height={353} alt="" decoding="async" />
+      <span className="spot critter" style={at({ w: [0.876, 0.583], t: [0.66, 0.583] })}>
+        <img src="/art/hero/critter.webp" width={320} height={343} alt="" decoding="async" />
       </span>
       {petals.map((p, i) => (
         <span key={`p${i}`} className="spot drift" style={{ ...at(p.at), '--dx': `${p.dx}px`, '--s': `${p.s}px`, '--turn': `${p.turn}deg`, '--d': `${p.d}s`, '--p': `${p.p}s` } as React.CSSProperties}>

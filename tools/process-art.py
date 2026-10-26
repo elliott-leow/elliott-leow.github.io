@@ -72,12 +72,14 @@ def night():
     if os.path.exists(p): save(fit(Image.open(p).convert('RGB'), 900), 'cards/record.webp', 86)
 
 
-def critter(name='chiikawa-0', fill=(27, 39, 70)):
-    """the little one on the cliff: drawn as an outline on black, so its body is filled solid with the night's navy
-    (the inside of its outline: the outline grown, its outside flooded from a corner, the rest is body), or the rocks
-    behind it would show through"""
+def critter(name='chiikawa2-1', fill=(27, 39, 70), floor=0.2, blush=((0.255, 0.745), 0.445)):
+    """Chiikawa on the cliff: a white gel-pen body with dark eyes and mouth, drawn on dark paper. The dark features
+    come out transparent, so underneath it is filled solid with the night's navy (the inside of its outline: the outline
+    grown, its outside flooded from a corner, the rest is body): the eyes read as dark, and no rock shows through.
+    (floor: this drawing's paper is a dark grey rather than black, so more of the dark is cut away; blush: where its cheeks
+    are, as fractions of it)"""
     from PIL import ImageDraw
-    ink = unblack(raw(name), floor=0.07, gain=1.7)
+    ink = unblack(raw(name), floor=floor, gain=1.7)
     a = ink.split()[3]
     solid = a.point(lambda v: 255 if v > 40 else 0).filter(ImageFilter.MaxFilter(15))
     ImageDraw.floodfill(solid, (0, 0), 128)
@@ -85,6 +87,17 @@ def critter(name='chiikawa-0', fill=(27, 39, 70)):
     out = Image.new('RGBA', ink.size, fill + (0,)); out.putalpha(body)
     out.alpha_composite(ink)
     box = out.getbbox()
+    # its blush, in soft pink gel pen under the hatching (the drawing's own came out too faint to read)
+    if blush:
+        w, h = box[2] - box[0], box[3] - box[1]
+        cheeks = Image.new('RGBA', out.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(cheeks)
+        for cx in blush[0]:
+            x, y = box[0] + cx * w, box[1] + blush[1] * h
+            d.ellipse((x - 0.075 * w, y - 0.035 * h, x + 0.075 * w, y + 0.035 * h), fill=(242, 160, 172, 150))
+        cheeks = cheeks.filter(ImageFilter.GaussianBlur(w * 0.008))
+        cheeks.putalpha(Image.fromarray(np.minimum(np.asarray(cheeks.split()[3]), np.asarray(body))))
+        out.alpha_composite(cheeks)
     pad = 8
     out = out.crop((box[0] - pad, box[1] - pad, box[2] + pad, box[3] + pad))
     save(fit(out, 320), 'hero/critter.webp', 90)
