@@ -72,18 +72,29 @@ def night():
     if os.path.exists(p): save(fit(Image.open(p).convert('RGB'), 900), 'cards/record.webp', 86)
 
 
-def critter(name='chiikawa2-1', fill=(27, 39, 70), floor=0.2, blush=((0.255, 0.745), 0.445)):
+def critter(name='chiikawa2-1', fill=(27, 39, 70), floor=0.2, blush=((0.255, 0.745), 0.445), tone=0.72):
     """Chiikawa on the cliff: a white gel-pen body with dark eyes and mouth, drawn on dark paper. The dark features
     come out transparent, so underneath it is filled solid with the night's navy (the inside of its outline: the outline
     grown, its outside flooded from a corner, the rest is body): the eyes read as dark, and no rock shows through.
     (floor: this drawing's paper is a dark grey rather than black, so more of the dark is cut away; blush: where its cheeks
-    are, as fractions of it)"""
+    are, as fractions of it; tone: how much of the body's white is kept)"""
     from PIL import ImageDraw
     ink = unblack(raw(name), floor=floor, gain=1.7)
     a = ink.split()[3]
     solid = a.point(lambda v: 255 if v > 40 else 0).filter(ImageFilter.MaxFilter(15))
     ImageDraw.floodfill(solid, (0, 0), 128)
     body = solid.point(lambda v: 255 if v != 128 else 0).filter(ImageFilter.MinFilter(15)).filter(ImageFilter.GaussianBlur(1.2))
+    # the body's white is let down to a light stipple, as gel pen dotted over the paper, so it's a drawing, not a cut-out;
+    # its contour (a band just inside the edge) and its features stay at full strength
+    if tone < 1:
+        a = np.asarray(ink, np.float32).copy()
+        inner = np.asarray(body.filter(ImageFilter.MinFilter(int(ink.size[0] * 0.025) | 1)), np.float32) / 255
+        light = a[..., :3].mean(axis=2) / 255 * a[..., 3] / 255 > 0.55  # the white of the body, not the dark features
+        r = np.random.default_rng(3).random(inner.shape)
+        stipple = np.where(r < 0.55, 1.0, 0.8)
+        k = np.where(light, 1 - inner * (1 - tone * stipple), 1)
+        a[..., 3] *= k
+        ink = Image.fromarray(a.clip(0, 255).astype(np.uint8), 'RGBA')
     out = Image.new('RGBA', ink.size, fill + (0,)); out.putalpha(body)
     out.alpha_composite(ink)
     box = out.getbbox()
